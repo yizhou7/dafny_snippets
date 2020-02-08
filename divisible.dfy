@@ -21,24 +21,38 @@ lemma {:induction e, e_1} power_lema(b:int, e:nat, e_1:nat, e_2:nat)
 	}
 }
 
-// lemma {:induction k} divisible_by_five_lema(k: int)
-// 	requires k >= 1;
-// 	ensures (power(2, 3 * k) - power(3, k)) % 5 == 0;
-// {
-// 	if k != 1 {
-// 		calc {
-// 			(power(2, 3 * k) - power(3, k)) % 5;
-// 			==
-// 			(power(2, 3 * (k - 1) + 3) - power(3, (k - 1) + 1)) % 5;
-// 			==
-// 			{
-// 			}
-// 			(8 * power(2, 3 * (k - 1)) - 3 * power(3, (k - 1))) % 5;
-// 		}
-
-// 		assume false;
-// 	}
-// }
+lemma {:induction k} divisible_by_five_lema(k: int)
+	requires k >= 1;
+	ensures (power(2, 3 * k) - power(3, k)) % 5 == 0;
+{
+	if k != 1 {
+		calc == {
+			(power(2, 3 * k) - power(3, k)) % 5;
+			==
+			(power(2, 3 * (k - 1) + 3) - power(3, (k - 1) + 1)) % 5;
+			==
+			{
+				assert power(2, 3 * (k - 1) + 3) == (power(2, 3 * (k - 1)) * 8)
+				by {
+					power_lema(2, 3 * (k - 1) + 3,  3 * (k - 1), 3);
+				}
+			}
+			(power(2, 3 * (k - 1)) * 8 - power(3, (k - 1) + 1)) % 5;
+			==
+			{
+				assert power(3, (k - 1) + 1) == (power(3, (k - 1)) * 3)
+				by {
+					power_lema(3, 3 * (k - 1) + 1,  3 * (k - 1), 1);
+				}
+			}
+			(power(2, 3 * (k - 1)) * 8 - power(3, (k - 1)) * 3) % 5;
+			==
+			(3 *(power(2, 3 * (k - 1)) - power(3, (k - 1))) + power(2, 3 * (k - 1)) * 5) % 5;
+			==
+			(3 *(power(2, 3 * (k - 1)) - power(3, (k - 1)))) % 5;
+		}
+	}
+}
 
 }
 

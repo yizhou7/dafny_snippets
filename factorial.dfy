@@ -28,7 +28,7 @@ method factorial_impl(n: int)
 		var i' := i + 1;
 		var result' := result * i';
 
-		calc {
+		calc == {
 			result'; 
 		==
 			factorial_spec(i) * (i + 1);
