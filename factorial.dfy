@@ -1,4 +1,4 @@
-module Numbers {
+module Factorial {
 
 function factorial_spec (n: int) : int
 	decreases n;
