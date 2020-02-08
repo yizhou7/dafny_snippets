@@ -7,7 +7,7 @@ function factorial_spec (n: int) : int
 	if n == 0 then 1 else n * factorial_spec (n - 1)
 }
 
-lemma {:induction n} factorial_step(n: int)
+lemma {:induction n} factorial_step_lema(n: int)
 	requires n >= 0;
 	ensures factorial_spec(n + 1) == factorial_spec(n) * (n + 1)
 {
@@ -34,7 +34,7 @@ method factorial_impl(n: int)
 			factorial_spec(i) * (i + 1);
 		==
 			{ 
-				factorial_step(i);
+				factorial_step_lema(i);
 			}
 			factorial_spec(i + 1);
 		}
