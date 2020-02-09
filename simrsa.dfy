@@ -11,10 +11,23 @@ function method power(b:int, e:nat) : int
 lemma {:induction e} exp_one_rule_lema(e: nat)
     ensures power(1, e) == 1;
 {
-
+    assert true;
 }
 
-lemma {:induction e, e_2} exp_power_rule_1(b:int, e: nat, e_1:nat, e_2:nat)
+lemma {:induction e, e_1} exp_product_lema(b:int, e:nat, e_1:nat, e_2:nat)
+	requires e_1 + e_2 == e; 
+	ensures power(b, e) == power(b, e_1) * power(b, e_2)
+{
+	if e_1 == 0 {
+		assert true;
+	} else {
+		assert power(b, e_1) == b * power(b, e_1 - 1);
+		assert power(b, e - 1) ==  power(b, e_1 - 1) * power(b, e_2);
+	}
+}
+
+lemma {:induction e, e_2} exp_power_lema_1(b:int, e: nat, e_1:nat, e_2:nat)
+    decreases e, e_2;
     requires e == e_1 * e_2
     ensures power(b, e) == power(power(b, e_1), e_2)
 {
@@ -34,13 +47,28 @@ lemma {:induction e, e_2} exp_power_rule_1(b:int, e: nat, e_1:nat, e_2:nat)
                     exp_one_rule_lema(e_2);
                 }
                 1;
-            }            
+            }
         } else {
-            assert e_2 >= 1;
-            assert e >= 1;
-            // assert power(b, e -1) == power(power(b, e_1), e_2 - 1);
-
-            assume false;
+            calc == {
+                power(b, e);
+                ==
+                power(b, e_1 * e_2);
+                ==
+                {
+                    exp_product_lema(b, e_1 * e_2, e_1 * (e_2 - 1), e_1);
+                }
+                power(b, e_1 * (e_2 - 1)) *  power(b, e_1);
+                ==
+                {
+                    exp_power_lema_1(b, e_1 * (e_2 - 1), e_1, e_2 -1);
+                }
+                power(power(b, e_1), e_2 - 1) *  power(b, e_1);
+                ==
+                {
+                    exp_product_lema(power(b, e_1), e_2, e_2 - 1, 1);
+                }
+                power(power(b, e_1), e_2);
+            }
         }
     }
 }
