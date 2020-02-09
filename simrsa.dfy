@@ -7,7 +7,6 @@ function method power(b:int, e:nat) : int
     else b * power(b ,e - 1)
 }
 
-
 lemma {:induction e} exp_one_rule_lema(e: nat)
     ensures power(1, e) == 1;
 {
@@ -72,6 +71,27 @@ lemma {:induction e, e_2} exp_power_lema_1(b:int, e: nat, e_1:nat, e_2:nat)
         }
     }
 }
+lemma {:induction e} mod_exp_sub_one_lema(b: int, e: nat, m: nat)
+    requires e >=1 && m >= 2;
+    ensures power(b, e) % m == ((power(b, e - 1) % m) * (b % m)) % m
+{
+    if e == 0 {
+        assert true;
+    } else {
+        assume false;
+    }
+}
+lemma {:induction e} mod_exp_lema(b: int, e: nat, m: nat)
+    requires m >= 2;
+    ensures power(b, e) % m == (power(b % m , e)) % m
+{
+    if e == 0 {
+        assert true;
+    } else {
+        assert power(b, e - 1) % m == (power(b % m , e - 1)) % m;
+        assume false;
+    }
+}
 
 predicate divides_def(d:nat, n:int)
     requires d != 0;
@@ -106,6 +126,11 @@ method encrypt_decrypt()
         message_plain';
         ==
         power(power(message_plain, e) % n, d) % n;
+        // ==
+        // {
+            
+        // }
+        // (power(message_plain, d * e) % n) % n;
     }
 
     // assert message_plain == message_plain';
