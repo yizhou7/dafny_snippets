@@ -9,7 +9,7 @@ function method power(b:int, e:nat) : int
         b*power(b,e-1)
 }
 
-lemma {:induction e, e_1} power_lema(b:int, e:nat, e_1:nat, e_2:nat)
+lemma {:induction e, e_1} exp_product_lema(b:int, e:nat, e_1:nat, e_2:nat)
 	requires e_1 + e_2 == e; 
 	ensures power(b, e) == power(b, e_1) * power(b, e_2)
 {
@@ -34,7 +34,7 @@ lemma {:induction k} divisible_by_five_lema(k: int)
 			{
 				assert power(2, 3 * (k - 1) + 3) == (power(2, 3 * (k - 1)) * 8)
 				by {
-					power_lema(2, 3 * (k - 1) + 3,  3 * (k - 1), 3);
+					exp_product_lema(2, 3 * (k - 1) + 3,  3 * (k - 1), 3);
 				}
 			}
 			(power(2, 3 * (k - 1)) * 8 - power(3, (k - 1) + 1)) % 5;
@@ -42,7 +42,7 @@ lemma {:induction k} divisible_by_five_lema(k: int)
 			{
 				assert power(3, (k - 1) + 1) == (power(3, (k - 1)) * 3)
 				by {
-					power_lema(3, 3 * (k - 1) + 1,  3 * (k - 1), 1);
+					exp_product_lema(3, 3 * (k - 1) + 1,  3 * (k - 1), 1);
 				}
 			}
 			(power(2, 3 * (k - 1)) * 8 - power(3, (k - 1)) * 3) % 5;
