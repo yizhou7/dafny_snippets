@@ -71,16 +71,49 @@ lemma {:induction e, e_2} exp_power_lema_1(b:int, e: nat, e_1:nat, e_2:nat)
         }
     }
 }
-lemma {:induction e} mod_exp_sub_one_lema(b: int, e: nat, m: nat)
-    requires e >=1 && m >= 2;
-    ensures power(b, e) % m == ((power(b, e - 1) % m) * (b % m)) % m
+
+predicate congruent_def(a: int, b: int, n: int)
 {
-    if e == 0 {
-        assert true;
-    } else {
-        assume false;
-    }
+    exists k : int :: a - b == n * k
 }
+
+
+lemma mul_distrubtive_lema(n: int, a: int, b: int, c: int)
+    ensures n * (a + b + c) == n * a + n * b  + n * c;
+{
+    assert true;
+}
+
+lemma mod_mul_lema(a_1: int, a_2: int, b_1: int, b_2: int, n: int)
+    requires congruent_def(a_1, b_1, n) && congruent_def(a_2, b_2, n);
+    ensures congruent_def(a_1 * a_2, b_1 * b_2, n);
+{
+    ghost var k_1, k_2 : int :| a_1 - b_1 == n * k_1 && a_2 - b_2 == n * k_2;
+
+    calc == {
+        a_1 * a_2 - b_1 * b_2;
+        ==
+        (n * k_1 + b_1) * (n * k_2 + b_2) - b_1 * b_2;
+        ==
+        n * n * k_1 * k_2 + n * b_1 * k_2 + n * k_1 * b_2;
+        ==
+        {
+            assert n * b_1 * k_2 == n * (b_1 * k_2);
+            assert n * k_1 * b_2 == n * (k_1 * b_2);
+            assert n * n * k_1 * k_2 == n * (n * k_1 * k_2); // order of these asserts somehow matter
+        }
+        n * (n * k_1 * k_2) + n * (b_1 * k_2) + n * (k_1 * b_2);
+        ==
+        {
+            mul_distrubtive_lema(n, n * k_1 * k_2, b_1 * k_2, k_1 * b_2);
+        }
+        n * (n * k_1 * k_2 + b_1 * k_2 + k_1 * b_2);
+    }
+    ghost var k := n * k_1 * k_2 + b_1 * k_2 + k_1 * b_2;
+    assert a_1 * a_2 - b_1 * b_2 == n * k;
+    assert congruent_def(a_1 * a_2, b_1 * b_2, n);
+}
+
 lemma {:induction e} mod_exp_lema(b: int, e: nat, m: nat)
     requires m >= 2;
     ensures power(b, e) % m == (power(b % m , e)) % m
