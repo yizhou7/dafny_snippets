@@ -14,36 +14,47 @@ module MONTGOMERY {
         && forall x:int :: gcd < x ==> !(divides_def(x,a) && divides_def(x,b))
     }
 
-    predicate mod_inverse_def(a:int, x:int, n:int)
+    predicate mod_inverse_def(a:nat, x:nat, n:nat)
         requires n != 0;
     {
         (x * a) % n == 1
     }
 
-    function method mod_inverse(a:int, n:int) : int
+    method mod_inverse(a:nat, n:nat) returns (x: nat)
         requires n > 0;
-        ensures mod_inverse_def(a, mod_inverse(a, n), n);
+        ensures mod_inverse_def(a, x, n);
+        ensures x < n;
     {
         assume false;
-        42
+        x := 42;
     }
 
     predicate montgomery_reduction_def(N: nat, R: nat, T: int, m: int)
         requires gcd_def(N, R, 1);
         requires 0 <= T < N * R;
     {
-        var R_inv := mod_inverse(R, N);
+        var R_inv :| mod_inverse_def(R, N, R_inv);
         m == (T * R_inv) % N
     }
 
-    function method montgomery_reduction(N: nat, R: nat, T: nat) : int
+    method montgomery_reduction(N: nat, R: nat, T: nat) returns (x: nat)
         requires gcd_def(N, R, 1);
-        requires 0 <= T < N * R;
+        requires 0 <= T < (N * R);
     {
-        var m := T * -mod_inverse(N, R);
+        var N_inv := mod_inverse(N, R);
+        var m := T * (R - N_inv);
         var t := (T + m * N) / R;
-        if N <= t then (t - N)
-        else t
+        x := if N <= t then (t - N)
+        else t;
+    }
+
+    method montgomery_mod(a: nat, b: nat, N:nat, R: nat) returns (x: nat)
+        requires 0 < N < R &&  gcd_def(N, R, 1);
+    {
+        var a' := (a * R) % N;
+        var b' := (b * R) % N;
+        var c' := montgomery_reduction(N, R, a' * b');
+        x := montgomery_reduction(N, R, c');
     }
 
 // function method power(b:int, e:nat) : int
