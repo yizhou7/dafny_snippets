@@ -14,21 +14,27 @@ module MONTGOMERY {
         && forall x:int :: gcd < x ==> !(divides_def(x,a) && divides_def(x,b))
     }
 
-    function method mod_inverse(a:int, n:int) : int
-        ensures 
+    predicate mod_inverse_def(a:nat, x:nat, n:nat)
+        requires n != 0;
     {
-        assume false;
-        0
+        (x * a) % n == 1
     }
 
-    // predicate montgomery_reduction_def(N: nat, R: nat, T: nat)
-    //     requires gcd_def(N, R) == 1;
-    //     requires 0 <= T < N * R;
-    // {
-    //     R_inv = 
-    //     T * 
+    function method mod_inverse(a:nat, n:nat) : nat
+        requires n > 0;
+        ensures mod_inverse_def(a, mod_inverse(a, n), n);
+    {
+        assume false;
+        42
+    }
 
-    // }
+    predicate montgomery_reduction_def(N: nat, R: nat, T: nat, m: nat)
+        requires gcd_def(N, R, 1);
+        requires 0 <= T < N * R;
+    {
+        var R_inv := mod_inverse(R, N);
+        m == (T * R_inv) % N
+    }
 
 
     // function method montgomery_reduction() : int
