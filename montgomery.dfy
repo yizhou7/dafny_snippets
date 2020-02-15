@@ -1,4 +1,29 @@
 module MONTGOMERY {
+    predicate congruent_def(a: int, b: int, n: int)
+    {
+        exists k : int :: a - b == n * k
+    }
+
+    lemma congruent_addition(a: int, b: int, c: int, d: int, n: nat)
+        requires n != 0;
+        requires congruent_def(a, b, n) && congruent_def(c, d, n)
+        ensures congruent_def(a + c, b + d, n)
+    {
+        var k_1, k_2 : int :| a - b == n * k_1 && c - d == n * k_2;
+        calc == {
+            (a + c) - (b + d);
+            ==
+            (a - b) + (c - d);
+            ==
+            n * k_1 + n * k_2;
+            ==
+            (k_1 + k_2) * n;
+        }
+
+        ghost var k := (k_1 + k_2);
+        assert (a + c) - (b + d) == n * k;
+        assert congruent_def(a + c, b + d, n);
+    }
 
     predicate divides_def(d:nat, n:int)
         requires d != 0;
@@ -29,11 +54,6 @@ module MONTGOMERY {
         42
     }
 
-    predicate congruent_def(a: int, b: int, n: int)
-    {
-        exists k : int :: a - b == n * k
-    }
-
     predicate montgomery_reduction_def(N: nat, R: nat, T: nat, m: nat)
         requires gcd_def(N, R, 1);
         requires 0 <= T < N * R;
@@ -57,7 +77,21 @@ module MONTGOMERY {
             {
                 assert T * (1 + (R - N_inv) * N) == T + T * (R - N_inv) * N;
             }
-            (T * (1 + (R - N_inv) * N )) % R; 
+            (T * (1 + (R - N_inv) * N )) % R;
+            ==
+            {
+                calc == {
+                    (1 + (R - N_inv) * N ) % R;
+                    ==
+                    {
+                        assert (R - N_inv) * N == R * N - N_inv * N;
+                    }
+                    (1 + R * N - N_inv * N) % R;
+                    ==
+                    (1 - N_inv * N) % R;
+                }
+            }
+            // (T * (1 + (R  * N - N_inv * N))) % R; 
         }
 
         assume (T + m * N) % R == 0;
