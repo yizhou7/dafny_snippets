@@ -29,7 +29,12 @@ module MONTGOMERY {
         42
     }
 
-    predicate montgomery_reduction_def(N: nat, R: nat, T: int, m: int)
+    predicate congruent_def(a: int, b: int, n: int)
+    {
+        exists k : int :: a - b == n * k
+    }
+
+    predicate montgomery_reduction_def(N: nat, R: nat, T: nat, m: nat)
         requires gcd_def(N, R, 1);
         requires 0 <= T < N * R;
     {
@@ -40,22 +45,38 @@ module MONTGOMERY {
     method montgomery_reduction(N: nat, R: nat, T: nat) returns (x: nat)
         requires gcd_def(N, R, 1);
         requires 0 <= T < (N * R);
+        // ensures montgomery_reduction_def(N, R, T, x);
     {
         var N_inv := mod_inverse(N, R);
         var m := T * (R - N_inv);
+        calc == {
+            (T + m * N) % R;
+            ==
+            (T + T * (R - N_inv) * N) % R;
+            ==
+            {
+                assert T * (1 + (R - N_inv) * N) == T + T * (R - N_inv) * N;
+            }
+            (T * (1 + (R - N_inv) * N )) % R; 
+        }
+
+        assume (T + m * N) % R == 0;
         var t := (T + m * N) / R;
+        assert t * R - T == m * N;
+        // assert congruent_def(t * R, T, N);
         x := if N <= t then (t - N)
         else t;
+        // assert congruent_def(t * R, T, N);
     }
 
-    method montgomery_mod(a: nat, b: nat, N:nat, R: nat) returns (x: nat)
-        requires 0 < N < R &&  gcd_def(N, R, 1);
-    {
-        var a' := (a * R) % N;
-        var b' := (b * R) % N;
-        var c' := montgomery_reduction(N, R, a' * b');
-        x := montgomery_reduction(N, R, c');
-    }
+    // method montgomery_mod(a: nat, b: nat, N:nat, R: nat) returns (x: nat)
+    //     requires 0 < N < R &&  gcd_def(N, R, 1);
+    // {
+    //     var a' := (a * R) % N;
+    //     var b' := (b * R) % N;
+    //     var c' := montgomery_reduction(N, R, a' * b');
+    //     x := montgomery_reduction(N, R, c');
+    // }
 
 // function method power(b:int, e:nat) : int
 //     decreases e;
