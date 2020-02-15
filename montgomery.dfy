@@ -20,20 +20,20 @@ module MONTGOMERY {
         (x * a) % n == 1
     }
 
-    method mod_inverse(a:nat, n:nat) returns (x: nat)
+    function method mod_inverse(a:nat, n:nat) : (x: nat)
         requires n > 0;
         ensures mod_inverse_def(a, x, n);
         ensures x < n;
     {
         assume false;
-        x := 42;
+        42
     }
 
     predicate montgomery_reduction_def(N: nat, R: nat, T: int, m: int)
         requires gcd_def(N, R, 1);
         requires 0 <= T < N * R;
     {
-        var R_inv :| mod_inverse_def(R, N, R_inv);
+        var R_inv := mod_inverse(R, N);
         m == (T * R_inv) % N
     }
 
@@ -184,7 +184,4 @@ module MONTGOMERY {
 // }
 
 
-
-
 }
-
