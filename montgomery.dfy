@@ -4,7 +4,7 @@ module MONTGOMERY {
         exists k : int :: a - b == n * k
     }
 
-    lemma congruent_addition(a: int, b: int, c: int, d: int, n: nat)
+    lemma congruent_add_lema(a: int, b: int, c: int, d: int, n: nat)
         requires n != 0;
         requires congruent_def(a, b, n) && congruent_def(c, d, n)
         ensures congruent_def(a + c, b + d, n)
@@ -22,7 +22,24 @@ module MONTGOMERY {
 
         ghost var k := (k_1 + k_2);
         assert (a + c) - (b + d) == n * k;
-        assert congruent_def(a + c, b + d, n);
+    }
+
+    lemma congruent_sub_lema(a: int, b: int, c: int, d: int, n: nat)
+        requires n != 0;
+        requires congruent_def(a, b, n) && congruent_def(c, d, n)
+        ensures congruent_def(a - c, b - d, n)
+    {
+        var k_1, k_2 : int :| a - b == n * k_1 && c - d == n * k_2;
+        calc == {
+            (a - c) - (b - d);
+            ==
+            n * k_1 - n * k_2;
+            ==
+            (k_1 - k_2) * n;
+        }
+
+        ghost var k := (k_1 +- k_2);
+        assert (a - c) - (b - d) == n * k;
     }
 
     predicate divides_def(d:nat, n:int)
@@ -87,8 +104,8 @@ module MONTGOMERY {
                         assert (R - N_inv) * N == R * N - N_inv * N;
                     }
                     (1 + R * N - N_inv * N) % R;
-                    ==
-                    (1 - N_inv * N) % R;
+                    // ==
+                    // (1 - N_inv * N) % R;
                 }
             }
             // (T * (1 + (R  * N - N_inv * N))) % R; 
