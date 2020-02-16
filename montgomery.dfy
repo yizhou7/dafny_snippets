@@ -293,8 +293,10 @@ module MONTGOMERY {
                 calc ==> {
                     (1 + (R - N_inv) * N ) % R == 0 % R;
                     {
-                        assume false; // REMOVE! it goes thorugh, but slow
-                        congruence_mod_connection_sufficient_lema(1 + (R - N_inv) * N, 0, R);
+                        ghost var a := 1 + (R - N_inv) * N;
+                        assert a % R == 0 % R;
+                        congruence_mod_connection_sufficient_lema(a, 0, R);
+                        assert congruent_def(a, 0, R);
                     }
                     congruent_def(1 + (R - N_inv) * N, 0, R);
                 }
@@ -311,7 +313,18 @@ module MONTGOMERY {
                         congruence_mod_connection_necessary_lema((1 + (R - N_inv) * N) * T, 0, R);
                     }
                     ((1 + (R - N_inv) * N) * T) % R == 0 % R;
+                    {
+                        assert (1 + (R - N_inv) * N) * T == T + (R - N_inv) * N * T;
+                    }
                     (T + (R - N_inv) * N * T) % R == 0 % R;
+                    {
+                        assert T + (R - N_inv) * N * T == T + (R - N_inv) * T *N;
+                    }
+                    (T + (R - N_inv) * T * N) % R == 0 % R;
+                    {
+                        assert m == T * (R - N_inv);
+                    }
+                    (T + m * N) % R == 0 % R;
                 }
             }
             // (T * (0 % R)) % R; 
