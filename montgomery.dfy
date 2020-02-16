@@ -44,6 +44,42 @@ module MONTGOMERY {
         assert (a - c) - (b - d) == n * k;
     }
 
+    lemma mul_distrubtive_lema(n: int, a: int, b: int, c: int)
+        ensures n * (a + b + c) == n * a + n * b  + n * c;
+    {
+        assert true;
+    }
+
+    lemma  congruent_mul_lema(a_1: int, a_2: int, b_1: int, b_2: int, n: int)
+        requires congruent_def(a_1, b_1, n) && congruent_def(a_2, b_2, n);
+        ensures congruent_def(a_1 * a_2, b_1 * b_2, n);
+    {
+        ghost var k_1, k_2 : int :| a_1 - b_1 == n * k_1 && a_2 - b_2 == n * k_2;
+
+        calc == {
+            a_1 * a_2 - b_1 * b_2;
+            ==
+            (n * k_1 + b_1) * (n * k_2 + b_2) - b_1 * b_2;
+            ==
+            n * n * k_1 * k_2 + n * b_1 * k_2 + n * k_1 * b_2;
+            ==
+            {
+                assert n * b_1 * k_2 == n * (b_1 * k_2);
+                assert n * k_1 * b_2 == n * (k_1 * b_2);
+                assert n * n * k_1 * k_2 == n * (n * k_1 * k_2); // order of these asserts somehow matter
+            }
+            n * (n * k_1 * k_2) + n * (b_1 * k_2) + n * (k_1 * b_2);
+            ==
+            {
+                mul_distrubtive_lema(n, n * k_1 * k_2, b_1 * k_2, k_1 * b_2);
+            }
+            n * (n * k_1 * k_2 + b_1 * k_2 + k_1 * b_2);
+        }
+        ghost var k := n * k_1 * k_2 + b_1 * k_2 + k_1 * b_2;
+        assert a_1 * a_2 - b_1 * b_2 == n * k;
+        assert congruent_def(a_1 * a_2, b_1 * b_2, n);
+    }
+
     predicate divides_def(d:nat, n:int)
         requires d != 0;
     {
@@ -233,9 +269,29 @@ module MONTGOMERY {
                         congruence_mod_connection_necessary_lema(a, b, R);
                     }
                     (1 - N_inv * N) % R;
+                    ==
+                    {
+                        assert congruent_def(1, 1, R) by {
+                            assert 1 % R == 1;
+                            congruence_mod_connection_sufficient_lema(1, 1, R);
+                        }
+                        assert congruent_def(N_inv * N, 1, R) by {
+                            assert (N_inv * N) % R == 1;
+                            congruence_mod_connection_sufficient_lema(N_inv * N, 1, R);
+                        }
+                        assert congruent_def(1 -  N_inv * N, 0, R) by {
+                            congruent_sub_lema(1, 1,  N_inv * N, 1, R);
+                        }
+                        assert (1 -  N_inv * N) % R == 0 % R by {
+                            congruence_mod_connection_necessary_lema(1 -  N_inv * N, 0, R);
+                        }
+                        assert (1 -  N_inv * N) % R == 0 % R;
+                    }
+                    0 % R;
                 }
+
             }
-            // (T * (1 + (R  * N - N_inv * N))) % R; 
+            // (T * (0 % R)) % R; 
         }
 
         assume (T + m * N) % R == 0;
