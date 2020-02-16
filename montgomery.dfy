@@ -249,7 +249,7 @@ module MONTGOMERY {
 
     }
 
-    lemma congruent_mul_inv_lemma(a: int, b: int, b_inv: int, n: int)
+    lemma congruent_mul_inv_lema(a: int, b: int, b_inv: int, n: int)
         requires n != 0;
         requires mod_inverse_def(b, b_inv, n);
         ensures congruent_def(a, a * b * b_inv, n);
@@ -273,6 +273,23 @@ module MONTGOMERY {
                 congruent_identity_lema(a, n);
             }
             congruent_mul_lema(1, b * b_inv, a, a, n);
+        }
+    }
+
+    lemma congruent_transitivity_lema(a: int, b: int, c: int, n: nat)
+        requires n != 0;
+        requires congruent_def(a, b, n) && congruent_def(b, c, n);
+        ensures congruent_def(a, c, n);
+    {
+        assert a % n == b % n by {
+            congruent_mod_connection_necessary_lema(a, b, n);
+        }
+        assert b % n == c % n by {
+            congruent_mod_connection_necessary_lema(b, c, n);
+        }
+        assert congruent_def(a, c, n) by {
+            assert a % n == c % n;
+            congruent_mod_connection_sufficient_lema(a, c, n);
         }
     }
 
@@ -302,7 +319,7 @@ module MONTGOMERY {
             }
             congruent_def(t * R * R_inv, T * R_inv, N);
             {
-                congruent_mul_inv_lemma(t, R, R_inv, N);
+                congruent_mul_inv_lema(t, R, R_inv, N);
             }
             // congruent_def(t * R * R_inv, T * R_inv, N);
         }
