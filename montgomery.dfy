@@ -151,9 +151,7 @@ module MONTGOMERY {
         requires a < b;
         ensures a % b == a;
     {
-        // assume false;
     }
-
 
     lemma congruence_mod_connection_sufficient_lema(a: int, b: int, n: int)
         requires n != 0;
@@ -271,7 +269,7 @@ module MONTGOMERY {
         assert montgomery_reduction_def(N, R, T, t);
     }
 
-    method montgomery_reduction(N: nat, R: nat, T: nat) returns (x: nat)
+    method montgomery_reduction(N: nat, R: nat, T: nat) returns (t: nat)
         requires R != 0;
         requires gcd_def(N, R, 1);
         requires 0 <= T < (N * R);
@@ -367,14 +365,55 @@ module MONTGOMERY {
         }
 
         assert (T + m * N) % R == 0;
-        var t := (T + m * N) / R;
+        t := (T + m * N) / R;
 
         assert congruent_def(t * R, T, N) by {
             assert t * R - T == N * m;
         }
 
-        x := if t >= N then (t - N)
-        else t;
+        if t >= N {
+            var t' := t - N;
+
+            assert congruent_def(N * R, 0, N) by {
+                mulitiple_congruent_zero_lema(N, R);
+            }
+
+            ghost var a, d := t * R, 0;
+
+            assert congruent_def(a, T, N);
+            assert congruent_def(N * R, d, N);
+
+            calc ==> {
+                congruent_def(a, T, N) && congruent_def(N * R, d, N);
+                {
+                    congruent_sub_lema(a, T, N * R, d, N);
+                }
+                congruent_def(a - N * R, T - d, N);
+                {
+                    assert N - d == N;
+                }
+                congruent_def(a - N * R, T, N);
+                {
+                    assert a == t * R;
+                }
+                congruent_def(t * R - N * R, T, N);
+                {
+                    assert t * R - N * R == (t - N) * R;
+                }
+                congruent_def((t - N) * R, T, N);
+                {
+                    assert t' == t - N;
+                }
+                congruent_def(t' * R, T, N);
+            }
+            assert congruent_def(t' * R, T, N);
+            t := t';
+            assert congruent_def(t * R, T, N);
+        }
+
+        assert congruent_def(t * R, T, N);
+        
+        assume false;
     }
 
     // method montgomery_mod(a: nat, b: nat, N:nat, R: nat) returns (x: nat)
