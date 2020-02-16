@@ -137,7 +137,6 @@ module MONTGOMERY {
         assert a - b == n * k;
     }
 
-
     lemma congruence_mod_connection_necessary_lema(a: int, b: int, n: nat)
         requires n != 0;
         requires congruent_def(a, b, n);
@@ -227,8 +226,13 @@ module MONTGOMERY {
                     (1 + R * N - N_inv * N) % R;
                     ==
                     {
-
+                        var a := 1 + R * N - N_inv * N;
+                        var b := 1 - N_inv * N;
+                        assert a - b == R * N;
+                        assert congruent_def(a, b, R);
+                        congruence_mod_connection_necessary_lema(a, b, R);
                     }
+                    (1 - N_inv * N) % R;
                 }
             }
             // (T * (1 + (R  * N - N_inv * N))) % R; 
