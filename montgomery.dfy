@@ -244,7 +244,7 @@ module MONTGOMERY {
     lemma montgomery_reduction_sufficient(N: nat, R: nat, T: nat, t: nat)
         requires gcd_def(N, R, 1);
         requires 0 <= T < N * R;
-        requires t * R == T % N;
+        requires (t * R) % N == T % N;
         requires t < N;
         ensures montgomery_reduction_def(N, R, T, t);
     {
@@ -411,8 +411,11 @@ module MONTGOMERY {
             assert congruent_def(t * R, T, N);
         }
 
-        assert congruent_def(t * R, T, N);
-        
+        assert (t * R) % N == T % N by {
+            assert congruent_def(t * R, T, N);
+            congruence_mod_connection_necessary_lema(t * R, T, N);
+        }
+
         assume false;
     }
 
