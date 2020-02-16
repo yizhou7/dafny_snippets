@@ -103,6 +103,13 @@ module MONTGOMERY {
         }
     }
 
+    lemma mulitiple_mod_zero_lema(a: int, b: nat)
+        requires b != 0;
+        ensures (a * b) % b == 0;
+    {
+        assume false;
+    }
+
     lemma congruence_mod_connection_sufficient_lema(a: int, b: int, n: int)
         requires n != 0;
         requires a % n == b % n;
@@ -131,44 +138,65 @@ module MONTGOMERY {
     }
 
 
-    lemma congruence_mod_connection_necessary_lema(a: int, b: int, n: int)
+    lemma congruence_mod_connection_necessary_lema(a: int, b: int, n: nat)
         requires n != 0;
         requires congruent_def(a, b, n);
         ensures a % n == b % n;
     {
         var r1 := a % n;
         var k1 := a / n;
+
         assert a == r1 + k1 * n;
-        assert congruent_def(a, r1, n) by {
-            assert a - r1 == n * k1;
-        }
+        assert r1 == a - k1 * n;
+        assert 0 <= r1 < n;
+    
+        // assert congruent_def(a, r1, n) by {
+        //     assert a - r1 == n * k1;
+        // }
+        // var k1' :| a - r1 == n * k1';
+        // assert k1' == k1;
 
         var r2 := b % n;
         var k2 := b / n;
-        assert b == r2 + k2 * n;
-        assert congruent_def(b, r2, n) by {
-            assert b - r2 == n * k2;
-        }
 
-        assert congruent_def(a - b, r1 - r2, n) by {
-            congruent_sub_lema(a, r1, b, r2, n);
-        }
+        assert b == r2 + k2 * n;
+        assert r2 == b - k2 * n;
+        assert 0 <= r2 < n;
+    
+        // assert congruent_def(b, r2, n) by {
+        //     assert b - r2 == n * k2;
+        // }
+        // var k2' :| b - r2 == n * k2';
+        // assert k2' == k2;
 
         var k :| a - b == n * k;
 
+        calc == {
+            (r1 - r2) % n;
+            ==
+            {
+                calc == {
+                    r1 - r2;
+                    ==
+                    (a - k1 * n) - (b - k2 * n);
+                    ==
+                    (a - b) + (k2 - k1) * n;
+                    ==
+                    n * k + (k2 - k1) * n;
+                    ==
+                    (k + k2 - k1) * n;
+                }
+            }
+            ((k + k2 - k1) * n) % n;
+            ==
+            {
+                mulitiple_mod_zero_lema(k + k2 - k1, n);
+            }
+            0;
+        }
+        assert r1 == r2;
+        assert a % n == b % n;
 
-        // ghost var k :| a - b == n * k;
-        // calc == {
-        //     (a - b) - (a - b)
-        //     == 
-        //     n * k - ((r1 + k1 * n) - (r2 + k2 * n));
-        //     ==
-
-        // }
-
-        // ghost var k :| a - b == n * k;
-        // ghost var r := b % n;
-        assume false;
     }
 
     method montgomery_reduction(N: nat, R: nat, T: nat) returns (x: nat)
