@@ -4,7 +4,7 @@ module MONTGOMERY {
         exists k : int :: a - b == n * k
     }
 
-    lemma congruent_add_lema(a: int, b: int, c: int, d: int, n: nat)
+    lemma congruent_add_lema(a: int, b: int, c: int, d: int, n: int)
         requires n != 0;
         requires congruent_def(a, b, n) && congruent_def(c, d, n)
         ensures congruent_def(a + c, b + d, n)
@@ -25,7 +25,7 @@ module MONTGOMERY {
         assert (a + c) - (b + d) == n * k;
     }
 
-    lemma congruent_sub_lema(a: int, b: int, c: int, d: int, n: nat)
+    lemma congruent_sub_lema(a: int, b: int, c: int, d: int, n: int)
         requires n != 0;
         requires congruent_def(a, b, n) && congruent_def(c, d, n)
         ensures congruent_def(a - c, b - d, n)
@@ -81,7 +81,7 @@ module MONTGOMERY {
         m == (T * R_inv) % N
     }
 
-    lemma {:induction a} mulitiple_mod_is_zero(a: nat, b: nat)
+    lemma {:induction a} mulitiple_congruent_zero_lema(a: nat, b: nat)
         requires b != 0;
         ensures congruent_def(a * b, 0, b);
     {
@@ -101,6 +101,74 @@ module MONTGOMERY {
             ghost var k' := (k + 1);
             assert a * b - 0 == b * k';
         }
+    }
+
+    lemma congruence_mod_connection_sufficient_lema(a: int, b: int, n: int)
+        requires n != 0;
+        requires a % n == b % n;
+        ensures congruent_def(a, b, n);
+    {
+        var r1 := a % n;
+        var k1 := a / n;
+        assert a == r1 + k1 * n;
+
+        var r2 := b % n;
+        var k2 := b / n;
+        assert b == r2 + k2 * n;
+
+        assert r1 == r2;
+        calc == {
+            a - b;
+            == 
+            (r1 + k1 * n) - (r2 + k2 * n);
+            == 
+            k1 * n - k2 * n;
+            == 
+            (k1 - k2) * n;
+        }
+        var k := k1 - k2;
+        assert a - b == n * k;
+    }
+
+
+    lemma congruence_mod_connection_necessary_lema(a: int, b: int, n: int)
+        requires n != 0;
+        requires congruent_def(a, b, n);
+        ensures a % n == b % n;
+    {
+        var r1 := a % n;
+        var k1 := a / n;
+        assert a == r1 + k1 * n;
+        assert congruent_def(a, r1, n) by {
+            assert a - r1 == n * k1;
+        }
+
+        var r2 := b % n;
+        var k2 := b / n;
+        assert b == r2 + k2 * n;
+        assert congruent_def(b, r2, n) by {
+            assert b - r2 == n * k2;
+        }
+
+        assert congruent_def(a - b, r1 - r2, n) by {
+            congruent_sub_lema(a, r1, b, r2, n);
+        }
+
+        var k :| a - b == n * k;
+
+
+        // ghost var k :| a - b == n * k;
+        // calc == {
+        //     (a - b) - (a - b)
+        //     == 
+        //     n * k - ((r1 + k1 * n) - (r2 + k2 * n));
+        //     ==
+
+        // }
+
+        // ghost var k :| a - b == n * k;
+        // ghost var r := b % n;
+        assume false;
     }
 
     method montgomery_reduction(N: nat, R: nat, T: nat) returns (x: nat)
@@ -131,7 +199,7 @@ module MONTGOMERY {
                     (1 + R * N - N_inv * N) % R;
                     ==
                     {
-                        assert (R * N) % R == 0; // why is this not true?
+
                     }
                 }
             }
