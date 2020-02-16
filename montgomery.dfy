@@ -50,7 +50,7 @@ module MONTGOMERY {
         assert true;
     }
 
-    lemma  congruent_mul_lema(a_1: int, a_2: int, b_1: int, b_2: int, n: int)
+    lemma  congruent_mul_lema(a_1: int, b_1: int, a_2: int, b_2: int, n: int)
         requires congruent_def(a_1, b_1, n) && congruent_def(a_2, b_2, n);
         ensures congruent_def(a_1 * a_2, b_1 * b_2, n);
     {
@@ -290,6 +290,29 @@ module MONTGOMERY {
                     0 % R;
                 }
 
+                calc ==> {
+                    (1 + (R - N_inv) * N ) % R == 0 % R;
+                    {
+                        assume false; // REMOVE! it goes thorugh, but slow
+                        congruence_mod_connection_sufficient_lema(1 + (R - N_inv) * N, 0, R);
+                    }
+                    congruent_def(1 + (R - N_inv) * N, 0, R);
+                }
+
+                assume congruent_def(T, T, R);
+
+                calc ==> {
+                    congruent_def((1 + (R - N_inv) * N) * T, 0 * T, R);
+                    {
+                        congruent_mul_lema(1 + (R - N_inv) * N, 0, T, T, R);
+                    }
+                    congruent_def((1 + (R - N_inv) * N) * T, 0, R);
+                    {
+                        congruence_mod_connection_necessary_lema((1 + (R - N_inv) * N) * T, 0, R);
+                    }
+                    ((1 + (R - N_inv) * N) * T) % R == 0 % R;
+                    (T + (R - N_inv) * N * T) % R == 0 % R;
+                }
             }
             // (T * (0 % R)) % R; 
         }
