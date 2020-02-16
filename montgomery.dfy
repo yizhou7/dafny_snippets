@@ -139,6 +139,14 @@ module MONTGOMERY {
         }
     }
 
+    lemma congruent_identity_lema(a:int, n:int)
+        requires n != 0;
+        ensures congruent_def(a, a, n);
+    {
+        var k := 0;
+        assert a - a == n * k;
+    }
+
     lemma mulitiple_mod_zero_lema(a: int, b: int)
         requires b != 0;
         ensures (a * b) % b == 0;
@@ -251,7 +259,26 @@ module MONTGOMERY {
         var R_inv := mod_inverse(R, N);
         var m := (T * R_inv) % N;
 
+        assert congruent_def(t * R, T, N) by {
+            assert (t * R) % N == T % N;
+            congruence_mod_connection_sufficient_lema(t * R, T, N);
+        }
+
+        assert congruent_def(R_inv, R_inv, N) by {
+            congruent_identity_lema(R_inv, N); 
+        }
+
+        calc ==> {
+            congruent_def(t * R, T, N) && congruent_def(R_inv, R_inv, N);
+            {
+                congruent_mul_lema(t * R, T, R_inv, R_inv, N);
+            }
+            congruent_def(t * R * R_inv, T * R_inv, N);
+        }
+        
+        assume false;
         assume congruent_def(t, T * R_inv, N);
+
         assert t % N == (T * R_inv) % N by {
             congruence_mod_connection_necessary_lema(t, T * R_inv, N);
         }
