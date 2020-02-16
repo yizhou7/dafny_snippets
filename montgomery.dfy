@@ -139,12 +139,21 @@ module MONTGOMERY {
         }
     }
 
-    lemma mulitiple_mod_zero_lema(a: int, b: nat)
+    lemma mulitiple_mod_zero_lema(a: int, b: int)
         requires b != 0;
         ensures (a * b) % b == 0;
     {
         assume false;
     }
+
+    lemma reaminder_mod_lema(a: nat, b: nat)
+        requires b != 0;
+        requires a < b;
+        ensures a % b == a;
+    {
+        // assume false;
+    }
+
 
     lemma congruence_mod_connection_sufficient_lema(a: int, b: int, n: int)
         requires n != 0;
@@ -234,6 +243,34 @@ module MONTGOMERY {
 
     }
 
+    lemma montgomery_reduction_sufficient(N: nat, R: nat, T: nat, t: nat)
+        requires gcd_def(N, R, 1);
+        requires 0 <= T < N * R;
+        requires t * R == T % N;
+        requires t < N;
+        ensures montgomery_reduction_def(N, R, T, t);
+    {
+        var R_inv := mod_inverse(R, N);
+        var m := (T * R_inv) % N;
+
+        assume congruent_def(t, T * R_inv, N);
+        assert t % N == (T * R_inv) % N by {
+            congruence_mod_connection_necessary_lema(t, T * R_inv, N);
+        }
+
+        calc == {
+            t % N - (T * R_inv) % N;
+            ==
+            {
+                reaminder_mod_lema(t, N);
+                assert t % N == t;
+            }
+            t - (T * R_inv) % N;
+        }
+
+        assert montgomery_reduction_def(N, R, T, t);
+    }
+
     method montgomery_reduction(N: nat, R: nat, T: nat) returns (x: nat)
         requires R != 0;
         requires gcd_def(N, R, 1);
@@ -294,7 +331,9 @@ module MONTGOMERY {
                     congruent_def(1 + (R - N_inv) * N, 0, R);
                 }
 
-                assume congruent_def(T, T, R);
+                assert congruent_def(T, T, R) by {
+                    assert T - T == R * 0;
+                }
 
                 assert congruent_def((1 + (R - N_inv) * N) * T, 0 * T, R) by {
                     congruent_mul_lema(1 + (R - N_inv) * N, 0, T, T, R);
@@ -329,9 +368,12 @@ module MONTGOMERY {
 
         assert (T + m * N) % R == 0;
         var t := (T + m * N) / R;
-        assert t * R - T == m * N;
-        // assert congruent_def(t * R, T, N);
-        x := if N <= t then (t - N)
+
+        assert congruent_def(t * R, T, N) by {
+            assert t * R - T == N * m;
+        }
+
+        x := if t >= N then (t - N)
         else t;
     }
 
