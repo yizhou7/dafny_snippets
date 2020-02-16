@@ -94,7 +94,7 @@ module MONTGOMERY {
         && forall x:int :: gcd < x ==> !(divides_def(x,a) && divides_def(x,b))
     }
 
-    predicate mod_inverse_def(a:nat, x:nat, n:nat)
+    predicate mod_inverse_def(a:int, x:int, n:int)
         requires n != 0;
     {
         (x * a) % n == 1
@@ -249,6 +249,33 @@ module MONTGOMERY {
 
     }
 
+    lemma congruent_mul_inv_lemma(a: int, b: int, b_inv: int, n: int)
+        requires n != 0;
+        requires mod_inverse_def(b, b_inv, n);
+        ensures congruent_def(a, a * b * b_inv, n);
+    {
+        assert congruent_def(a, a * b * b_inv, n) by {
+            assert congruent_def(1, b * b_inv, n) by {
+                calc ==> {
+                    1 % n == 1;
+                    {
+                        assert mod_inverse_def(b, b_inv, n);
+                        assert (b * b_inv) % n == 1;
+                    }
+                    1 % n == (b * b_inv) % n;
+                    {
+                        congruence_mod_connection_sufficient_lema(1, b * b_inv, n);
+                    }
+                    congruent_def(1, b * b_inv, n);
+                }
+            }
+            assert congruent_def(a, a, n) by {
+                congruent_identity_lema(a, n);
+            }
+            congruent_mul_lema(1, b * b_inv, a, a, n);
+        }
+    }
+
     lemma montgomery_reduction_sufficient(N: nat, R: nat, T: nat, t: nat)
         requires gcd_def(N, R, 1);
         requires 0 <= T < N * R;
@@ -274,6 +301,10 @@ module MONTGOMERY {
                 congruent_mul_lema(t * R, T, R_inv, R_inv, N);
             }
             congruent_def(t * R * R_inv, T * R_inv, N);
+            {
+                assume congruent_def(t * R * R_inv, t, N);
+            }
+
         }
         
         assume false;
