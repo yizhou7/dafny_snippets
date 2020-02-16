@@ -336,15 +336,14 @@ module MONTGOMERY {
                 assert congruent_def(t, t * R * R_inv, N) by {
                     congruent_mul_inv_lema(t, R, R_inv, N);
                 }
-                // assert congruent_def(t, T * R_inv, N) by {
-                //     congruent_transitivity_lema(t * R * R_inv, T * R_inv,  );
-                // }
+                assert congruent_def(t, T * R_inv, N) by {
+                    congruent_transitivity_lema(t, t * R * R_inv, T * R_inv, N);
+                }
             }
+            congruent_def(t, T * R_inv, N);
         }
         
-        assume false;
-        assume congruent_def(t, T * R_inv, N);
-
+        assert congruent_def(t, T * R_inv, N);
         assert t % N == (T * R_inv) % N by {
             congruent_mod_connection_necessary_lema(t, T * R_inv, N);
         }
