@@ -245,13 +245,6 @@ module MONTGOMERY {
         calc == {
             (T + m * N) % R;
             ==
-            (T + T * (R - N_inv) * N) % R;
-            ==
-            {
-                assert T * (1 + (R - N_inv) * N) == T + T * (R - N_inv) * N;
-            }
-            (T * (1 + (R - N_inv) * N )) % R;
-            ==
             {
                 calc == {
                     (1 + (R - N_inv) * N ) % R;
@@ -303,11 +296,12 @@ module MONTGOMERY {
 
                 assume congruent_def(T, T, R);
 
+                assert congruent_def((1 + (R - N_inv) * N) * T, 0 * T, R) by {
+                    congruent_mul_lema(1 + (R - N_inv) * N, 0, T, T, R);
+                }
+
                 calc ==> {
                     congruent_def((1 + (R - N_inv) * N) * T, 0 * T, R);
-                    {
-                        congruent_mul_lema(1 + (R - N_inv) * N, 0, T, T, R);
-                    }
                     congruent_def((1 + (R - N_inv) * N) * T, 0, R);
                     {
                         congruence_mod_connection_necessary_lema((1 + (R - N_inv) * N) * T, 0, R);
@@ -326,11 +320,14 @@ module MONTGOMERY {
                     }
                     (T + m * N) % R == 0 % R;
                 }
+                assert (T + m * N) % R == 0 % R;
             }
-            // (T * (0 % R)) % R; 
+            0 % R;
+            ==
+            0;
         }
 
-        assume (T + m * N) % R == 0;
+        assert (T + m * N) % R == 0;
         var t := (T + m * N) / R;
         assert t * R - T == m * N;
         // assert congruent_def(t * R, T, N);
