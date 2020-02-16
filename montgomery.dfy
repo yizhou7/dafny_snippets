@@ -293,6 +293,20 @@ module MONTGOMERY {
         }
     }
 
+    lemma congruent_reflexivity_lema(a: int, b: int, n: nat)
+        requires n != 0;
+        requires congruent_def(a, b, n);
+        ensures congruent_def(b, a, n);
+    {
+        assert a % n == b % n by {
+            congruent_mod_connection_necessary_lema(a, b, n);
+        }
+        assert congruent_def(b, a, n) by {
+            assert b % n == a % n;
+            congruent_mod_connection_sufficient_lema(b, a, n);
+        }
+    }
+
     lemma montgomery_reduction_sufficient(N: nat, R: nat, T: nat, t: nat)
         requires gcd_def(N, R, 1);
         requires 0 <= T < N * R;
@@ -319,9 +333,13 @@ module MONTGOMERY {
             }
             congruent_def(t * R * R_inv, T * R_inv, N);
             {
-                congruent_mul_inv_lema(t, R, R_inv, N);
+                assert congruent_def(t, t * R * R_inv, N) by {
+                    congruent_mul_inv_lema(t, R, R_inv, N);
+                }
+                // assert congruent_def(t, T * R_inv, N) by {
+                //     congruent_transitivity_lema(t * R * R_inv, T * R_inv,  );
+                // }
             }
-            // congruent_def(t * R * R_inv, T * R_inv, N);
         }
         
         assume false;
