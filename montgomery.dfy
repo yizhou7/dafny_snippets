@@ -361,154 +361,196 @@ module MONTGOMERY {
         assert montgomery_reduction_def(N, R, T, t);
     }
 
-    method montgomery_reduction(N: nat, R: nat, T: nat) returns (t: nat)
+    method montgomery_reduction(N: nat, R: nat, T: int) returns (t: nat)
         requires R != 0;
         requires gcd_def(N, R, 1);
         requires 0 <= T < (N * R);
-        // ensures montgomery_reduction_def(N, R, T, x);
+        // ensures montgomery_reduction_def(N, R, T, t);
     {
         var N_inv := mod_inverse(N, R);
-        var m := T * (R - N_inv);
-        calc == {
-            (T + m * N) % R;
-            ==
+        var N';
+        assume congruent_def(N' * N, -1, R);
+
+        var m := (T * N') % R;
+
+        assert congruent_def(m, T * N', R) by {
+            assert m % R == (T * N') % R;
+            congruent_mod_connection_sufficient_lema(m, T * N', R);
+        }
+
+        assert congruent_def(N, N, R) by {
+            congruent_identity_lema(N, R);
+        }
+
+        calc ==> {
+            congruent_def(m, T * N', R) && congruent_def(N, N, R);
             {
-                calc == {
-                    (1 + (R - N_inv) * N ) % R;
-                    ==
-                    {
-                        assert (R - N_inv) * N == R * N - N_inv * N;
-                    }
-                    (1 + R * N - N_inv * N) % R;
-                    ==
-                    {
-                        var a := 1 + R * N - N_inv * N;
-                        var b := 1 - N_inv * N;
-                        assert a - b == R * N;
-                        assert congruent_def(a, b, R);
-                        congruent_mod_connection_necessary_lema(a, b, R);
-                    }
-                    (1 - N_inv * N) % R;
-                    ==
-                    {
-                        assert congruent_def(1, 1, R) by {
-                            assert 1 % R == 1;
-                            congruent_mod_connection_sufficient_lema(1, 1, R);
-                        }
-                        assert congruent_def(N_inv * N, 1, R) by {
-                            assert (N_inv * N) % R == 1;
-                            congruent_mod_connection_sufficient_lema(N_inv * N, 1, R);
-                        }
-                        assert congruent_def(1 -  N_inv * N, 0, R) by {
-                            congruent_sub_lema(1, 1,  N_inv * N, 1, R);
-                        }
-                        assert (1 -  N_inv * N) % R == 0 % R by {
-                            congruent_mod_connection_necessary_lema(1 -  N_inv * N, 0, R);
-                        }
-                        assert (1 -  N_inv * N) % R == 0 % R;
-                    }
-                    0 % R;
-                }
-
-                calc ==> {
-                    (1 + (R - N_inv) * N ) % R == 0 % R;
-                    {
-                        ghost var a := 1 + (R - N_inv) * N;
-                        assert a % R == 0 % R;
-                        congruent_mod_connection_sufficient_lema(a, 0, R);
-                        assert congruent_def(a, 0, R);
-                    }
-                    congruent_def(1 + (R - N_inv) * N, 0, R);
-                }
-
-                assert congruent_def(T, T, R) by {
-                    assert T - T == R * 0;
-                }
-
-                assert congruent_def((1 + (R - N_inv) * N) * T, 0 * T, R) by {
-                    congruent_mul_lema(1 + (R - N_inv) * N, 0, T, T, R);
-                }
-
-                calc ==> {
-                    congruent_def((1 + (R - N_inv) * N) * T, 0 * T, R);
-                    congruent_def((1 + (R - N_inv) * N) * T, 0, R);
-                    {
-                        congruent_mod_connection_necessary_lema((1 + (R - N_inv) * N) * T, 0, R);
-                    }
-                    ((1 + (R - N_inv) * N) * T) % R == 0 % R;
-                    {
-                        assert (1 + (R - N_inv) * N) * T == T + (R - N_inv) * N * T;
-                    }
-                    (T + (R - N_inv) * N * T) % R == 0 % R;
-                    {
-                        assert T + (R - N_inv) * N * T == T + (R - N_inv) * T *N;
-                    }
-                    (T + (R - N_inv) * T * N) % R == 0 % R;
-                    {
-                        assert m == T * (R - N_inv);
-                    }
-                    (T + m * N) % R == 0 % R;
-                }
-                assert (T + m * N) % R == 0 % R;
+                congruent_mul_lema(m, T * N', N, N, R);
+                assert congruent_def(m * N, N * T * N', R);
             }
-            0 % R;
-            ==
-            0;
-        }
-
-        assert (T + m * N) % R == 0;
-        t := (T + m * N) / R;
-
-        assert congruent_def(t * R, T, N) by {
-            assert t * R - T == N * m;
-        }
-
-        if t >= N {
-            var t' := t - N;
-
-            assert congruent_def(N * R, 0, N) by {
-                mulitiple_congruent_zero_lema(N, R);
+            congruent_def(m * N, N * T * N', R);
+            {
+                assert N * T * N' == T * N * N';
             }
-
-            ghost var a, d := t * R, 0;
-
-            assert congruent_def(a, T, N);
-            assert congruent_def(N * R, d, N);
-
-            calc ==> {
-                congruent_def(a, T, N) && congruent_def(N * R, d, N);
-                {
-                    congruent_sub_lema(a, T, N * R, d, N);
-                }
-                congruent_def(a - N * R, T - d, N);
-                {
-                    assert N - d == N;
-                }
-                congruent_def(a - N * R, T, N);
-                {
-                    assert a == t * R;
-                }
-                congruent_def(t * R - N * R, T, N);
-                {
-                    assert t * R - N * R == (t - N) * R;
-                }
-                congruent_def((t - N) * R, T, N);
-                {
-                    assert t' == t - N;
-                }
-                congruent_def(t' * R, T, N);
+            congruent_def(m * N, T * N * N', R);
+        }
+        
+        calc ==> {
+            congruent_def(N' * N, -1, R);
+            {
+                assert congruent_def(T, T, R);
+                congruent_mul_lema(N' * N, -1, T, T, R);
             }
-            assert congruent_def(t' * R, T, N);
-            t := t';
-            assert congruent_def(t * R, T, N);
+            congruent_def(N' * N * T, -1 * T, R);
+            {
+                assert -1 * T == -T;
+            }
+            congruent_def(N' * N * T, -T, R);
         }
 
-        assert (t * R) % N == T % N by {
-            assert congruent_def(t * R, T, N);
-            congruent_mod_connection_necessary_lema(t * R, T, N);
-        }
+        // calc == {
+        //     (T + m * N) % R;
+        //     ==
+        //     {
+        //         calc == {
+        //             (1 + (R - N_inv) * N ) % R;
+        //             ==
+        //             {
+        //                 assert (R - N_inv) * N == R * N - N_inv * N;
+        //             }
+        //             (1 + R * N - N_inv * N) % R;
+        //             ==
+        //             {
+        //                 var a := 1 + R * N - N_inv * N;
+        //                 var b := 1 - N_inv * N;
+        //                 assert a - b == R * N;
+        //                 assert congruent_def(a, b, R);
+        //                 congruent_mod_connection_necessary_lema(a, b, R);
+        //             }
+        //             (1 - N_inv * N) % R;
+        //             ==
+        //             {
+        //                 assert congruent_def(1, 1, R) by {
+        //                     assert 1 % R == 1;
+        //                     congruent_mod_connection_sufficient_lema(1, 1, R);
+        //                 }
+        //                 assert congruent_def(N_inv * N, 1, R) by {
+        //                     assert (N_inv * N) % R == 1;
+        //                     congruent_mod_connection_sufficient_lema(N_inv * N, 1, R);
+        //                 }
+        //                 assert congruent_def(1 -  N_inv * N, 0, R) by {
+        //                     congruent_sub_lema(1, 1,  N_inv * N, 1, R);
+        //                 }
+        //                 assert (1 -  N_inv * N) % R == 0 % R by {
+        //                     congruent_mod_connection_necessary_lema(1 -  N_inv * N, 0, R);
+        //                 }
+        //                 assert (1 -  N_inv * N) % R == 0 % R;
+        //             }
+        //             0 % R;
+        //         }
 
-        assume false;
+        //         calc ==> {
+        //             (1 + (R - N_inv) * N ) % R == 0 % R;
+        //             {
+        //                 ghost var a := 1 + (R - N_inv) * N;
+        //                 assert a % R == 0 % R;
+        //                 congruent_mod_connection_sufficient_lema(a, 0, R);
+        //                 assert congruent_def(a, 0, R);
+        //             }
+        //             congruent_def(1 + (R - N_inv) * N, 0, R);
+        //         }
+
+        //         assert congruent_def(T, T, R) by {
+        //             assert T - T == R * 0;
+        //         }
+
+        //         assert congruent_def((1 + (R - N_inv) * N) * T, 0 * T, R) by {
+        //             congruent_mul_lema(1 + (R - N_inv) * N, 0, T, T, R);
+        //         }
+
+        //         calc ==> {
+        //             congruent_def((1 + (R - N_inv) * N) * T, 0 * T, R);
+        //             congruent_def((1 + (R - N_inv) * N) * T, 0, R);
+        //             {
+        //                 congruent_mod_connection_necessary_lema((1 + (R - N_inv) * N) * T, 0, R);
+        //             }
+        //             ((1 + (R - N_inv) * N) * T) % R == 0 % R;
+        //             {
+        //                 assert (1 + (R - N_inv) * N) * T == T + (R - N_inv) * N * T;
+        //             }
+        //             (T + (R - N_inv) * N * T) % R == 0 % R;
+        //             {
+        //                 assert T + (R - N_inv) * N * T == T + (R - N_inv) * T *N;
+        //             }
+        //             (T + (R - N_inv) * T * N) % R == 0 % R;
+        //             {
+        //                 assert m == T * (R - N_inv);
+        //             }
+        //             (T + m * N) % R == 0 % R;
+        //         }
+        //         assert (T + m * N) % R == 0 % R;
+        //     }
+        //     0 % R;
+        //     ==
+        //     0;
+        // }
+
+        // assert (T + m * N) % R == 0;
+        // t := (T + m * N) / R;
+
+        // assert congruent_def(t * R, T, N) by {
+        //     assert t * R - T == N * m;
+        // }
+
+        // if t >= N {
+        //     var t' := t - N;
+
+        //     assert congruent_def(N * R, 0, N) by {
+        //         mulitiple_congruent_zero_lema(N, R);
+        //     }
+
+        //     ghost var a, d := t * R, 0;
+
+        //     assert congruent_def(a, T, N);
+        //     assert congruent_def(N * R, d, N);
+
+        //     calc ==> {
+        //         congruent_def(a, T, N) && congruent_def(N * R, d, N);
+        //         {
+        //             congruent_sub_lema(a, T, N * R, d, N);
+        //         }
+        //         congruent_def(a - N * R, T - d, N);
+        //         {
+        //             assert N - d == N;
+        //         }
+        //         congruent_def(a - N * R, T, N);
+        //         {
+        //             assert a == t * R;
+        //         }
+        //         congruent_def(t * R - N * R, T, N);
+        //         {
+        //             assert t * R - N * R == (t - N) * R;
+        //         }
+        //         congruent_def((t - N) * R, T, N);
+        //         {
+        //             assert t' == t - N;
+        //         }
+        //         congruent_def(t' * R, T, N);
+        //     }
+        //     assert congruent_def(t' * R, T, N);
+        //     t := t';
+        //     assert congruent_def(t * R, T, N);
+        // }
+
+        // assert (t * R) % N == T % N by {
+        //     assert congruent_def(t * R, T, N);
+        //     congruent_mod_connection_necessary_lema(t * R, T, N);
+        // }
+        // assume t < N;
+
+        // assert montgomery_reduction_def(N, R, T, t) by {
+        //     montgomery_reduction_sufficient(N, R, T, t);
+        // }
     }
 
     // method montgomery_mod(a: nat, b: nat, N:nat, R: nat) returns (x: nat)
