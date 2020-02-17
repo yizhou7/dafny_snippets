@@ -578,7 +578,7 @@ module MONTGOMERY {
         }
     }
 
-    lemma montgomery_representation_lemma(a: nat, c: nat, a': nat, R: nat, R_inv: nat, N: nat)
+    lemma montgomery_representation_lemma(a: nat, a': nat, R: nat, R_inv: nat, N: nat)
         requires 0 < N < R && gcd_def(N, R, 1);
         requires R_inv == mod_inverse(R, N);
         requires congruent_def(a', a * R, N);
@@ -622,11 +622,8 @@ module MONTGOMERY {
         requires congruent_def(c, c' * R_inv, N);
         requires congruent_def(a', a * R, N);
         requires congruent_def(b', b * R, N);
+        ensures congruent_def(c, a * b, N);
     {
-        // assert congruent_def(a' * R_inv, a, N) by {
-        //     montgomery_representation_lemma();
-        // }
-
         calc ==> {
             congruent_def(c', (a' * b') * R_inv, N);
             {
@@ -638,8 +635,25 @@ module MONTGOMERY {
                 congruent_transitivity_lema(c, c' * R_inv, (a' * b') * R_inv * R_inv, N); 
             }
             congruent_def(c, (a' * b') * R_inv * R_inv, N);
-        } 
+            {
+                assert a' * R_inv * b' * R_inv == (a' * b') * R_inv * R_inv;
+            }
+            congruent_def(c, a' * R_inv * b' * R_inv, N);
+        }
 
+        assert congruent_def(c, a * b, N) by {
+            assert congruent_def(a' * R_inv * b' * R_inv, a * b, N) by {
+                assert congruent_def(a' * R_inv, a, N) by {
+                    montgomery_representation_lemma(a, a', R, R_inv, N);
+                }
+                assert congruent_def(b' * R_inv, b, N) by {
+                    montgomery_representation_lemma(b, b', R, R_inv, N);
+                }
+                congruent_mul_lema(a' * R_inv, a, b' * R_inv, b, N);
+            }
+            assert congruent_def(c, a' * R_inv * b' * R_inv, N);
+            congruent_transitivity_lema(c, a' * R_inv * b' * R_inv, a * b, N); 
+        }
     }
 
     method montgomery_mul_mod(a: nat, b: nat, N:nat, R: nat) returns (c: nat)
