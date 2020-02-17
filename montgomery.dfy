@@ -141,6 +141,27 @@ module MONTGOMERY {
         (m == (T * mod_inverse(R, N)) % N) && (m < N)
     }
 
+    lemma montgomery_reduction_properties_lemma(N: nat, R: nat, T: nat, m: nat)
+        requires 0 <= T < N * R;
+        requires montgomery_reduction_def(N, R, T, m);
+        ensures congruent_def(m, T * mod_inverse(R, N), N);
+    {
+        ghost var temp := T * mod_inverse(R, N);
+
+        calc ==> {
+            m == temp % N;
+            m % N == temp % N;
+            {
+                congruent_mod_connection_sufficient_lema(m, temp, N);
+            }
+            congruent_def(m, temp, N);
+            {
+                assert temp == T * mod_inverse(R, N);
+            }
+            congruent_def(m, T * mod_inverse(R, N), N);
+        }
+    }
+
     // flaky
     lemma {:induction a} mulitiple_congruent_zero_lema(a: nat, b: nat)
         requires b != 0;
@@ -329,6 +350,21 @@ module MONTGOMERY {
         assert congruent_def(b, a, n) by {
             assert b % n == a % n;
             congruent_mod_connection_sufficient_lema(b, a, n);
+        }
+    }
+
+    lemma mod_inv_identity_lema(R: int, R_inv: int, N: nat)
+        requires 0 < N < R;
+        requires R_inv == mod_inverse(R, N);
+        ensures congruent_def(R * R_inv, 1, N);
+    {
+        calc ==> {
+            (R * R_inv) % N == 1;
+            (R * R_inv) % N == 1 % N;
+            {
+                congruent_mod_connection_sufficient_lema(R * R_inv, 1, N);
+            }
+            congruent_def(R * R_inv, 1, N);
         }
     }
 
@@ -578,21 +614,6 @@ module MONTGOMERY {
         }
     }
 
-    lemma mod_inv_identity_lema(R: int, R_inv: int, N: nat)
-        requires 0 < N < R;
-        requires R_inv == mod_inverse(R, N);
-        ensures congruent_def(R * R_inv, 1, N);
-    {
-        calc ==> {
-            (R * R_inv) % N == 1;
-            (R * R_inv) % N == 1 % N;
-            {
-                congruent_mod_connection_sufficient_lema(R * R_inv, 1, N);
-            }
-            congruent_def(R * R_inv, 1, N);
-        }
-    }
-
     lemma montgomery_representation_lemma(a: nat, a': nat, R: nat, R_inv: nat, N: nat)
         requires 0 < N < R && gcd_def(N, R, 1);
         requires R_inv == mod_inverse(R, N);
@@ -692,26 +713,18 @@ module MONTGOMERY {
         assert congruent_def(c, a * b, N) by {
             assert congruent_def(a', a * R, N) by {
                 assert a' == (a * R) % N;
-                calc ==> {
-                    a' == (a * R) % N;
-                    {
-                        residue_congruent_lema(a', a * R, N);
-                    }
-                    congruent_def(a', a * R, N);
-                }
+                residue_congruent_lema(a', a * R, N);
             }
 
             assert congruent_def(b', b * R, N) by {
                 assert b' == (b * R) % N;
-                calc ==> {
-                    b' == (b * R) % N;
-                    {
-                        residue_congruent_lema(b', b * R, N);
-                    }
-                    congruent_def(b', b * R, N);
-                }
+                residue_congruent_lema(b', b * R, N);
             }
-            assume congruent_def(c', (a' * b') * R_inv, N);
+            assert congruent_def(c', (a' * b') * R_inv, N) by {
+                assert montgomery_reduction_def(N, R, a' * b', c');
+                montgomery_reduction_properties_lemma(N, R, a' * b', c');
+            }
+            assume false;
             assume congruent_def(c, c' * R_inv, N);
 
             montgomery_mul_mod_lema(a, b, c, a', b', c', R, R_inv, N);
