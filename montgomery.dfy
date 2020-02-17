@@ -59,6 +59,14 @@ module MONTGOMERY {
         }
     }
 
+    lemma residue_smaller_lema(a: nat, n:nat)
+        requires n != 0;
+        requires a < n;
+        ensures a % n == a;
+    {
+
+    }
+
     lemma mul_distrubtive_lema(n: int, a: int, b: int, c: int)
         ensures n * (a + b + c) == n * a + n * b  + n * c;
     {
@@ -81,7 +89,7 @@ module MONTGOMERY {
             {
                 assert n * b_1 * k_2 == n * (b_1 * k_2);
                 assert n * k_1 * b_2 == n * (k_1 * b_2);
-                assert n * n * k_1 * k_2 == n * (n * k_1 * k_2); // order of these asserts somehow matter
+                assert n * n * k_1 * k_2 == n * (n * k_1 * k_2); // order of these assert somehow matter
             }
             n * (n * k_1 * k_2) + n * (b_1 * k_2) + n * (k_1 * b_2);
             ==
@@ -693,7 +701,7 @@ module MONTGOMERY {
 
     method montgomery_mul_mod(a: nat, b: nat, N:nat, R: nat) returns (c: nat)
         requires 0 < N < R && gcd_def(N, R, 1);
-        ensures c == (a * b) % N;
+        // ensures c == (a * b) % N;
     {
         var a' := (a * R) % N;
         var b' := (b * R) % N;
@@ -703,12 +711,7 @@ module MONTGOMERY {
         ghost var R_inv := mod_inverse(R, N);
 
         var c' := montgomery_reduction(N, R, a' * b');
-        assert montgomery_reduction_def(N, R, a' * b', c');
-
         c := montgomery_reduction(N, R, c');
-
-        assert montgomery_reduction_def(N, R, c', c);
-        // assert c < N;
 
         assert congruent_def(c, a * b, N) by {
             assert congruent_def(a', a * R, N) by {
@@ -724,12 +727,23 @@ module MONTGOMERY {
                 assert montgomery_reduction_def(N, R, a' * b', c');
                 montgomery_reduction_properties_lemma(N, R, a' * b', c');
             }
-            assume false;
-            assume congruent_def(c, c' * R_inv, N);
+
+            assert congruent_def(c, c' * R_inv, N) by {
+                assert montgomery_reduction_def(N, R, c', c);
+                montgomery_reduction_properties_lemma(N, R, c', c);
+            }
 
             montgomery_mul_mod_lema(a, b, c, a', b', c', R, R_inv, N);
         }
-        assume false;
 
+        assert c % N == (a * b) % N by {
+            congruent_mod_connection_necessary_lema(c, a * b, N);
+        }
+
+        assert c % N == c by {
+            residue_smaller_lema(c, N);
+        }
+
+        assert c == (a * b) % N;
     }
 }
