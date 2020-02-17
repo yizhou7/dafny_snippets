@@ -361,10 +361,11 @@ module MONTGOMERY {
         assert montgomery_reduction_def(N, R, T, t);
     }
 
-    lemma reduction_bounded_lemma(N: nat, R: nat, T: int, m: nat)
+    lemma reduction_bounded_lemma(N: nat, R: nat, T: int, m: nat, t: int)
         requires N != 0 && R != 0;
         requires 0 <= m < R;
         requires 0 <= T < (N * R);
+        requires t == (T + m * N) / R;
     {
         calc ==> {
             0 <= m < R;
@@ -388,6 +389,10 @@ module MONTGOMERY {
                 assert R > 0;
             }
             0 <= (T + m * N) / R < 2 * N;
+            {
+                assert t == (T + m * N) / R;
+            }
+            0 <= t < 2 * N;
         }     
     }
 
@@ -471,19 +476,17 @@ module MONTGOMERY {
         var N';
         assume congruent_def(N' * N, -1, R);
 
-        var m := (T * N') % R;
+        var m := (T * N') % R;        
 
-        reduction_divisibie_lemma(N, N', R, T, m);
-        assert (T + m * N) % R == 0;
-
+        assert (T + m * N) % R == 0 by {
+            reduction_divisibie_lemma(N, N', R, T, m);
+        }
         t := (T + m * N) / R;
 
-        assert N != 0 && R != 0;
-        assert 0 <= m < R;
-        assert 0 <= T < (N * R);
-        reduction_bounded_lemma(N, R, T, m);
-
         assume false;
+
+        reduction_bounded_lemma(N, R, T, m, t);
+        assert 0 <= t < 2 * N;
 
         assert congruent_def(t * R, T, N) by {
             assert t * R - T == N * m;
