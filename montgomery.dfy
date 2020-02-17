@@ -80,6 +80,17 @@ module MONTGOMERY {
         assert congruent_def(a_1 * a_2, b_1 * b_2, n);
     }
 
+    lemma  congruent_mul_const_lema(a: int, b: int, c: int, n: int)
+        requires n != 0;
+        requires congruent_def(a, b, n);
+        ensures congruent_def(a * c, b * c, n);
+    {
+        assert congruent_def(c, c, n) by {
+            congruent_identity_lema(c, n);
+        }
+        congruent_mul_lema(a, b, c, c, n);
+    }
+
     predicate divides_def(d:nat, n:int)
         requires d != 0;
     {
@@ -110,13 +121,12 @@ module MONTGOMERY {
     }
 
     predicate montgomery_reduction_def(N: nat, R: nat, T: nat, m: nat)
-        requires gcd_def(N, R, 1);
         requires 0 <= T < N * R;
     {
-        var R_inv := mod_inverse(R, N);
-        m == (T * R_inv) % N
+        (m == (T * mod_inverse(R, N)) % N) && (m < N)
     }
 
+    // flaky
     lemma {:induction a} mulitiple_congruent_zero_lema(a: nat, b: nat)
         requires b != 0;
         ensures congruent_def(a * b, 0, b);
@@ -507,8 +517,7 @@ module MONTGOMERY {
     }
 
     method montgomery_reduction(N: nat, R: nat, T: int) returns (t: nat)
-        requires N != 0 && R != 0;
-        requires gcd_def(N, R, 1);
+        requires 0 < N < R && gcd_def(N, R, 1);
         requires 0 <= T < (N * R);
         ensures montgomery_reduction_def(N, R, T, t);
     {
@@ -554,12 +563,45 @@ module MONTGOMERY {
         }
     }
 
-    // method montgomery_mod(a: nat, b: nat, N:nat, R: nat) returns (x: nat)
-    //     requires 0 < N < R &&  gcd_def(N, R, 1);
-    // {
-    //     var a' := (a * R) % N;
-    //     var b' := (b * R) % N;
-    //     var c' := montgomery_reduction(N, R, a' * b');
-    //     x := montgomery_reduction(N, R, c');
-    // }
+    lemma montgomery_mul_mod_lema(a: nat, b: nat, c: nat, a': nat, b': nat,  c': nat, R: nat, R_inv: nat, N: nat)
+        requires 0 < N < R && gcd_def(N, R, 1);
+        requires congruent_def(c', (a' * b') * R_inv, N);
+        requires congruent_def(c, c' * R_inv, N);
+    {
+        calc ==> {
+            congruent_def(c', (a' * b') * R_inv, N);
+            {
+            }
+            congruent_def(c' * R_inv, (a' * b') * R_inv * R_inv, N);
+
+        } 
+
+    }
+
+    method montgomery_mul_mod(a: nat, b: nat, N:nat, R: nat) returns (c: nat)
+        requires 0 < N < R && gcd_def(N, R, 1);
+        ensures c == (a * b) % N;
+    {
+        var a' := (a * R) % N;
+        var b' := (b * R) % N;
+        assert a' < N && b' < N;
+        assert a' * b' < N * N;
+
+        ghost var R_inv := mod_inverse(R, N);
+
+        var c' := montgomery_reduction(N, R, a' * b');
+        assert montgomery_reduction_def(N, R, a' * b', c');
+
+        c := montgomery_reduction(N, R, c');
+
+        assert montgomery_reduction_def(N, R, c', c);
+
+        calc ==> {
+            montgomery_reduction_def(N, R, c', c) && montgomery_reduction_def(N, R, a' * b', c');
+            (c < N) && (c == (c' * R_inv) % N) && (c' == ((a' * b') * R_inv) % N);
+            // c < N && c == (c' * R_inv) % N;
+        }
+
+        assume false;
+    }
 }
