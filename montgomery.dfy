@@ -511,7 +511,7 @@ module MONTGOMERY {
         requires N != 0 && R != 0;
         requires gcd_def(N, R, 1);
         requires 0 <= T < (N * R);
-        // ensures montgomery_reduction_def(N, R, T, t);
+        ensures montgomery_reduction_def(N, R, T, t);
     {
         var N_inv := mod_inverse(N, R);
         var N';
@@ -535,18 +535,20 @@ module MONTGOMERY {
 
         if t >= N {
             var t' := t - N;
+            assert 0 <= t' < N;
             assert congruent_def(t' * R, T, N) by {
                 reduction_congruent_lemma(N, R, T, t, t');
             }
             t := t';
+            assert 0 <= t < N;
             assert congruent_def(t * R, T, N);
         }
+        assert 0 <= t < N;
 
         assert (t * R) % N == T % N by {
             assert congruent_def(t * R, T, N);
             congruent_mod_connection_necessary_lema(t * R, T, N);
         }
-        assume t < N;
 
         assert montgomery_reduction_def(N, R, T, t) by {
             montgomery_reduction_sufficient_lema(N, R, T, t);
