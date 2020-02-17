@@ -563,17 +563,59 @@ module MONTGOMERY {
         }
     }
 
+    lemma mod_inv_identity_lema(R: int, R_inv: int, N: nat)
+        requires 0 < N < R;
+        requires R_inv == mod_inverse(R, N);
+        ensures congruent_def(1, R * R_inv, N);
+    {
+        calc ==> {
+            (R * R_inv) % N == 1;
+            (R * R_inv) % N == 1 % N;
+            {
+                congruent_mod_connection_sufficient_lema(R * R_inv, 1, N);
+            }
+            congruent_def(R * R_inv, 1, N);
+            {
+                congruent_reflexivity_lema(R * R_inv, 1, N);
+            }
+            congruent_def(1, R * R_inv, N);
+        }
+    }
+
     lemma montgomery_mul_mod_lema(a: nat, b: nat, c: nat, a': nat, b': nat,  c': nat, R: nat, R_inv: nat, N: nat)
         requires 0 < N < R && gcd_def(N, R, 1);
+        requires R_inv == mod_inverse(R, N);
         requires congruent_def(c', (a' * b') * R_inv, N);
         requires congruent_def(c, c' * R_inv, N);
+        requires congruent_def(a', a * R, N);
+        requires congruent_def(b', b * R, N);
     {
+        calc ==> {
+            congruent_def(a', a * R, N);
+            {
+                congruent_mul_const_lema(a', a * R, R_inv, N);
+            }
+            congruent_def(a' * R_inv, a * R * R_inv, N);
+            {
+                calc ==>
+                {
+                    // assert mod_inv_identity_lema(R, R_inv, N);
+                    congruent_def(1, R * R_inv, N);
+                }
+            }
+        }
+
         calc ==> {
             congruent_def(c', (a' * b') * R_inv, N);
             {
+                congruent_mul_const_lema(c', (a' * b') * R_inv, R_inv, N);
             }
             congruent_def(c' * R_inv, (a' * b') * R_inv * R_inv, N);
-
+            {
+                assert congruent_def(c, c' * R_inv, N);
+                congruent_transitivity_lema(c, c' * R_inv, (a' * b') * R_inv * R_inv, N); 
+            }
+            congruent_def(c, (a' * b') * R_inv * R_inv, N);
         } 
 
     }
