@@ -440,13 +440,11 @@ module MONTGOMERY {
             congruent_def(N' * N * T, -T, R);
         }
 
-        assert congruent_def(m * N, -T, R) by {
-            assert congruent_def(m * N, N' * T * N, R);
-            assert congruent_def(N' * N * T, -T, R);
-            congruent_transitivity_lema(m * N, N' * N * T, -T, R);
-        }
-
         calc ==> {
+            congruent_def(m * N, N' * T * N, R) && congruent_def(N' * N * T, -T, R);
+            {
+                congruent_transitivity_lema(m * N, N' * N * T, -T, R);
+            }
             congruent_def(m * N, -T, R);
             {
                 assert congruent_def(T, T, R);
@@ -464,6 +462,7 @@ module MONTGOMERY {
             (T + m * N) % R == 0 % R; 
             (T + m * N) % R == 0; 
         }
+        assert (T + m * N) % R == 0; 
     }
 
     lemma reduction_congruent_lemma(N: nat, R: nat, T: int, t: int, t': int)
