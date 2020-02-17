@@ -689,33 +689,34 @@ module MONTGOMERY {
         assert montgomery_reduction_def(N, R, c', c);
         // assert c < N;
 
-        // assert congruent_def(c, a * b, N) by {
+        assert congruent_def(c, a * b, N) by {
             assert congruent_def(a', a * R, N) by {
                 assert a' == (a * R) % N;
                 calc ==> {
                     a' == (a * R) % N;
-                    a' % N == (a * R) % N;
                     {
-                        congruent_mod_connection_sufficient_lema(a', a * R, N);
+                        residue_congruent_lema(a', a * R, N);
                     }
                     congruent_def(a', a * R, N);
                 }
             }
-        //    assert congruent_def(b', b * R, N) by {
-        //         calc ==> {
-        //             b' == (b * R) % N;
-        //             b' % N == b * R) % N;
-        //             {
-        //                 congruent_mod_connection_sufficient_lema(b', b * R, N);
-        //             }
-        //             congruent_def(b', b * R, N);
-        //         }
-        //     }
-            // assert congruent_def(c', (a' * b') * R_inv, N);
-            // assert congruent_def(c, c' * R_inv, N);
 
-            assume false;
-            // montgomery_mul_mod_lema(a, b, c, a', b', c', R, R_inv, N);
-        // }
+            assert congruent_def(b', b * R, N) by {
+                assert b' == (b * R) % N;
+                calc ==> {
+                    b' == (b * R) % N;
+                    {
+                        residue_congruent_lema(b', b * R, N);
+                    }
+                    congruent_def(b', b * R, N);
+                }
+            }
+            assume congruent_def(c', (a' * b') * R_inv, N);
+            assume congruent_def(c, c' * R_inv, N);
+
+            montgomery_mul_mod_lema(a, b, c, a', b', c', R, R_inv, N);
+        }
+        assume false;
+
     }
 }
