@@ -366,6 +366,7 @@ module MONTGOMERY {
         requires 0 <= m < R;
         requires 0 <= T < (N * R);
         requires t == (T + m * N) / R;
+        ensures 0 <= t < 2 * N;
     {
         calc ==> {
             0 <= m < R;
@@ -481,12 +482,14 @@ module MONTGOMERY {
         assert (T + m * N) % R == 0 by {
             reduction_divisibie_lemma(N, N', R, T, m);
         }
+
         t := (T + m * N) / R;
 
-        assume false;
+        assert 0 <= t < 2 * N by {
+            reduction_bounded_lemma(N, R, T, m, t);
+        }
 
-        reduction_bounded_lemma(N, R, T, m, t);
-        assert 0 <= t < 2 * N;
+        assume false;
 
         assert congruent_def(t * R, T, N) by {
             assert t * R - T == N * m;
