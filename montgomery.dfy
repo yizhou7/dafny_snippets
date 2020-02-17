@@ -361,18 +361,44 @@ module MONTGOMERY {
         assert montgomery_reduction_def(N, R, T, t);
     }
 
-    method montgomery_reduction(N: nat, R: nat, T: int) returns (t: nat)
-        requires R != 0;
+    lemma reduction_bounded_lemma(N: nat, R: nat, T: int, m: nat)
+        requires N != 0 && R != 0;
+        requires 0 <= m < R;
+        requires 0 <= T < (N * R);
+    {
+        calc ==> {
+            0 <= m < R;
+            {
+                assert N > 0;
+            }
+            0 <= m * N < R * N;
+            {
+                assert 0 <= T < (N * R);
+            }
+            0 <= T + m * N < T + R * N;
+            {
+                assert 0 <= T < (N * R);
+            }
+            0 <= T + m * N < N * R + R * N;
+            {
+                assert N * R + R * N == 2 * N * R; 
+            }
+            0 <= T + m * N < 2 * N * R;
+            {
+                assert R > 0;
+            }
+            0 <= (T + m * N) / R < 2 * N;
+        }     
+    }
+
+    lemma reduction_divisibie_lemma(N: nat, N': int, R: nat, T: int, m: int)
+        requires N != 0 && R != 0;
         requires gcd_def(N, R, 1);
         requires 0 <= T < (N * R);
-        // ensures montgomery_reduction_def(N, R, T, t);
+        requires m == (T * N') % R;
+        requires congruent_def(N' * N, -1, R);
+        ensures (T + m * N) % R == 0; 
     {
-        var N_inv := mod_inverse(N, R);
-        var N';
-        assume congruent_def(N' * N, -1, R);
-
-        var m := (T * N') % R;
-
         assert congruent_def(m, T * N', R) by {
             assert m % R == (T * N') % R;
             congruent_mod_connection_sufficient_lema(m, T * N', R);
@@ -432,9 +458,32 @@ module MONTGOMERY {
             (T + m * N) % R == 0 % R; 
             (T + m * N) % R == 0; 
         }
+    }
 
+
+    method montgomery_reduction(N: nat, R: nat, T: int) returns (t: nat)
+        requires N != 0 && R != 0;
+        requires gcd_def(N, R, 1);
+        requires 0 <= T < (N * R);
+        // ensures montgomery_reduction_def(N, R, T, t);
+    {
+        var N_inv := mod_inverse(N, R);
+        var N';
+        assume congruent_def(N' * N, -1, R);
+
+        var m := (T * N') % R;
+
+        reduction_divisibie_lemma(N, N', R, T, m);
         assert (T + m * N) % R == 0;
+
         t := (T + m * N) / R;
+
+        assert N != 0 && R != 0;
+        assert 0 <= m < R;
+        assert 0 <= T < (N * R);
+        reduction_bounded_lemma(N, R, T, m);
+
+        assume false;
 
         assert congruent_def(t * R, T, N) by {
             assert t * R - T == N * m;
