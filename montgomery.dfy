@@ -307,7 +307,7 @@ module MONTGOMERY {
         }
     }
 
-    lemma montgomery_reduction_sufficient(N: nat, R: nat, T: nat, t: nat)
+    lemma montgomery_reduction_sufficient_lema(N: nat, R: nat, T: nat, t: nat)
         requires gcd_def(N, R, 1);
         requires 0 <= T < N * R;
         requires (t * R) % N == T % N;
@@ -466,6 +466,46 @@ module MONTGOMERY {
         }
     }
 
+    lemma reduction_congruent_lemma(N: nat, R: nat, T: int, t: int, t': int)
+        requires N != 0 && R != 0;
+        requires congruent_def(t * R, T, N);
+        requires t' == t - N;
+        ensures congruent_def(t' * R, T, N);
+    {
+        assert congruent_def(N * R, 0, N) by {
+            mulitiple_congruent_zero_lema(N, R);
+        }
+
+        ghost var a, d := t * R, 0;
+
+        assert congruent_def(a, T, N);
+        assert congruent_def(N * R, d, N);
+
+        calc ==> {
+            congruent_def(a, T, N) && congruent_def(N * R, d, N);
+            {
+                congruent_sub_lema(a, T, N * R, d, N);
+            }
+            congruent_def(a - N * R, T - d, N);
+            {
+                assert N - d == N;
+            }
+            congruent_def(a - N * R, T, N);
+            {
+                assert a == t * R;
+            }
+            congruent_def(t * R - N * R, T, N);
+            {
+                assert t * R - N * R == (t - N) * R;
+            }
+            congruent_def((t - N) * R, T, N);
+            {
+                assert t' == t - N;
+            }
+            congruent_def(t' * R, T, N);
+        }
+        assert congruent_def(t' * R, T, N);
+    }
 
     method montgomery_reduction(N: nat, R: nat, T: int) returns (t: nat)
         requires N != 0 && R != 0;
@@ -489,48 +529,15 @@ module MONTGOMERY {
             reduction_bounded_lemma(N, R, T, m, t);
         }
 
-        assume false;
-
         assert congruent_def(t * R, T, N) by {
             assert t * R - T == N * m;
         }
 
         if t >= N {
             var t' := t - N;
-
-            assert congruent_def(N * R, 0, N) by {
-                mulitiple_congruent_zero_lema(N, R);
+            assert congruent_def(t' * R, T, N) by {
+                reduction_congruent_lemma(N, R, T, t, t');
             }
-
-            ghost var a, d := t * R, 0;
-
-            assert congruent_def(a, T, N);
-            assert congruent_def(N * R, d, N);
-
-            calc ==> {
-                congruent_def(a, T, N) && congruent_def(N * R, d, N);
-                {
-                    congruent_sub_lema(a, T, N * R, d, N);
-                }
-                congruent_def(a - N * R, T - d, N);
-                {
-                    assert N - d == N;
-                }
-                congruent_def(a - N * R, T, N);
-                {
-                    assert a == t * R;
-                }
-                congruent_def(t * R - N * R, T, N);
-                {
-                    assert t * R - N * R == (t - N) * R;
-                }
-                congruent_def((t - N) * R, T, N);
-                {
-                    assert t' == t - N;
-                }
-                congruent_def(t' * R, T, N);
-            }
-            assert congruent_def(t' * R, T, N);
             t := t';
             assert congruent_def(t * R, T, N);
         }
@@ -542,7 +549,7 @@ module MONTGOMERY {
         assume t < N;
 
         assert montgomery_reduction_def(N, R, T, t) by {
-            montgomery_reduction_sufficient(N, R, T, t);
+            montgomery_reduction_sufficient_lema(N, R, T, t);
         }
     }
 
