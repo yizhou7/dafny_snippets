@@ -581,8 +581,38 @@ module MONTGOMERY {
         ensures montgomery_reduction_def(N, R, T, t);
     {
         var N_inv := mod_inverse(N, R);
-        var N';
-        assume congruent_def(N' * N, -1, R);
+        var N' := R - N_inv;
+
+        assert congruent_def(N * R - N_inv * N, -1, R) by {
+            assert congruent_def(N_inv * N, 1, R) by {
+                calc ==> {
+                    (N_inv * N) % R == 1;
+                    (N_inv * N) % R == 1 % R;
+                    {
+                        congruent_mod_connection_sufficient_lema(N_inv * N, 1, R);
+                    }
+                    congruent_def(N_inv * N, 1, R);
+                }
+            }
+            assert congruent_def(N * R, 0, R) by {
+                mulitiple_congruent_zero_lema(N, R);
+            }
+            congruent_sub_lema(N * R, 0, N_inv * N, 1, R);
+        }
+
+        calc ==> {
+            congruent_def(N * R - N_inv * N, -1, R);
+            {
+                assert N * R - N_inv * N == N * (R - N_inv);
+            }
+            congruent_def(N * (R - N_inv), -1, R);
+            {
+                assert N' == R - N_inv;
+            }
+            congruent_def(N * N', -1, R);
+        }
+
+        assert congruent_def(N' * N, -1, R);
 
         var m := (T * N') % R;        
 
@@ -701,7 +731,7 @@ module MONTGOMERY {
 
     method montgomery_mul_mod(a: nat, b: nat, N:nat, R: nat) returns (c: nat)
         requires 0 < N < R && gcd_def(N, R, 1);
-        // ensures c == (a * b) % N;
+        ensures c == (a * b) % N;
     {
         var a' := (a * R) % N;
         var b' := (b * R) % N;
