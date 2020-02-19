@@ -777,21 +777,39 @@ module MONTGOMERY {
         assert c == (a * b) % N;
     }
 
-    lemma not_so_interesting_lemma(a: int, b: int, c: int, n: nat)
-        requires n != 0;
-        requires a == b % n;
-        ensures (b * c) % n == (a * c) % n;
+    // lemma not_so_interesting_lemma(a: int, b: int, c: int, n: nat)
+    //     requires n != 0;
+    //     requires a == b % n;
+    //     ensures (b * c) % n == (a * c) % n;
+    // {
+    //     ghost var d := (b * c) % n;
+    //     assert congruent_def(a, b, n) by {
+    //         residue_congruent_lema(a, b, n);
+    //     }
+    //     assert congruent_def(a * c, b * c, n) by {
+    //         congruent_mul_const_lema(a, b, c, n);
+    //     }
+    //     assert a * c % n == b * c % n by {
+    //         congruent_mod_connection_necessary_lema(a * c, b * c, n);
+    //     }
+    // }
+
+    method montgomery_exp_mod(m: nat, b: nat, N:nat, R: nat) returns (c: nat)
+        requires 0 < N < R && gcd_def(N, R, 1);
+        // ensures c == (a * b) % N;
     {
-        ghost var d := (b * c) % n;
-        assert congruent_def(a, b, n) by {
-            residue_congruent_lema(a, b, n);
-        }
-        assert congruent_def(a * c, b * c, n) by {
-            congruent_mul_const_lema(a, b, c, n);
-        }
-        assert a * c % n == b * c % n by {
-            congruent_mod_connection_necessary_lema(a * c, b * c, n);
+        var m' : nat := (m * R) % N;
+        var c' : nat := m';
+    
+        var i := 1;
+
+        while i < b
+            decreases b - i;
+        {
+            c' := montgomery_mul_mod(c', m', N, R);
+            i := i + 1;
         }
     }
+
 
 }
