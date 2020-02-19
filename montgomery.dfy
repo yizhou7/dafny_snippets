@@ -776,4 +776,22 @@ module MONTGOMERY {
 
         assert c == (a * b) % N;
     }
+
+    lemma not_so_interesting_lemma(a: int, b: int, c: int, n: nat)
+        requires n != 0;
+        requires a == b % n;
+        ensures (b * c) % n == (a * c) % n;
+    {
+        ghost var d := (b * c) % n;
+        assert congruent_def(a, b, n) by {
+            residue_congruent_lema(a, b, n);
+        }
+        assert congruent_def(a * c, b * c, n) by {
+            congruent_mul_const_lema(a, b, c, n);
+        }
+        assert a * c % n == b * c % n by {
+            congruent_mod_connection_necessary_lema(a * c, b * c, n);
+        }
+    }
+
 }
