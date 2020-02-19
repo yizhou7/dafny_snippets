@@ -729,7 +729,7 @@ module MONTGOMERY {
         }
     }
 
-    method montgomery_mul_mod(a: nat, b: nat, N:nat, R: nat) returns (c: nat)
+    method mul_mod_montgomery(a: nat, b: nat, N:nat, R: nat) returns (c: nat)
         requires 0 < N < R && gcd_def(N, R, 1);
         ensures c == (a * b) % N;
     {
@@ -794,19 +794,40 @@ module MONTGOMERY {
     //     }
     // }
 
-    method montgomery_exp_mod(m: nat, b: nat, N:nat, R: nat) returns (c: nat)
+    function method pow(b: int, e: nat) : nat
+    {
+        if e == 0 then 1
+        else b * pow(b, e -1)
+    }
+
+    method montgomery_product(A: nat, B: nat, N:nat, R: nat, R_inv: nat) returns (P: nat)
+        requires 0 < N < R && gcd_def(N, R, 1);
+        requires R_inv == mod_inverse(R, N);
+        ensures P == A * B * R_inv % N;
+    {
+        assume false;
+    }
+
+    method exp_mod_montgomery(M: nat, E: nat, N:nat, R: nat) returns (C: nat)
+        requires E > 0;
         requires 0 < N < R && gcd_def(N, R, 1);
         // ensures c == (a * b) % N;
     {
-        var m' : nat := (m * R) % N;
-        var c' : nat := m';
+        var M' : nat := (M * R) % N;
+        var C' : nat := M';
+        var R_inv : nat;
+        assume R_inv == mod_inverse(R, N);
     
         var i := 1;
 
-        while i < b
-            decreases b - i;
+        while i < E
+            decreases E - i;
         {
-            c' := montgomery_mul_mod(c', m', N, R);
+            assume C' == pow(M', i) * pow(R_inv, E);
+            var C'' := montgomery_product(C', M', N, R, R_inv);
+
+            assert C'' == C' * M' * R_inv % N;
+            C' := C'';
             i := i + 1;
         }
     }
