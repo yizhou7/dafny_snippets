@@ -828,7 +828,66 @@ module MONTGOMERY {
         assert true;
     }
 
-    // lemma 
+    lemma montgomery_product_lemma(C': nat, M': nat, E: nat, N:nat, R: nat, R_inv: nat, i: nat)
+        requires i != 0;
+        requires 0 < N < R && gcd_def(N, R, 1);
+        requires C' == power(M', i) * power(R_inv, i - 1) % N;
+        // ensures (C' * M' * R_inv) % N == (power(M', i + 1) * power(R_inv, i)) % N;
+    {
+        ghost var P0 := power(M', i) * power(R_inv, i - 1);
+        ghost var P1 := M' * R_inv;
+
+        calc == {
+            (C' * M' * R_inv) % N;
+            ==
+            {
+                assert C' == power(M', i) * power(R_inv, i - 1) % N;
+            }
+            ((power(M', i) * power(R_inv, i - 1) % N) * M' * R_inv) % N;
+            ==
+            {
+                assert P0 == power(M', i) * power(R_inv, i - 1);
+            }
+            ((P0 % N) * (M' * R_inv)) % N;
+            ==
+            {
+                assert P1 == M' * R_inv;
+            }
+            ((P0 % N) * P1) % N;
+            ==
+            {
+                not_so_interesting_lemma_2(P0, P1, N);
+            }
+            (P0 * P1) % N;
+            ==
+            {
+                assert P0 == power(M', i) * power(R_inv, i - 1);
+            }
+            ((power(M', i) * power(R_inv, i - 1)) * P1) % N;
+            ==
+            {
+                assert P1 == M' * R_inv;
+            }
+            ((power(M', i) * power(R_inv, i - 1)) * (M' * R_inv)) % N;
+            ==
+            {
+                assert (power(M', i) * power(R_inv, i - 1)) * (M' * R_inv)
+                    == (power(M', i) * M') * (power(R_inv, i - 1) * R_inv) by {
+                    multiplication_para(power(M', i), power(R_inv, i - 1), M', R_inv);
+                }
+            }
+            ((power(M', i) * M') * (power(R_inv, i - 1) * R_inv)) % N;
+            {
+                power_add_one_lema(M', i); 
+            }
+            (power(M', i + 1) * power(R_inv, i - 1) * R_inv) % N;
+            {
+                power_add_one_lema(R_inv, i - 1); 
+            }
+            (power(M', i + 1) * power(R_inv, i)) % N;
+        }
+    }
+
 
     method exp_mod_montgomery(M: nat, E: nat, N:nat, R: nat) returns (C: nat)
         requires E > 0;
@@ -854,60 +913,7 @@ module MONTGOMERY {
 
             var C'' := montgomery_product(C', M', N, R, R_inv);
 
-            ghost var P0 := power(M', i) * power(R_inv, i - 1);
-            ghost var P1 := M' * R_inv;
 
-            calc == {
-                C'';
-                ==
-                (C' * M' * R_inv) % N;
-                ==
-                {
-                    assert C' == power(M', i) * power(R_inv, i - 1) % N;
-                }
-                ((power(M', i) * power(R_inv, i - 1) % N) * M' * R_inv) % N;
-                ==
-                {
-                    assert P0 == power(M', i) * power(R_inv, i - 1);
-                }
-                ((P0 % N) * (M' * R_inv)) % N;
-                ==
-                {
-                    assert P1 == M' * R_inv;
-                }
-                ((P0 % N) * P1) % N;
-                ==
-                {
-                    not_so_interesting_lemma_2(P0, P1, N);
-                }
-                (P0 * P1) % N;
-                ==
-                {
-                    assert P0 == power(M', i) * power(R_inv, i - 1);
-                }
-                ((power(M', i) * power(R_inv, i - 1)) * P1) % N;
-                ==
-                {
-                    assert P1 == M' * R_inv;
-                }
-                ((power(M', i) * power(R_inv, i - 1)) * (M' * R_inv)) % N;
-                ==
-                {
-                    assert (power(M', i) * power(R_inv, i - 1)) * (M' * R_inv)
-                        == (power(M', i) * M') * (power(R_inv, i - 1) * R_inv) by {
-                        multiplication_para(power(M', i), power(R_inv, i - 1), M', R_inv);
-                    }
-                }
-                ((power(M', i) * M') * (power(R_inv, i - 1) * R_inv)) % N;
-                {
-                    power_add_one_lema(M', i); 
-                }
-                (power(M', i + 1) * power(R_inv, i - 1) * R_inv) % N;
-                {
-                    power_add_one_lema(R_inv, i - 1); 
-                }
-                (power(M', i + 1) * power(R_inv, i)) % N;
-            }
 
             i := i + 1;
             // assert C'' == power(M', i) * power(R_inv, i - 1) % N;
