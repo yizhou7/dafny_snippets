@@ -794,10 +794,17 @@ module MONTGOMERY {
     //     }
     // }
 
-    function method pow(b: int, e: nat) : nat
+    function method {:opaque} power(b:int, e:nat) : int
+        decreases e;
     {
-        if e == 0 then 1
-        else b * pow(b, e -1)
+        if (e == 0) then 1
+        else b * power(b, e - 1)
+    }
+
+    lemma {:induction e} power_add_one_lema(b:int, e:nat)
+        ensures power(b, e) * b == power(b, e + 1);
+    {
+        reveal power();
     }
 
     method montgomery_product(A: nat, B: nat, N:nat, R: nat, R_inv: nat) returns (P: nat)
@@ -820,17 +827,30 @@ module MONTGOMERY {
     
         var i := 1;
 
+        assert C' == power(M', i) * power(R_inv, i - 1) by {
+            reveal power();
+        }
+
         while i < E
+            invariant C' == power(M', i) * power(R_inv, i - 1);
             decreases E - i;
         {
-            assume C' == pow(M', i) * pow(R_inv, E);
             var C'' := montgomery_product(C', M', N, R, R_inv);
 
-            assert C'' == C' * M' * R_inv % N;
-            C' := C'';
-            i := i + 1;
+            calc == {
+                C'';
+                ==
+                C' * M' * R_inv % N;
+                ==
+                power(M', i) * power(R_inv, i - 1) * M' * R_inv % N;
+                {
+                    assume false;
+                }
+                power(M', i + 1) * power(R_inv, i) % N;
+            }
+
+            i, C' := i + 1, C'';
+            assert C' == power(M', i) * power(R_inv, i - 1) % N;
         }
     }
-
-
 }
