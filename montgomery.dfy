@@ -777,22 +777,29 @@ module MONTGOMERY {
         assert c == (a * b) % N;
     }
 
-    // lemma not_so_interesting_lemma(a: int, b: int, c: int, n: nat)
-    //     requires n != 0;
-    //     requires a == b % n;
-    //     ensures (b * c) % n == (a * c) % n;
-    // {
-    //     ghost var d := (b * c) % n;
-    //     assert congruent_def(a, b, n) by {
-    //         residue_congruent_lema(a, b, n);
-    //     }
-    //     assert congruent_def(a * c, b * c, n) by {
-    //         congruent_mul_const_lema(a, b, c, n);
-    //     }
-    //     assert a * c % n == b * c % n by {
-    //         congruent_mod_connection_necessary_lema(a * c, b * c, n);
-    //     }
-    // }
+    lemma not_so_interesting_lemma(a: int, b: int, c: int, n: nat)
+        requires n != 0;
+        requires a == b % n;
+        ensures (a * c) % n == (b * c) % n;
+    {
+        ghost var d := (b * c) % n;
+        assert congruent_def(a, b, n) by {
+            residue_congruent_lema(a, b, n);
+        }
+        assert congruent_def(a * c, b * c, n) by {
+            congruent_mul_const_lema(a, b, c, n);
+        }
+        assert a * c % n == b * c % n by {
+            congruent_mod_connection_necessary_lema(a * c, b * c, n);
+        }
+    }
+
+    lemma not_so_interesting_lemma_2(a: int, b: int, n: nat)
+        requires n != 0;
+        ensures ((a % n) * b) % n == (a * b) % n;
+    {
+        not_so_interesting_lemma(a % n, a, b, n);
+    }
 
     function method {:opaque} power(b:int, e:nat) : int
         decreases e;
@@ -841,24 +848,30 @@ module MONTGOMERY {
 
             calc == {
                 C'';
-                C' * M' * R_inv % N;
-                power(M', i) * power(R_inv, i - 1) * M' * R_inv % N;
-                power(M', i) * M' * power(R_inv, i - 1) * R_inv % N;
+                (C' * M' * R_inv) % N;
                 {
-                    power_add_one_lema(M', i); 
+                    assert C' == power(M', i) * power(R_inv, i - 1) % N;
                 }
-                power(M', i + 1) * power(R_inv, i - 1) * R_inv % N;
+                ((power(M', i) * power(R_inv, i - 1) % N) * M' * R_inv) % N;
                 {
-                    power_add_one_lema(R_inv, i - 1); 
+                    // not_so_interesting_lemma_2();
                 }
-                power(M', i + 1) * power(R_inv, i) % N;
+                // power(M', i) * M' * power(R_inv, i - 1) * R_inv % N;
+                // {
+                //     power_add_one_lema(M', i); 
+                // }
+                // power(M', i + 1) * power(R_inv, i - 1) * R_inv % N;
+                // {
+                //     power_add_one_lema(R_inv, i - 1); 
+                // }
+                // power(M', i + 1) * power(R_inv, i) % N;
             }
 
             i := i + 1;
-            assert C'' == power(M', i) * power(R_inv, i - 1) % N;
+            // assert C'' == power(M', i) * power(R_inv, i - 1) % N;
 
-            C' := C'';
-            assert C' == power(M', i) * power(R_inv, i - 1) % N;
+            // C' := C'';
+            // assert C' == power(M', i) * power(R_inv, i - 1) % N;
         }
     }
 }
