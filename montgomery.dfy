@@ -808,10 +808,22 @@ module MONTGOMERY {
         else b * power(b, e - 1)
     }
 
+    lemma {:induction e} power_base_one_lema(e: nat) 
+        ensures power(1, e) == 1;
+    {
+        reveal power();
+    }
+
     lemma {:induction e} power_add_one_lema(b:int, e:nat)
         ensures power(b, e) * b == power(b, e + 1);
     {
         reveal power();
+    }
+
+    lemma power_same_exp_lema(a: int, b: int, e: nat)
+        ensures power(a, e) * power(b, e) == power(a * b, e);
+    {
+        assume false;
     }
 
     method montgomery_product(A: nat, B: nat, N:nat, R: nat, R_inv: nat) returns (P: nat)
@@ -828,7 +840,7 @@ module MONTGOMERY {
         assert true;
     }
 
-    lemma montgomery_product_lemma(C': nat, C'': nat, M': nat, E: nat, N:nat, R: nat, R_inv: nat, i: nat)
+    lemma montgomery_reapeat_product_lemma(C': nat, C'': nat, M': nat, E: nat, N:nat, R: nat, R_inv: nat, i: nat)
         requires i != 0;
         requires 0 < N < R && gcd_def(N, R, 1);
         requires C' == power(M', i) * power(R_inv, i - 1) % N;
@@ -896,9 +908,51 @@ module MONTGOMERY {
         assert C'' == (power(M', i + 1) * power(R_inv, i)) % N;
     }
 
+    lemma montgomery_exp_lemma(M': nat, E: nat, N:nat, R: nat, R_inv: nat, C: nat, C': nat)
+        requires E > 1;
+        requires 0 < N < R && gcd_def(N, R, 1);
+
+        requires R_inv == mod_inverse(R, N);
+        requires C' == power(M', E) * power(R_inv, E - 1) % N;
+        requires montgomery_reduction_def(N, R, C', C);
+    {
+        calc == {
+            C;
+            ==
+            {
+                assert montgomery_reduction_def(N, R, C', C);
+            }
+            C' * mod_inverse(R, N) % N;
+            ==
+            C' * R_inv % N;
+            ==
+            {
+                assert C' == power(M', E) * power(R_inv, E - 1) % N;
+            }
+            (power(M', E) * power(R_inv, E - 1) % N) * R_inv % N;
+            ==
+            {
+                not_so_interesting_lemma_2(power(M', E) * power(R_inv, E - 1), R_inv, N);
+            }
+            (power(M', E) * power(R_inv, E - 1)) * R_inv % N;
+            ==
+            power(M', E) * power(R_inv, E - 1) * R_inv % N;
+            ==
+            power(M', E) * (power(R_inv, E - 1) * R_inv) % N;
+            ==
+            (power(R_inv, E - 1) * R_inv) * power(M', E) % N; // if we don't reoder, the parse tree gets messed up, takes forever to prove 
+            ==
+            {
+                assert(power(R_inv, E - 1) * R_inv) == power(R_inv, E) by {
+                    power_add_one_lema(R_inv, E - 1);
+                }
+            }
+            power(R_inv, E) * power(M', E) % N;
+        }
+    }
 
     method exp_mod_montgomery(M: nat, E: nat, N:nat, R: nat) returns (C: nat)
-        requires E > 0;
+        requires E > 1;
         requires 0 < N < R && gcd_def(N, R, 1);
         // ensures c == (a * b) % N;
     {
@@ -907,7 +961,7 @@ module MONTGOMERY {
         var R_inv : nat;
         assume R_inv == mod_inverse(R, N);
     
-        var i := 1;
+        var i :nat := 1;
 
         assert C' == power(M', i) * power(R_inv, i - 1) % N by {
             reveal power();
@@ -915,14 +969,13 @@ module MONTGOMERY {
 
         while i < E
             invariant C' == power(M', i) * power(R_inv, i - 1) % N;
+            invariant i <= E;
             decreases E - i;
         {
-            // assume C' == power(M', i) * power(R_inv, i - 1) % N;
-
             var C'' := montgomery_product(C', M', N, R, R_inv);
 
             assert C'' == power(M', i + 1) * power(R_inv, i) % N by {
-                montgomery_product_lemma(C', C'', M', E, N, R, R_inv, i);
+                montgomery_reapeat_product_lemma(C', C'', M', E, N, R, R_inv, i);
             }
 
             i := i + 1;
@@ -930,5 +983,11 @@ module MONTGOMERY {
             C' := C'';
             assert C' == power(M', i) * power(R_inv, i - 1) % N;
         }
+
+        assert i == E;
+        assert C' == power(M', E) * power(R_inv, E - 1) % N;
+
+        C := montgomery_reduction(N, R, C');
+
     }
 }
