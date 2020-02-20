@@ -914,20 +914,21 @@ module MONTGOMERY {
         }
 
         while i < E
-            // invariant C' == power(M', i) * power(R_inv, i - 1) % N;
+            invariant C' == power(M', i) * power(R_inv, i - 1) % N;
             decreases E - i;
         {
-            assume C' == power(M', i) * power(R_inv, i - 1) % N;
+            // assume C' == power(M', i) * power(R_inv, i - 1) % N;
 
             var C'' := montgomery_product(C', M', N, R, R_inv);
 
-
+            assert C'' == power(M', i + 1) * power(R_inv, i) % N by {
+                montgomery_product_lemma(C', C'', M', E, N, R, R_inv, i);
+            }
 
             i := i + 1;
-            // assert C'' == power(M', i) * power(R_inv, i - 1) % N;
-
-            // C' := C'';
-            // assert C' == power(M', i) * power(R_inv, i - 1) % N;
+            assert C'' == power(M', i) * power(R_inv, i - 1) % N;
+            C' := C'';
+            assert C' == power(M', i) * power(R_inv, i - 1) % N;
         }
     }
 }
