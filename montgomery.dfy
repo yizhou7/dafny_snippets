@@ -827,29 +827,37 @@ module MONTGOMERY {
     
         var i := 1;
 
-        assert C' == power(M', i) * power(R_inv, i - 1) by {
+        assert C' == power(M', i) * power(R_inv, i - 1) % N by {
             reveal power();
         }
 
         while i < E
-            invariant C' == power(M', i) * power(R_inv, i - 1);
+            // invariant C' == power(M', i) * power(R_inv, i - 1) % N;
             decreases E - i;
         {
+            assume C' == power(M', i) * power(R_inv, i - 1) % N;
+
             var C'' := montgomery_product(C', M', N, R, R_inv);
 
             calc == {
                 C'';
-                ==
                 C' * M' * R_inv % N;
-                ==
                 power(M', i) * power(R_inv, i - 1) * M' * R_inv % N;
+                power(M', i) * M' * power(R_inv, i - 1) * R_inv % N;
                 {
-                    assume false;
+                    power_add_one_lema(M', i); 
+                }
+                power(M', i + 1) * power(R_inv, i - 1) * R_inv % N;
+                {
+                    power_add_one_lema(R_inv, i - 1); 
                 }
                 power(M', i + 1) * power(R_inv, i) % N;
             }
 
-            i, C' := i + 1, C'';
+            i := i + 1;
+            assert C'' == power(M', i) * power(R_inv, i - 1) % N;
+
+            C' := C'';
             assert C' == power(M', i) * power(R_inv, i - 1) % N;
         }
     }
