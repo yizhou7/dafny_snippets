@@ -828,16 +828,19 @@ module MONTGOMERY {
         assert true;
     }
 
-    lemma montgomery_product_lemma(C': nat, M': nat, E: nat, N:nat, R: nat, R_inv: nat, i: nat)
+    lemma montgomery_product_lemma(C': nat, C'': nat, M': nat, E: nat, N:nat, R: nat, R_inv: nat, i: nat)
         requires i != 0;
         requires 0 < N < R && gcd_def(N, R, 1);
         requires C' == power(M', i) * power(R_inv, i - 1) % N;
-        // ensures (C' * M' * R_inv) % N == (power(M', i + 1) * power(R_inv, i)) % N;
+        requires C'' == (C' * M' * R_inv) % N;
+        ensures C'' == (power(M', i + 1) * power(R_inv, i)) % N;
     {
         ghost var P0 := power(M', i) * power(R_inv, i - 1);
         ghost var P1 := M' * R_inv;
 
         calc == {
+            C'';
+            ==
             (C' * M' * R_inv) % N;
             ==
             {
@@ -878,14 +881,19 @@ module MONTGOMERY {
             }
             ((power(M', i) * M') * (power(R_inv, i - 1) * R_inv)) % N;
             {
-                power_add_one_lema(M', i); 
+                assert (power(M', i) * M') == power(M', i + 1) by {
+                    power_add_one_lema(M', i); 
+                }
             }
-            (power(M', i + 1) * power(R_inv, i - 1) * R_inv) % N;
+            (power(M', i + 1) * (power(R_inv, i - 1) * R_inv)) % N;
             {
-                power_add_one_lema(R_inv, i - 1); 
+                assert power(R_inv, i - 1) * R_inv == power(R_inv, i) by {
+                    power_add_one_lema(R_inv, i - 1); 
+                }
             }
             (power(M', i + 1) * power(R_inv, i)) % N;
         }
+        assert C'' == (power(M', i + 1) * power(R_inv, i)) % N;
     }
 
 
