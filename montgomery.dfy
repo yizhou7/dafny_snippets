@@ -936,8 +936,6 @@ module MONTGOMERY {
         assert C'' == (power(M', i + 1) * power(R_inv, i)) % N;
     }
 
-    // lemma montgomery_exp_inv_expansion_lemma
-
     lemma montgomery_exp_lemma(M: nat, M': nat, E: nat, N:nat, R: nat, R_inv: nat, C: nat, C': nat)
         requires E > 1;
         requires 0 < N < R && gcd_def(N, R, 1);
@@ -945,6 +943,7 @@ module MONTGOMERY {
         requires R_inv == mod_inverse(R, N);
         requires C' == power(M', E) * power(R_inv, E - 1) % N;
         requires montgomery_reduction_def(N, R, C', C);
+        ensures C == power(M, E) % N;
     {
         calc == {
             C;
@@ -989,6 +988,8 @@ module MONTGOMERY {
             }
             power(M' * R_inv % N, E) % N;
             ==
+            power((M' * R_inv % N), E) % N;
+            ==
             {
                 ghost var a := (M * R);
                 calc == {
@@ -1007,11 +1008,20 @@ module MONTGOMERY {
                     (M * R * R_inv) % N;
                     ==
                     {
-
+                        mod_inv_identity_lema_2(M, R, R_inv, N );
                     }
+                    M % N;
                 }
+                assert (M' * R_inv % N) == M % N;
             }
+            power(M % N, E) % N;
+            ==
+            {
+                power_exp_lemma(M, E, N);
+            }
+            power(M, E) % N;
         }
+        assert C == power(M, E) % N;
     }
 
     method exp_mod_montgomery(M: nat, E: nat, N:nat, R: nat) returns (C: nat)
