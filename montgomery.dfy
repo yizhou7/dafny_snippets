@@ -1027,7 +1027,7 @@ module MONTGOMERY {
     method exp_mod_montgomery(M: nat, E: nat, N:nat, R: nat) returns (C: nat)
         requires E > 1;
         requires 0 < N < R && gcd_def(N, R, 1);
-        // ensures c == (a * b) % N;
+        ensures C == power(M, E) % N;
     {
         var M' : nat := (M * R) % N;
         var C' : nat := M';
@@ -1062,5 +1062,8 @@ module MONTGOMERY {
 
         C := montgomery_reduction(N, R, C');
 
+        assert C == power(M, E) % N by {
+            montgomery_exp_lemma(M, M', E, N, R, R_inv, C, C');
+        }
     }
 }
