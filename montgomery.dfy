@@ -376,6 +376,27 @@ module MONTGOMERY {
         }
     }
 
+    lemma mod_inv_identity_lema_2(A: int, R: int, R_inv: int, N: nat)
+        requires 0 < N < R;
+        requires R_inv == mod_inverse(R, N);
+        ensures A * R * R_inv % N == A % N;
+    {
+        assert congruent_def(R * R_inv, 1, N) by {
+            mod_inv_identity_lema(R, R_inv, N);
+        }
+        calc ==> {
+            congruent_def(R * R_inv, 1, N);
+            {
+                congruent_mul_const_lema(R * R_inv, 1, A, N);
+            }
+            congruent_def(A * R * R_inv, A, N);
+            {
+                congruent_mod_connection_necessary_lema(A * R * R_inv, A, N);
+            }
+            A * R * R_inv % N == A % N;
+        }
+    }
+
     lemma montgomery_reduction_sufficient_lema(N: nat, R: nat, T: nat, t: nat)
         requires gcd_def(N, R, 1);
         requires 0 <= T < N * R;
@@ -826,6 +847,13 @@ module MONTGOMERY {
         assume false;
     }
 
+    lemma power_exp_lemma(a: nat, b: nat, n: nat)
+        requires n != 0;
+        ensures power(a, b) % n == power(a % n, b) % n;
+    {
+        assume false;
+    }
+
     method montgomery_product(A: nat, B: nat, N:nat, R: nat, R_inv: nat) returns (P: nat)
         requires 0 < N < R && gcd_def(N, R, 1);
         requires R_inv == mod_inverse(R, N);
@@ -908,10 +936,12 @@ module MONTGOMERY {
         assert C'' == (power(M', i + 1) * power(R_inv, i)) % N;
     }
 
-    lemma montgomery_exp_lemma(M': nat, E: nat, N:nat, R: nat, R_inv: nat, C: nat, C': nat)
+    // lemma montgomery_exp_inv_expansion_lemma
+
+    lemma montgomery_exp_lemma(M: nat, M': nat, E: nat, N:nat, R: nat, R_inv: nat, C: nat, C': nat)
         requires E > 1;
         requires 0 < N < R && gcd_def(N, R, 1);
-
+        requires M' == (M * R) % N;
         requires R_inv == mod_inverse(R, N);
         requires C' == power(M', E) * power(R_inv, E - 1) % N;
         requires montgomery_reduction_def(N, R, C', C);
@@ -948,6 +978,39 @@ module MONTGOMERY {
                 }
             }
             power(R_inv, E) * power(M', E) % N;
+            ==
+            {
+                power_same_exp_lema(R_inv, M', E);
+            }
+            power(M' * R_inv, E) % N;
+            ==
+            {
+                power_exp_lemma(M' * R_inv, E, N);
+            }
+            power(M' * R_inv % N, E) % N;
+            ==
+            {
+                ghost var a := (M * R);
+                calc == {
+                    M' * R_inv % N;
+                    ==
+                    {
+                        assert M' == a % N;
+                    }
+                    (a % N * R_inv) % N;
+                    ==
+                    {
+                        not_so_interesting_lemma_2(a, R_inv, N);
+                    }
+                    (a * R_inv) % N;
+                    ==
+                    (M * R * R_inv) % N;
+                    ==
+                    {
+
+                    }
+                }
+            }
         }
     }
 
