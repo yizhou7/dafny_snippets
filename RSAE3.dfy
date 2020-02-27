@@ -5,6 +5,8 @@ module RSAE3 {
 
     const E_32 :int := UINT32_MAX as int + 1;
 
+    function method reinterpret_cast(a: int64) : uint64
+
     // least significant -> most significant
     function method interpret(A: seq<uint32>) : int
         decreases A;
@@ -104,10 +106,20 @@ module RSAE3 {
         assert interpret(A) + interpret(B) + carry as int == interpret(S);
     }
 
+    lemma {:induction A, B} shift_preservation(A: seq<uint32>, B: seq<uint32>)
+        decreases A, B;
+        requires |A| == |B|;
+        requires interpret(A) >= interpret(B);
+        ensures |A| != 0 ==> interpret(A[1..]) >= interpret(B[1..])
+    {
+        assert true;
+    }
+
+
     method rec_seq_sub(A: seq<uint32>, B: seq<uint32>, borrow: uint32) returns (S : seq<uint32>)
         decreases A, B;
         requires |A| == |B|;
-        requires interpret(A) > interpret(B);
+        requires interpret(A) >= interpret(B);
         ensures interpret(A) - interpret(B) - borrow as int == interpret(S);
     {
         if |A| == 0 {
@@ -117,13 +129,19 @@ module RSAE3 {
     
         var a: uint32, b: uint32 := A[0], B[0];
         var diff: int64 := a as int64 - b as int64 - borrow as int64;
-        // var masked := and64(diff, UINT32_MAX as uint64) as uint32;
+        var masked := and64(reinterpret_cast(diff), UINT32_MAX as uint64) as uint32;
 
         var A', B' := A[1..], B[1..];
+        assert interpret(A') >= interpret(B') by {
+            shift_preservation(A', B');
+        }
 
         if diff < 0 {
 
         } else {
+            var S' := rec_seq_sub(A', B', 0);
+            S := [masked] + S';
+
 
         }
 
