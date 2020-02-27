@@ -39,10 +39,6 @@ module RSAE3 {
             calc == {
                 interpret(S);
                 ==
-                S[0] as int + E_32 * interpret(S[1..]);
-                ==
-                masked as int + E_32 * interpret(S[1..]);
-                ==
                 masked as int + E_32 * interpret(S');
                 ==
                 {
@@ -63,10 +59,6 @@ module RSAE3 {
 
             calc == {
                 interpret(S);
-                ==
-                S[0] as int + E_32 * interpret(S[1..]);
-                ==
-                masked as int + E_32 * interpret(S[1..]);
                 ==
                 masked as int + E_32 * interpret(S');
                 ==
@@ -137,7 +129,25 @@ module RSAE3 {
         }
 
         if diff < 0 {
+            assume masked as int == diff as int + E_32 as int;
 
+            var S' := rec_seq_sub(A', B', 1);
+            S := [masked] + S';
+
+            calc == {
+                interpret(S);
+                ==
+                masked as int + E_32 * interpret(S');
+                ==
+                {
+                    assert interpret(S') == interpret(A') - interpret(B') - 1;
+                }
+                masked as int + E_32 * (interpret(A') - interpret(B') - 1);
+                ==
+                masked as int + E_32 * interpret(A') - E_32 * interpret(B') - E_32;
+                ==
+                diff as int + E_32 * interpret(A') - E_32 * interpret(B');
+            }
         } else {
             assume diff as int == masked as int;
 
@@ -147,10 +157,6 @@ module RSAE3 {
             calc == {
                 interpret(S);
                 ==
-                S[0] as int + E_32 * interpret(S[1..]);
-                ==
-                masked as int + E_32 * interpret(S[1..]);
-                ==
                 masked as int + E_32 * interpret(S');
                 ==
                 {
@@ -158,28 +164,30 @@ module RSAE3 {
                 }
                 masked as int + E_32 * (interpret(A') - interpret(B'));
                 ==
-                {
-                    assert diff == A[0] as int64 - B[0] as int64 - borrow as int64;
-                }
-                A[0] as int - B[0] as int - borrow as int + E_32 * (interpret(A') - interpret(B'));
-                ==
-                A[0] as int - B[0] as int - borrow as int + E_32 * interpret(A') -  E_32 * interpret(B');
-                ==
-                (A[0] as int + E_32 * interpret(A')) - (B[0] as int + E_32 * interpret(B')) - borrow as int;
-                ==
-                {
-                    assert interpret(A) == A[0] as int + E_32 * interpret(A');
-                }
-                interpret(A) - (B[0] as int + E_32 * interpret(B')) - borrow as int;
-                ==
-                {
-                    assert interpret(B) == B[0] as int + E_32 * interpret(B');
-                }
-                interpret(A) - interpret(B) - borrow as int;
+                diff as int + E_32 * interpret(A') - E_32 * interpret(B');
             }
         }
 
-        assume interpret(A) - interpret(B) - borrow as int == interpret(S);
+        calc == {
+            diff as int + E_32 * interpret(A') - E_32 * interpret(B');
+            ==
+            {
+                assert diff as int == A[0] as int - B[0] as int - borrow as int;
+            }
+            A[0] as int - B[0] as int - borrow as int + E_32 * interpret(A') - E_32 * interpret(B');
+            ==
+            (A[0] as int + E_32 * interpret(A')) - (B[0] as int + E_32 * interpret(B')) - borrow as int;
+            ==
+            {
+                assert interpret(A) == A[0] as int + E_32 * interpret(A');
+            }
+            interpret(A) - (B[0] as int + E_32 * interpret(B')) - borrow as int;
+            ==
+            {
+                assert interpret(B) == B[0] as int + E_32 * interpret(B');
+            }
+            interpret(A) - interpret(B) - borrow as int;
+        }
     }
 
     // method modpow3(A: nat, N:nat, R: nat, RR: nat)
