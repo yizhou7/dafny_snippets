@@ -859,6 +859,14 @@ module MONTGOMERY {
         requires R_inv == mod_inverse(R, N);
         ensures P == A * B * R_inv % N;
     {
+        var N_inv := mod_inverse(N, R);
+        var N';
+        assume(congruent_def(N' * N_inv, R - 1, R));
+
+        var T := A * B;
+        var M := T * N' % R;
+        P := (T + M * N) / R;
+
         assume false;
     }
 
@@ -1066,4 +1074,7 @@ module MONTGOMERY {
             montgomery_exp_lemma(M, M', E, N, R, R_inv, C, C');
         }
     }
+
+
+
 }
