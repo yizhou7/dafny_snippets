@@ -115,7 +115,6 @@ module RSAE3 {
         assert true;
     }
 
-
     method rec_seq_sub(A: seq<uint32>, B: seq<uint32>, borrow: uint32) returns (S : seq<uint32>)
         decreases A, B;
         requires |A| == |B|;
@@ -132,6 +131,7 @@ module RSAE3 {
         var masked := and64(reinterpret_cast(diff), UINT32_MAX as uint64) as uint32;
 
         var A', B' := A[1..], B[1..];
+
         assert interpret(A') >= interpret(B') by {
             shift_preservation(A', B');
         }
@@ -139,10 +139,44 @@ module RSAE3 {
         if diff < 0 {
 
         } else {
+            assume diff as int == masked as int;
+
             var S' := rec_seq_sub(A', B', 0);
             S := [masked] + S';
 
-
+            calc == {
+                interpret(S);
+                ==
+                S[0] as int + E_32 * interpret(S[1..]);
+                ==
+                masked as int + E_32 * interpret(S[1..]);
+                ==
+                masked as int + E_32 * interpret(S');
+                ==
+                {
+                    assert interpret(S') == interpret(A') - interpret(B');
+                }
+                masked as int + E_32 * (interpret(A') - interpret(B'));
+                ==
+                {
+                    assert diff == A[0] as int64 - B[0] as int64 - borrow as int64;
+                }
+                A[0] as int - B[0] as int - borrow as int + E_32 * (interpret(A') - interpret(B'));
+                ==
+                A[0] as int - B[0] as int - borrow as int + E_32 * interpret(A') -  E_32 * interpret(B');
+                ==
+                (A[0] as int + E_32 * interpret(A')) - (B[0] as int + E_32 * interpret(B')) - borrow as int;
+                ==
+                {
+                    assert interpret(A) == A[0] as int + E_32 * interpret(A');
+                }
+                interpret(A) - (B[0] as int + E_32 * interpret(B')) - borrow as int;
+                ==
+                {
+                    assert interpret(B) == B[0] as int + E_32 * interpret(B');
+                }
+                interpret(A) - interpret(B) - borrow as int;
+            }
         }
 
         assume interpret(A) - interpret(B) - borrow as int == interpret(S);
