@@ -3,7 +3,7 @@ include "NativeTypes.dfy"
 module RSAE3 {
     import opened NativeTypes
 
-    const E_32 :int := UINT32_MAX as int;
+    const E_32 :int := UINT32_MAX as int + 1;
 
     // least significant -> most significant
     function method interpret(A: seq<uint32>) : int
@@ -13,7 +13,7 @@ module RSAE3 {
         else A[0] as int + E_32 * interpret(A[1..])
     }
 
-    method seq_add(A: seq<uint32>, B: seq<uint32>, carry: uint32) returns (S : seq<uint32>)
+    method rec_seq_add(A: seq<uint32>, B: seq<uint32>, carry: uint32) returns (S : seq<uint32>)
         decreases A, B;
         requires |A| == |B|;
         ensures interpret(A) + interpret(B) + carry as int == interpret(S);
@@ -29,7 +29,9 @@ module RSAE3 {
         var A', B' := A[1..], B[1..];
 
         if sum > UINT32_MAX as uint64 {
-            var S' := seq_add(A', B', 1);
+            assume masked as int == sum as int - E_32;
+
+            var S' := rec_seq_add(A', B', 1);
             S := [masked] + S';
 
             calc == {
@@ -48,13 +50,13 @@ module RSAE3 {
                 ==
                 masked as int + E_32 * interpret(A') + E_32 * interpret(B') + E_32;
                 {
-                    assume masked as int == sum as int - E_32;
+                    assert masked as int == sum as int - E_32;
                 }
                 sum as int + E_32 * interpret(A') + E_32 * interpret(B');
             }
             assert interpret(S) == sum as int + E_32 * interpret(A') + E_32 * interpret(B');
         } else {
-            var S' := seq_add(A', B', 0);
+            var S' := rec_seq_add(A', B', 0);
             S := [masked] + S';
 
             calc == {
@@ -102,26 +104,31 @@ module RSAE3 {
         assert interpret(A) + interpret(B) + carry as int == interpret(S);
     }
 
-    // method seq_sub(A: seq<uint32>, B: seq<uint32>) returns (x : seq<uint32>)
-    //     decreases A, B;
-    //     requires |A| == |B|
-    // {
-    //     if |A| == 0 {
-    //         return [];
-    //     }
-        
-    //     var a: uint32, b: uint32 := A[0], B[0];
-    //     var diff: int64 := a as int64 - b as int64;
+    method rec_seq_sub(A: seq<uint32>, B: seq<uint32>, borrow: uint32) returns (S : seq<uint32>)
+        decreases A, B;
+        requires |A| == |B|;
+        requires interpret(A) > interpret(B);
+        ensures interpret(A) - interpret(B) - borrow as int == interpret(S);
+    {
+        if |A| == 0 {
+            assume borrow == 0;
+            return [0];
+        }
+    
+        var a: uint32, b: uint32 := A[0], B[0];
+        var diff: int64 := a as int64 - b as int64 - borrow as int64;
+        // var masked := and64(diff, UINT32_MAX as uint64) as uint32;
 
-    //     if diff > 0 {
-    //         var sub := seq_sub(A[1..], B[1..]);
-    //         return [diff as uint32] + sub;
-    //     }
-        
-    //     var diff_cast: uint64;
-    //     var masked := and64(diff_cast, UINT32_MAX as uint64) as uint32;
-    //     assume (masked as int + b as int == a as int + );
-    // }
+        var A', B' := A[1..], B[1..];
+
+        if diff < 0 {
+
+        } else {
+
+        }
+
+        assume interpret(A) - interpret(B) - borrow as int == interpret(S);
+    }
 
     // method modpow3(A: nat, N:nat, R: nat, RR: nat)
     //     requires RR == R * R;
