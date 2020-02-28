@@ -1,3 +1,5 @@
+.depend
+.vscode
 .history
 *.dll
 *.mdb
