@@ -10,24 +10,24 @@ module RSAE3 {
     function method reinterpret_cast(a: int64) : uint64
 
     // least significant -> most significant
-    // function head_rec_interp(A: seq<uint32>) : int
+    // function hd_rec_interp(A: seq<uint32>) : int
     //     decreases A;
     // {
     //     if |A| == 0 then 0
-    //     else A[0] as int + E_2_32 * head_rec_interp(A[1..])
+    //     else A[0] as int + E_2_32 * hd_rec_interp(A[1..])
     // }
 
-    function head_rec_interp(A: seq<uint32>) : int
+    function hd_rec_interp(A: seq<uint32>) : int
     {
-        head_rec_interp_aux(A, 0)
+        hd_rec_interp_aux(A, 0)
     }
 
-    function head_rec_interp_aux(A: seq<uint32>, i: nat) : int
+    function hd_rec_interp_aux(A: seq<uint32>, i: nat) : int
         decreases |A| - i as int; 
         requires 0 <= i <= |A|;
     {
         if i == |A| then 0
-        else word_interp(A, i) + head_rec_interp_aux(A, i + 1)
+        else word_interp(A, i) + hd_rec_interp_aux(A, i + 1)
     }
 
     function word_interp(A: seq<uint32>, i: nat) : int
@@ -41,52 +41,56 @@ module RSAE3 {
         power(E_2_32, i) as int
     }
 
-    function tail_rec_interp(A: seq<uint32>) : int
+    function tl_rec_interp(A: seq<uint32>) : int
     {
-        tail_rec_interp_aux(A, 0, 0)
+        tl_rec_interp_aux(A, 0, 0)
     }
 
-    function tail_rec_interp_aux(A: seq<uint32>, i: nat, acc: int) : int
+    function tl_rec_interp_aux(A: seq<uint32>, i: nat, acc: int) : int
         decreases |A| - i as int; 
         requires 0 <= i <= |A|;
     {
         if i == |A| then acc
-        else tail_rec_interp_aux(A, i + 1, acc + word_interp(A, i))
+        else tl_rec_interp_aux(A, i + 1, acc + word_interp(A, i))
     }
 
     lemma interp_sufficient(A: seq<uint32>)
-        ensures tail_rec_interp(A) == head_rec_interp(A);
+        ensures tl_rec_interp(A) == hd_rec_interp(A);
     {
-        assume tail_rec_interp(A) == head_rec_interp(A);
+        assume tl_rec_interp(A) == hd_rec_interp(A);
     }
 
     method seq_add(A: seq<uint32>, B: seq<uint32>) returns (S : seq<uint32>)
         requires |A| == |B|;
         // ensures interpret(A) + interpret(B) == interpret(S);
     {
-        var carry: uint32 := 0;
-        var index := 0;
+        var c: uint32 := 0;
+        var i := 0;
         S := [];
 
         assert(|A| > 1 ==> |A[..1]| == 1);
 
-        while index < |A|
-            decreases |A| - index
+        while i < |A|
+            decreases |A| - i
         {
-            assume tail_rec_interp(A[..index]) + tail_rec_interp(B[..index]) + carry as int * postional_weight(index) == tail_rec_interp(S);
+            var S_old, i_old, c_old := S, i, c;
 
-            var sum: uint64 := A[index] as uint64 + B[index] as uint64 + carry as uint64;
+            var sum: uint64 := A[i_old] as uint64 + B[i_old] as uint64 + c_old as uint64;
             var masked := and64(sum, UINT32_MAX as uint64) as uint32;
-            
+
+            assume hd_rec_interp(A) + hd_rec_interp(B) + c_old as int * postional_weight(i_old) == hd_rec_interp(S);
+
             if sum > UINT32_MAX as uint64 {
-                S := S + [masked];
-                carry := 1;
+                S := S_old + [masked];
+                c := 1;
+                i := i_old + 1;
             } else {
+                assert masked as int == sum as int;
                 S := S + [masked];
-                carry := 0;
+                c := 0;
+                i := i_old + 1;
             }
 
-            index := index + 1;
         }
     
         assume false;
