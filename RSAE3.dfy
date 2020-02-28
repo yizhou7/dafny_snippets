@@ -1,7 +1,9 @@
 include "NativeTypes.dfy"
+include "Powers.dfy"
 
 module RSAE3 {
     import opened NativeTypes
+    import opened Powers
 
     const E_32 :int := UINT32_MAX as int + 1;
 
@@ -97,6 +99,41 @@ module RSAE3 {
 
         assert interpret(A) + interpret(B) + carry as int == interpret(S);
     }
+
+    method seq_add(A: seq<uint32>, B: seq<uint32>) returns (S : seq<uint32>)
+        requires |A| == |B|;
+        // ensures interpret(A) + interpret(B) == interpret(S);
+    {
+        var carry: uint32 := 0;
+        var index := 0;
+
+        S := [];
+
+        while index < |A|
+            decreases |A| - index
+        {
+            ghost var A', B' := A[..index], B[..index];
+            var a: uint32, b: uint32 := A[index], B[index];
+
+            assume interpret(A') + interpret(B') == interpret(S) + carry as int;
+
+            var sum: uint64 := a as uint64 + b as uint64 + carry as uint64;
+            var masked := and64(sum, UINT32_MAX as uint64) as uint32;
+            
+            if sum > UINT32_MAX as uint64 {
+                S := S + [masked];
+                carry := 1;
+            } else {
+                S := S + [masked];
+                carry := 0;
+            }
+            index := index + 1;
+        }
+    
+        assume false;
+    }
+
+
 
     lemma {:induction A, B} shift_preservation(A: seq<uint32>, B: seq<uint32>)
         decreases A, B;
