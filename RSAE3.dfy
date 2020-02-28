@@ -107,14 +107,29 @@ module RSAE3 {
         assert true;
     }
 
-    method rec_seq_sub(A: seq<uint32>, B: seq<uint32>, borrow: uint32) returns (S : seq<uint32>)
+    lemma {:induction i} shifts_preservation(A: seq<uint32>, B: seq<uint32>, i: nat)
+        requires |A| == |B|;
+        requires interpret(A) >= interpret(B);
+        requires 0 <= i < |A|;
+        ensures interpret(A[i..]) >= interpret(B[i..])
+    {
+        if i != 0 {
+            var A', B' := A[i - 1..], B[i - 1..];
+            assert interpret(A') >= interpret(B');
+            shift_preservation(A', B');
+        }
+    }
+
+/*
+    method rec_seq_sub(A: seq<uint32>, B: seq<uint32>, borrow: uint32, i: uint32) returns (S : seq<uint32>)
         decreases A, B;
         requires |A| == |B|;
+        requires i == 0 ==> borrow == 0;
+        requires |A| == 0 ==> borrow == 0;
         requires interpret(A) >= interpret(B);
         ensures interpret(A) - interpret(B) - borrow as int == interpret(S);
     {
         if |A| == 0 {
-            assume borrow == 0;
             return [0];
         }
     
@@ -122,16 +137,26 @@ module RSAE3 {
         var diff: int64 := a as int64 - b as int64 - borrow as int64;
         var masked := and64(reinterpret_cast(diff), UINT32_MAX as uint64) as uint32;
 
-        var A', B' := A[1..], B[1..];
+        var A', B' := A[i..], B[i..];
 
         assert interpret(A') >= interpret(B') by {
             shift_preservation(A', B');
+        }
+        
+        calc ==> {
+            |A'| == 0;
+            |A| == 1;
+            {
+                assert interpret(A) >= interpret(B);
+            }
+            A[0] >= B[0];
+            // diff >= 0;
         }
 
         if diff < 0 {
             assume masked as int == diff as int + E_32 as int;
 
-            var S' := rec_seq_sub(A', B', 1);
+            var S' := rec_seq_sub(A', B', 1, i + 1);
             S := [masked] + S';
 
             calc == {
@@ -151,7 +176,7 @@ module RSAE3 {
         } else {
             assume diff as int == masked as int;
 
-            var S' := rec_seq_sub(A', B', 0);
+            var S' := rec_seq_sub(A', B', 0, i + 1);
             S := [masked] + S';
 
             calc == {
@@ -189,6 +214,7 @@ module RSAE3 {
             interpret(A) - interpret(B) - borrow as int;
         }
     }
+*/
 
     // method modpow3(A: nat, N:nat, R: nat, RR: nat)
     //     requires RR == R * R;
