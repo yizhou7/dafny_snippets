@@ -107,6 +107,19 @@ module RSAE3 {
         assert true;
     }
 
+    lemma {:induction i} shifts_order_preservation(A: seq<uint32>, B: seq<uint32>, i: nat)
+        requires |A| == |B|;
+        requires interpret(A) >= interpret(B);
+        requires 0 <= i < |A|;
+        ensures interpret(A[i..]) >= interpret(B[i..])
+    {
+        if i != 0 {
+            var A', B' := A[i - 1..], B[i - 1..];
+            assert interpret(A') >= interpret(B');
+            shift_preservation(A', B');
+        }
+    }
+
     method rec_seq_sub(A: seq<uint32>, B: seq<uint32>, borrow: uint32) returns (S : seq<uint32>)
         decreases A, B;
         requires |A| == |B|;
