@@ -10,17 +10,12 @@ module RSAE3 {
     function method reinterpret_cast(a: int64) : uint64
 
     // least significant -> most significant
-    function head_rec_interp(A: seq<uint32>) : int
-        decreases A;
-    {
-        if |A| == 0 then 0
-        else A[0] as int + E_2_32 * head_rec_interp(A[1..])
-    }
-
-    function tail_rec_interp(A: seq<uint32>) : int
-    {
-        tail_rec_interp_aux(A, 0, 0)
-    }
+    // function head_rec_interp(A: seq<uint32>) : int
+    //     decreases A;
+    // {
+    //     if |A| == 0 then 0
+    //     else A[0] as int + E_2_32 * head_rec_interp(A[1..])
+    // }
 
     function word_interp(A: seq<uint32>, i: nat) : int
         requires i < |A|;
@@ -28,12 +23,30 @@ module RSAE3 {
         A[i] as int * power(E_2_32, i) as int
     }
 
+    function head_rec_interp(A: seq<uint32>) : int
+    {
+        head_rec_interp_aux(A, 0)
+    }
+
+    function head_rec_interp_aux(A: seq<uint32>, i: nat) : int
+        decreases |A| - i as int; 
+        requires 0 <= i <= |A|;
+    {
+        if i == |A| then 0
+        else word_interp(A, i) + head_rec_interp_aux(A, i + 1)
+    }
+
+    function tail_rec_interp(A: seq<uint32>) : int
+    {
+        tail_rec_interp_aux(A, 0, 0)
+    }
+
     function tail_rec_interp_aux(A: seq<uint32>, i: nat, acc: int) : int
         decreases |A| - i as int; 
         requires 0 <= i <= |A|;
     {
         if i == |A| then acc
-        else tail_rec_interp_aux(A, i + 1, word_interp(A, i))
+        else tail_rec_interp_aux(A, i + 1, acc + word_interp(A, i))
     }
 
     // method rec_seq_add(A: seq<uint32>, B: seq<uint32>, carry: uint32) returns (S : seq<uint32>)
