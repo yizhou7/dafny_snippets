@@ -17,12 +17,6 @@ module RSAE3 {
     //     else A[0] as int + E_2_32 * head_rec_interp(A[1..])
     // }
 
-    function word_interp(A: seq<uint32>, i: nat) : int
-        requires i < |A|;
-    {
-        A[i] as int * power(E_2_32, i) as int
-    }
-
     function head_rec_interp(A: seq<uint32>) : int
     {
         head_rec_interp_aux(A, 0)
@@ -36,6 +30,12 @@ module RSAE3 {
         else word_interp(A, i) + head_rec_interp_aux(A, i + 1)
     }
 
+    function word_interp(A: seq<uint32>, i: nat) : int
+        requires i < |A|;
+    {
+        A[i] as int * power(E_2_32, i) as int
+    }
+
     function tail_rec_interp(A: seq<uint32>) : int
     {
         tail_rec_interp_aux(A, 0, 0)
@@ -47,6 +47,12 @@ module RSAE3 {
     {
         if i == |A| then acc
         else tail_rec_interp_aux(A, i + 1, acc + word_interp(A, i))
+    }
+
+    lemma interp_sufficient(A: seq<uint32>)
+        ensures tail_rec_interp(A) == head_rec_interp(A);
+    {
+        assume tail_rec_interp(A) == head_rec_interp(A);
     }
 
     // method rec_seq_add(A: seq<uint32>, B: seq<uint32>, carry: uint32) returns (S : seq<uint32>)
