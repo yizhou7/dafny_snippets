@@ -33,7 +33,12 @@ module RSAE3 {
     function word_interp(A: seq<uint32>, i: nat) : int
         requires i < |A|;
     {
-        A[i] as int * power(E_2_32, i) as int
+        A[i] as int * postional_weight(i)
+    }
+
+    function postional_weight(i: int) : int
+    {
+        power(E_2_32, i) as int
     }
 
     function tail_rec_interp(A: seq<uint32>) : int
@@ -53,6 +58,38 @@ module RSAE3 {
         ensures tail_rec_interp(A) == head_rec_interp(A);
     {
         assume tail_rec_interp(A) == head_rec_interp(A);
+    }
+
+    method seq_add(A: seq<uint32>, B: seq<uint32>) returns (S : seq<uint32>)
+        requires |A| == |B|;
+        // ensures interpret(A) + interpret(B) == interpret(S);
+    {
+        var carry: uint32 := 0;
+        var index := 0;
+        S := [];
+
+        assert(|A| > 1 ==> |A[..1]| == 1);
+
+        while index < |A|
+            decreases |A| - index
+        {
+            assume tail_rec_interp(A[..index]) + tail_rec_interp(B[..index]) + carry as int * postional_weight(index) == tail_rec_interp(S);
+
+            var sum: uint64 := A[index] as uint64 + B[index] as uint64 + carry as uint64;
+            var masked := and64(sum, UINT32_MAX as uint64) as uint32;
+            
+            if sum > UINT32_MAX as uint64 {
+                S := S + [masked];
+                carry := 1;
+            } else {
+                S := S + [masked];
+                carry := 0;
+            }
+
+            index := index + 1;
+        }
+    
+        assume false;
     }
 
     // method rec_seq_add(A: seq<uint32>, B: seq<uint32>, carry: uint32) returns (S : seq<uint32>)
@@ -138,44 +175,7 @@ module RSAE3 {
     //     assert interpret(A) + interpret(B) + carry as int == interpret(S);
     // }
 
-    // method seq_add(A: seq<uint32>, B: seq<uint32>) returns (S : seq<uint32>)
-    //     requires |A| == |B|;
-    //     // ensures interpret(A) + interpret(B) == interpret(S);
-    // {
-    //     var carry: uint32 := 0;
-    //     var index := 0;
-    //     // ghost var A', B' := A[..index], B[..index];
-    //     var A_, B_ := A, B;
-    //     S := [];
 
-    //     // assert (|A[..0]| == 0);
-    //     while index < |A|
-    //         decreases |A| - index
-    //     {
-    //         var A', B' := A[..index], B[..index];
-
-    //         assume interpret(A') + interpret(B') == interpret(S) + carry as int * power(E_2_32 as int, index);
-
-    //         var a: uint32, b: uint32 := A[index], B[index];
-
-    //         var sum: uint64 := a as uint64 + b as uint64 + carry as uint64;
-    //         var masked := and64(sum, UINT32_MAX as uint64) as uint32;
-            
-    //         if sum > UINT32_MAX as uint64 {
-    //             S := S + [masked];
-    //             carry := 1;
-    //         } else {
-    //             S := S + [masked];
-    //             carry := 0;
-    //         }
-
-    //         index := index + 1;
-    //         A', B' := A[..index], B[..index];
-    //         assume interpret(A') + interpret(B') == interpret(S) + carry as int * power(E_2_32 as int, index);
-    //     }
-    
-    //     assume false;
-    // }
 
     // lemma {:induction A, B} shift_preservation(A: seq<uint32>, B: seq<uint32>)
     //     decreases A, B;
