@@ -11,7 +11,7 @@ module RSAE3 {
 
     // |A[..i]| == i, interp A[..i] as an int 
     function interp(A: seq<uint32>, i: int) : int
-        decreases i; 
+        decreases i;
         requires 0 <= i <= |A|;
     {
         if i == 0 then 0
@@ -81,7 +81,7 @@ module RSAE3 {
             decreases |A| - i;
             invariant interp(A, i) + interp(B, i) == interp(S, i) + c as int * postional_weight(i);
         {
-            var c_old, i_old: int := c, i;
+            ghost var c_old, i_old: int := c, i;
             assert interp(A, i_old) + interp(B, i_old) == interp(S, i_old) + c_old as int * postional_weight(i_old);
 
             var sum: uint64 := A[i] as uint64 + B[i] as uint64 + c as uint64;
@@ -144,125 +144,51 @@ module RSAE3 {
         assert seq_interp(A) + seq_interp(B) == seq_interp(S) + c as int * postional_weight(i);
     }
 
-    /*
-    function hd_rec_interp(A: seq<uint32>) : int
+    method seq_sub(A: seq<uint32>, B: seq<uint32>) returns (b: uint32, S:seq<uint32>)
+        requires |A| == |B|;
+        // ensures seq_interp(A) - seq_interp(B) == seq_interp(S) + b as int * postional_weight(|A|);
     {
-        hd_rec_interp_aux(A, 0)
+        var temp := new uint32[|A|];
+        b, S := 0, temp[..];
+
+        var i: nat := 0;
+
+        while i < |A|
+            invariant |S| == |A|;
+            invariant 0 <= i <= |A|;
+            decreases |A| - i;
+        {
+            assume interp(A, i) + interp(B, i) == interp(S, i) + b as int * postional_weight(i);
+
+            var b_old, i_old: int := b, i;
+            // assert interp(A, i_old) + interp(B, i_old) == interp(S, i_old) + c_old as int * postional_weight(i_old);
+
+            var diff: int64 := A[i] as int64 - B[i] as int64 - b as int64;
+            var masked := and64(reinterpret_cast(diff), UINT32_MAX as uint64) as uint32;
+
+            ghost var S_old := S;
+            ghost var prefix_sum := interp(S_old, i);
+            S := S[i := masked];
+
+            assert interp(S, i_old) == interp(S_old, i_old) by {
+                prefix_sum_lemma(S, S_old, i_old);
+            }
+
+            assert prefix_sum == interp(S, i_old);
+
+            i := i + 1;
+
+            if diff < 0 {
+                b := 1;
+            } else {
+                assume masked as int == diff as int;
+
+                b := 0;
+            }
+
+        }
+
     }
-
-    function hd_rec_interp_aux(A: seq<uint32>, i: nat) : int
-        decreases |A| - i as int; 
-        requires 0 <= i <= |A|;
-    {
-        if i == |A| then 0
-        else word_interp(A, i) + hd_rec_interp_aux(A, i + 1)
-    }
-
-    function tl_rec_interp(A: seq<uint32>) : int
-    {
-        tl_rec_interp_aux(A, 0, 0)
-    }
-
-    function tl_rec_interp_aux(A: seq<uint32>, i: nat, acc: int) : int
-        decreases |A| - i as int; 
-        requires 0 <= i <= |A|;
-    {
-        if i == |A| then acc
-        else tl_rec_interp_aux(A, i + 1, acc + word_interp(A, i))
-    }
-
-    lemma interp_sufficient(A: seq<uint32>)
-        ensures tl_rec_interp(A) == hd_rec_interp(A);
-    {
-        assume tl_rec_interp(A) == hd_rec_interp(A);
-    }
-    */
-
-
-    // method rec_seq_add(A: seq<uint32>, B: seq<uint32>, carry: uint32) returns (S : seq<uint32>)
-    //     decreases A, B;
-    //     requires |A| == |B|;
-    //     ensures interpret(A) + interpret(B) + carry as int == interpret(S);
-    // {
-    //     if |A| == 0 {
-    //         return [carry];
-    //     }
-    
-    //     var a: uint32, b: uint32 := A[0], B[0];
-    //     var sum: uint64 := a as uint64 + b as uint64 + carry as uint64;
-    //     var masked := and64(sum, UINT32_MAX as uint64) as uint32;
-
-    //     var A', B' := A[1..], B[1..];
-
-    //     if sum > UINT32_MAX as uint64 {
-    //         assume masked as int == sum as int - E_2_32;
-
-    //         var S' := rec_seq_add(A', B', 1);
-    //         S := [masked] + S';
-
-    //         calc == {
-    //             interpret(S);
-    //             ==
-    //             masked as int + E_2_32 * interpret(S');
-    //             ==
-    //             {
-    //                 assert interpret(S') == interpret(A') + interpret(B') + 1;
-    //             }
-    //             masked as int + E_2_32 * (interpret(A') + interpret(B') + 1);
-    //             ==
-    //             masked as int + E_2_32 * interpret(A') + E_2_32 * interpret(B') + E_2_32;
-    //             {
-    //                 assert masked as int == sum as int - E_2_32;
-    //             }
-    //             sum as int + E_2_32 * interpret(A') + E_2_32 * interpret(B');
-    //         }
-    //         assert interpret(S) == sum as int + E_2_32 * interpret(A') + E_2_32 * interpret(B');
-    //     } else {
-    //         var S' := rec_seq_add(A', B', 0);
-    //         S := [masked] + S';
-
-    //         calc == {
-    //             interpret(S);
-    //             ==
-    //             masked as int + E_2_32 * interpret(S');
-    //             ==
-    //             {
-    //                 assert interpret(S') == interpret(A') + interpret(B');
-    //             }
-    //             masked as int + E_2_32 * (interpret(A') + interpret(B'));
-    //             ==
-    //             masked as int + E_2_32 * interpret(A') + E_2_32 * interpret(B');
-    //             ==
-    //             sum as int + E_2_32 * interpret(A') + E_2_32 * interpret(B');
-    //         }
-    //         assert interpret(S) == sum as int + E_2_32 * interpret(A') + E_2_32 * interpret(B');
-    //     }
-
-    //     calc == {
-    //         sum as int + E_2_32 * interpret(A') + E_2_32 * interpret(B');
-    //         ==
-    //         {
-    //             assert sum as int == A[0] as int + B[0] as int + carry as int;
-    //         }
-    //         A[0] as int + B[0] as int + carry as int + E_2_32 * interpret(A') + E_2_32 * interpret(B');
-    //         ==
-    //         (A[0] as int + E_2_32 * interpret(A')) + (B[0] as int + E_2_32 * interpret(B')) + carry as int;
-    //         ==
-    //         {
-    //             assert interpret(A) == A[0] as int + E_2_32 * interpret(A');
-    //         }
-    //         interpret(A) + (B[0] as int + E_2_32 * interpret(B')) + carry as int;
-    //         ==
-    //         {
-    //             assert interpret(B) == B[0] as int + E_2_32 * interpret(B');
-    //         }
-    //         interpret(A) + interpret(B) + carry as int;
-    //     }
-
-    //     assert interpret(A) + interpret(B) + carry as int == interpret(S);
-    // }
-
-
 
     // lemma {:induction A, B} shift_preservation(A: seq<uint32>, B: seq<uint32>)
     //     decreases A, B;
