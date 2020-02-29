@@ -20,8 +20,13 @@ module RSAE3 {
         power(E_2_32, i) as int
     }
 
-    // interperts A[..i] as an int
-    // assert(|A| > 1 ==> |A[..1]| == 1);
+    lemma prefix_sum_unchange(S: seq<uint32>, S': seq<uint32>, i: nat)
+        requires |S| == |S'|;
+    {
+
+    }
+
+    // |A[..i]| == i, interp A[..i] as an int 
     function interp(A: seq<uint32>, i: int) : int
         decreases i; 
         requires 0 <= i <= |A|;
@@ -30,31 +35,86 @@ module RSAE3 {
         else word_interp(A, i - 1) + interp(A, i - 1)
     }
 
-    method seq_add(A: seq<uint32>, B: seq<uint32>) returns (S: seq<uint32>)
+    method seq_add(A: seq<uint32>, B: seq<uint32>)
         requires |A| == |B|;
     {
         var c: uint32 := 0;
         var i: nat := 0;
-        S := [];
-        assume |S| == |A|;
-
+        var temp := new uint32[|A|];
+        var S := temp[..];
+        assert |S| == |A|;
 
         while i < |A|
-            decreases |A| - i
+            invariant |S| == |A|;
+            decreases |A| - i;
         {
-            var i_old: int := i;
+            assume interp(A, i) + interp(B, i) == interp(S, i) + c as int * postional_weight(i);
+
+            var c_old, i_old: int := c, i;
+            assert interp(A, i_old) + interp(B, i_old) == interp(S, i_old) + c_old as int * postional_weight(i_old);
 
             var sum: uint64 := A[i] as uint64 + B[i] as uint64 + c as uint64;
             var masked := and64(sum, UINT32_MAX as uint64) as uint32;
 
+            ghost var prefix_sum := interp(S, i);
+            S := S[i := masked];
+            assume prefix_sum == interp(S, i_old);
+
             i := i + 1;
-            S := S + [masked];
 
             if sum > UINT32_MAX as uint64 {
                 c := 1;
             } else {
                 assert masked as int == sum as int;
                 c := 0;
+
+                assert interp(A, i_old) + interp(B, i_old) == interp(S, i_old) + c_old as int * postional_weight(i_old);
+
+                calc == {
+                    interp(S, i);
+                    ==
+                    word_interp(S, i - 1) + interp(S, i - 1);
+                    ==
+                    word_interp(S, i_old) + interp(S, i_old);
+                    ==
+                    masked as int * postional_weight(i_old) + interp(S, i_old);
+                }
+
+                calc == {
+                    interp(B, i);
+                    ==
+                    word_interp(B, i - 1) + interp(B, i - 1);
+                    ==
+                    B[i - 1] as int * postional_weight(i - 1) + interp(B, i - 1);
+                }
+
+                calc == {
+                    interp(A, i);
+                    ==
+                    word_interp(A, i - 1) + interp(A, i - 1);
+                    ==
+                    A[i - 1] as int * postional_weight(i - 1) + interp(A, i - 1);
+                }
+
+                calc == {
+                    interp(A, i) + interp(B, i);
+                    ==
+                    A[i - 1] as int * postional_weight(i - 1) + interp(A, i_old) +
+                    B[i - 1] as int * postional_weight(i - 1) + interp(B, i_old);
+                    ==
+                    A[i - 1] as int * postional_weight(i - 1) + 
+                    B[i - 1] as int * postional_weight(i - 1) +
+                    interp(S, i_old) + c_old as int * postional_weight(i_old);
+                    ==
+                    postional_weight(i - 1) * (A[i - 1] as int + B[i - 1] as int + c_old as int) +
+                    interp(S, i_old);
+                    ==
+                    postional_weight(i - 1) * (sum as int) + interp(S, i_old);
+                    ==
+                    interp(S, i);
+                }
+
+                assert interp(A, i) + interp(B, i) == interp(S, i);
             }
 
         }
