@@ -15,12 +15,24 @@ module RSAE3 {
         A[i] as int * postional_weight(i)
     }
 
-    function postional_weight(i: int) : int
+    function postional_weight(i: nat) : int
     {
         power(E_2_32, i) as int
     }
 
-    function interp_
+    function interp(A: seq<uint32>) : int
+    {
+        if |A| == 0 then 0
+        else interp_aux(A, |A| - 1)
+    }
+
+    function interp_aux(A: seq<uint32>, i: nat) : int
+        decreases i; 
+        requires 0 <= i < |A|;
+    {
+        if i == 0 then word_interp(A, 0)
+        else word_interp(A, i) + interp_aux(A, i - 1)
+    }
 
     /*
     function hd_rec_interp(A: seq<uint32>) : int
