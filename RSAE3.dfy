@@ -9,14 +9,20 @@ module RSAE3 {
 
     function method reinterpret_cast(a: int64) : uint64
 
-    // least significant -> most significant
-    // function hd_rec_interp(A: seq<uint32>) : int
-    //     decreases A;
-    // {
-    //     if |A| == 0 then 0
-    //     else A[0] as int + E_2_32 * hd_rec_interp(A[1..])
-    // }
+    function word_interp(A: seq<uint32>, i: nat) : int
+        requires i < |A|;
+    {
+        A[i] as int * postional_weight(i)
+    }
 
+    function postional_weight(i: int) : int
+    {
+        power(E_2_32, i) as int
+    }
+
+    function interp_
+
+    /*
     function hd_rec_interp(A: seq<uint32>) : int
     {
         hd_rec_interp_aux(A, 0)
@@ -28,17 +34,6 @@ module RSAE3 {
     {
         if i == |A| then 0
         else word_interp(A, i) + hd_rec_interp_aux(A, i + 1)
-    }
-
-    function word_interp(A: seq<uint32>, i: nat) : int
-        requires i < |A|;
-    {
-        A[i] as int * postional_weight(i)
-    }
-
-    function postional_weight(i: int) : int
-    {
-        power(E_2_32, i) as int
     }
 
     function tl_rec_interp(A: seq<uint32>) : int
@@ -59,7 +54,9 @@ module RSAE3 {
     {
         assume tl_rec_interp(A) == hd_rec_interp(A);
     }
+    */
 
+    /*
     method seq_add(A: seq<uint32>, B: seq<uint32>) returns (S : seq<uint32>)
         requires |A| == |B|;
         // ensures interpret(A) + interpret(B) == interpret(S);
@@ -73,28 +70,32 @@ module RSAE3 {
         while i < |A|
             decreases |A| - i
         {
-            var S_old, i_old, c_old := S, i, c;
+            assume hd_rec_interp(A[..i]) + hd_rec_interp(B[..i]) + c as int * postional_weight(i) == hd_rec_interp(S);
 
-            var sum: uint64 := A[i_old] as uint64 + B[i_old] as uint64 + c_old as uint64;
+            var S_old, i_old := S, i;
+
+            var sum: uint64 := A[i_old] as uint64 + B[i_old] as uint64 + c as uint64;
             var masked := and64(sum, UINT32_MAX as uint64) as uint32;
 
-            assume hd_rec_interp(A) + hd_rec_interp(B) + c_old as int * postional_weight(i_old) == hd_rec_interp(S);
+            i := i_old + 1;
+            S := S_old + [masked];
+
+           calc == {
+                hd_rec_interp(S);
+                ==
+                word_interp(S, 0) + hd_rec_interp_aux(S,  1);
+            }
 
             if sum > UINT32_MAX as uint64 {
-                S := S_old + [masked];
                 c := 1;
-                i := i_old + 1;
             } else {
                 assert masked as int == sum as int;
-                S := S + [masked];
                 c := 0;
-                i := i_old + 1;
             }
 
         }
-    
-        assume false;
     }
+    */
 
     // method rec_seq_add(A: seq<uint32>, B: seq<uint32>, carry: uint32) returns (S : seq<uint32>)
     //     decreases A, B;
