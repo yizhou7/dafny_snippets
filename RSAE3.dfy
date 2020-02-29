@@ -86,6 +86,7 @@ module RSAE3 {
 
             var sum: uint64 := A[i] as uint64 + B[i] as uint64 + c as uint64;
             var masked := and64(sum, UINT32_MAX as uint64) as uint32;
+            assume masked as int + E_2_32 == sum as int;
 
             ghost var S_old := S;
             ghost var prefix_sum := interp(S_old, i);
@@ -120,8 +121,6 @@ module RSAE3 {
             }
 
             if sum > UINT32_MAX as uint64 {
-                assume masked as int + E_2_32 == sum as int;
-
                 c := 1;
                 calc == {
                     postional_weight(i - 1) * (sum as int) + interp(S, i_old);
@@ -160,6 +159,9 @@ module RSAE3 {
             var diff: int64 := A[i] as int64 - B[i] as int64 - b as int64;
             var masked := and64(reinterpret_cast(diff), UINT32_MAX as uint64) as uint32;
 
+            assume diff < 0 ==> masked as int == diff as int + E_2_32 as int;
+            assume diff >= 0 ==> masked as int == diff as int;
+
             ghost var S_old := S;
             ghost var prefix_sum := interp(S_old, i);
             S := S[i := masked];
@@ -191,8 +193,6 @@ module RSAE3 {
             }
 
             if diff < 0 {
-                assume masked as int == diff as int + E_2_32 as int;
-
                 b := 1;
                 calc == {
                     postional_weight(i - 1) * (diff as int) + interp(S, i_old);
@@ -202,9 +202,7 @@ module RSAE3 {
                     }
                     postional_weight(i - 1) * masked as int - postional_weight(i) + interp(S, i_old);
                 }
-            } else {
-                assume masked as int == diff as int;
-                
+            } else {                
                 b := 0;
                 assert interp(A, i) - interp(B, i) == interp(S, i);
             }
