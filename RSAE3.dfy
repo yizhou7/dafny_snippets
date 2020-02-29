@@ -47,10 +47,10 @@ module RSAE3 {
 
         while i < |A|
             invariant |S| == |A|;
+            invariant 0 <= i <= |A|;
             decreases |A| - i;
+            invariant interp(A, i) + interp(B, i) == interp(S, i) + c as int * postional_weight(i);
         {
-            assume interp(A, i) + interp(B, i) == interp(S, i) + c as int * postional_weight(i);
-
             var c_old, i_old: int := c, i;
             assert interp(A, i_old) + interp(B, i_old) == interp(S, i_old) + c_old as int * postional_weight(i_old);
 
@@ -58,6 +58,7 @@ module RSAE3 {
             var masked := and64(sum, UINT32_MAX as uint64) as uint32;
 
             ghost var prefix_sum := interp(S, i);
+
             S := S[i := masked];
             assume prefix_sum == interp(S, i_old);
 
@@ -86,24 +87,24 @@ module RSAE3 {
             }
 
             if sum > UINT32_MAX as uint64 {
+                assume masked as int + E_2_32 == sum as int;
+
                 c := 1;
-
-
+                calc == {
+                    postional_weight(i - 1) * (sum as int) + interp(S, i_old);
+                    postional_weight(i - 1) * masked as int + postional_weight(i - 1) * E_2_32 + interp(S, i_old);
+                    {
+                        assume postional_weight(i - 1) * E_2_32 == postional_weight(i);
+                    }
+                    postional_weight(i - 1) * masked as int + postional_weight(i) + interp(S, i_old);
+                }
+                assert interp(A, i) + interp(B, i) == interp(S, i) + postional_weight(i);
             } else {
                 c := 0;
-
-                calc == {
-                    postional_weight(i - 1) * (masked as int) + interp(S, i_old);
-                    ==
-                    {
-                        assert masked as int == sum as int;
-                    }
-                    interp(S, i);
-                }
-
                 assert interp(A, i) + interp(B, i) == interp(S, i);
             }
 
+            assert interp(A, i) + interp(B, i) == interp(S, i) + c as int * postional_weight(i);
         }
     }
 
