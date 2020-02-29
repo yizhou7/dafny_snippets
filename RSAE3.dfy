@@ -20,35 +20,28 @@ module RSAE3 {
         power(E_2_32, i) as int
     }
 
-    function interp(A: seq<uint32>) : int
-    {
-        if |A| == 0 then 0
-        else interp_aux(A, |A| - 1)
-    }
-
-    function interp_aux(A: seq<uint32>, i: int) : int
+    // interperts A[..i] as an int
+    // assert(|A| > 1 ==> |A[..1]| == 1);
+    function interp(A: seq<uint32>, i: int) : int
         decreases i; 
-        requires -1 <= i < |A|;
+        requires 0 <= i <= |A|;
     {
-        if i == -1 then 0
-        else word_interp(A, i) + interp_aux(A, i - 1)
+        if i == 0 then 0
+        else word_interp(A, i - 1) + interp(A, i - 1)
     }
 
     method seq_add(A: seq<uint32>, B: seq<uint32>) returns (S: seq<uint32>)
         requires |A| == |B|;
-        // ensures interpret(A) + interpret(B) == interpret(S);
     {
         var c: uint32 := 0;
         var i: nat := 0;
         S := [];
         assume |S| == |A|;
 
-        assert(|A| > 1 ==> |A[..1]| == 1);
 
         while i < |A|
             decreases |A| - i
         {
-            assume interp(A[..i]) + interp(B[..i]) + c as int * postional_weight(i) == interp(S[..i]);
             var i_old: int := i;
 
             var sum: uint64 := A[i] as uint64 + B[i] as uint64 + c as uint64;
@@ -56,18 +49,6 @@ module RSAE3 {
 
             i := i + 1;
             S := S + [masked];
- 
-            assert interp(A[..i_old]) + interp(B[..i_old]) + c as int * postional_weight(i_old) == interp(S[..i_old]);
-
-            // calc == {
-            //     interp(S);
-            //     ==
-            //     interp_aux(S, |S| - 1);
-            //     ==
-            //     interp_aux(S, i - 1);
-            //     ==
-            //     interp_aux(S, i_old - 1) + word_interp(S, i_old);
-            // }
 
             if sum > UINT32_MAX as uint64 {
                 c := 1;
