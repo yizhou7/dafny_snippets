@@ -34,43 +34,40 @@ module RSAE3 {
         else word_interp(A, i) + interp_aux(A, i - 1)
     }
 
-    method seq_add(A: seq<uint32>, B: seq<uint32>) returns (S : seq<uint32>)
+    method seq_add(A: seq<uint32>, B: seq<uint32>) returns (S: seq<uint32>)
         requires |A| == |B|;
         // ensures interpret(A) + interpret(B) == interpret(S);
     {
         var c: uint32 := 0;
         var i: nat := 0;
         S := [];
+        assume |S| == |A|;
 
         assert(|A| > 1 ==> |A[..1]| == 1);
 
         while i < |A|
-            invariant |S| == i as int;
             decreases |A| - i
         {
-            assume interp(A[..i]) + interp(B[..i]) + c as int * postional_weight(i) == interp(S);
+            assume interp(A[..i]) + interp(B[..i]) + c as int * postional_weight(i) == interp(S[..i]);
+            var i_old: int := i;
 
-            var S_old, i_old: int := S, i;
-
-            var sum: uint64 := A[i_old] as uint64 + B[i_old] as uint64 + c as uint64;
+            var sum: uint64 := A[i] as uint64 + B[i] as uint64 + c as uint64;
             var masked := and64(sum, UINT32_MAX as uint64) as uint32;
 
-            i := i_old + 1;
-            S := S_old + [masked];
+            i := i + 1;
+            S := S + [masked];
+ 
+            assert interp(A[..i_old]) + interp(B[..i_old]) + c as int * postional_weight(i_old) == interp(S[..i_old]);
 
-            assert interp(A[..i_old]) + interp(B[..i_old]) + c as int * postional_weight(i_old) == interp(S_old);
-
-            calc == {
-                interp(S);
-                ==
-                interp_aux(S, |S| - 1);
-                ==
-                interp_aux(S, i - 1);
-                ==
-                interp_aux(S, i_old);
-                ==
-                interp_aux(S, i_old - 1) + word_interp(S, i_old);
-            }
+            // calc == {
+            //     interp(S);
+            //     ==
+            //     interp_aux(S, |S| - 1);
+            //     ==
+            //     interp_aux(S, i - 1);
+            //     ==
+            //     interp_aux(S, i_old - 1) + word_interp(S, i_old);
+            // }
 
             if sum > UINT32_MAX as uint64 {
                 c := 1;
