@@ -91,11 +91,10 @@ module RSAE3 {
             ghost var prefix_sum := interp(S_old, i);
             S := S[i := masked];
 
-            assert interp(S, i_old) == interp(S_old, i_old) by {
+            assert prefix_sum == interp(S, i_old) by {
                 prefix_sum_lemma(S, S_old, i_old);
+                assert interp(S, i_old) == interp(S_old, i_old);
             }
-
-            assert prefix_sum == interp(S, i_old);
 
             i := i + 1;
 
@@ -132,21 +131,17 @@ module RSAE3 {
                     }
                     postional_weight(i - 1) * masked as int + postional_weight(i) + interp(S, i_old);
                 }
-                assert interp(A, i) + interp(B, i) == interp(S, i) + postional_weight(i);
             } else {
                 c := 0;
-                assert interp(A, i) + interp(B, i) == interp(S, i);
             }
 
             assert interp(A, i) + interp(B, i) == interp(S, i) + c as int * postional_weight(i);
         }
-
-        assert seq_interp(A) + seq_interp(B) == seq_interp(S) + c as int * postional_weight(i);
     }
 
     method seq_sub(A: seq<uint32>, B: seq<uint32>) returns (b: uint32, S:seq<uint32>)
         requires |A| == |B|;
-        // ensures seq_interp(A) - seq_interp(B) == seq_interp(S) + b as int * postional_weight(|A|);
+        ensures seq_interp(A) - seq_interp(B) == seq_interp(S) - b as int * postional_weight(|A|);
     {
         var temp := new uint32[|A|];
         b, S := 0, temp[..];
@@ -157,9 +152,8 @@ module RSAE3 {
             invariant |S| == |A|;
             invariant 0 <= i <= |A|;
             decreases |A| - i;
+            invariant interp(A, i) - interp(B, i) == interp(S, i) - b as int * postional_weight(i);
         {
-            assume interp(A, i) - interp(B, i) == interp(S, i) - b as int * postional_weight(i);
-
             var b_old, i_old: int := b, i;
             assert interp(A, i_old) - interp(B, i_old) == interp(S, i_old) - b_old as int * postional_weight(i_old);
 
@@ -170,10 +164,10 @@ module RSAE3 {
             ghost var prefix_sum := interp(S_old, i);
             S := S[i := masked];
 
-            assert interp(S, i_old) == interp(S_old, i_old) by {
+            assert prefix_sum == interp(S, i_old) by {
                 prefix_sum_lemma(S, S_old, i_old);
+                assert interp(S, i_old) == interp(S_old, i_old);
             }
-            assert prefix_sum == interp(S, i_old);
 
             i := i + 1;
 
@@ -197,15 +191,26 @@ module RSAE3 {
             }
 
             if diff < 0 {
+                assume masked as int == diff as int + E_2_32 as int;
+
                 b := 1;
+                calc == {
+                    postional_weight(i - 1) * (diff as int) + interp(S, i_old);
+                    postional_weight(i - 1) * masked as int - postional_weight(i - 1) * E_2_32 + interp(S, i_old);
+                    {
+                        postional_shift_lemma(i);
+                    }
+                    postional_weight(i - 1) * masked as int - postional_weight(i) + interp(S, i_old);
+                }
             } else {
                 assume masked as int == diff as int;
+                
                 b := 0;
                 assert interp(A, i) - interp(B, i) == interp(S, i);
             }
 
+            assert interp(A, i) - interp(B, i) == interp(S, i) - b as int * postional_weight(i);
         }
-
     }
 
     // lemma {:induction A, B} shift_preservation(A: seq<uint32>, B: seq<uint32>)
