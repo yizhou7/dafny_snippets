@@ -20,6 +20,23 @@ module RSAE3 {
         power(E_2_32, i) as int
     }
 
+    lemma postional_shift_lemma(i: int)
+        requires i > 0;
+        ensures postional_weight(i - 1) * E_2_32 == postional_weight(i);
+    {
+        calc == {
+            postional_weight(i - 1) * E_2_32;
+            ==
+            power(E_2_32, i - 1) * E_2_32;
+            {
+                power_add_one_lema(E_2_32, i - 1);
+            }
+            power(E_2_32, i);
+            ==
+            postional_weight(i);
+        }
+    }
+
     lemma interp_expand(A: seq<uint32>, i: nat)
         requires 0  < i <= |A|;
         ensures interp(A, i) == A[i - 1] as int * postional_weight(i - 1) + interp(A, i - 1);
@@ -94,7 +111,7 @@ module RSAE3 {
                     postional_weight(i - 1) * (sum as int) + interp(S, i_old);
                     postional_weight(i - 1) * masked as int + postional_weight(i - 1) * E_2_32 + interp(S, i_old);
                     {
-                        assume postional_weight(i - 1) * E_2_32 == postional_weight(i);
+                        postional_shift_lemma(i);
                     }
                     postional_weight(i - 1) * masked as int + postional_weight(i) + interp(S, i_old);
                 }
