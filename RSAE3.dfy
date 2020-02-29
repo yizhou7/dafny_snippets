@@ -158,10 +158,10 @@ module RSAE3 {
             invariant 0 <= i <= |A|;
             decreases |A| - i;
         {
-            assume interp(A, i) + interp(B, i) == interp(S, i) + b as int * postional_weight(i);
+            assume interp(A, i) - interp(B, i) == interp(S, i) - b as int * postional_weight(i);
 
             var b_old, i_old: int := b, i;
-            // assert interp(A, i_old) + interp(B, i_old) == interp(S, i_old) + c_old as int * postional_weight(i_old);
+            assert interp(A, i_old) - interp(B, i_old) == interp(S, i_old) - b_old as int * postional_weight(i_old);
 
             var diff: int64 := A[i] as int64 - B[i] as int64 - b as int64;
             var masked := and64(reinterpret_cast(diff), UINT32_MAX as uint64) as uint32;
@@ -173,17 +173,35 @@ module RSAE3 {
             assert interp(S, i_old) == interp(S_old, i_old) by {
                 prefix_sum_lemma(S, S_old, i_old);
             }
-
             assert prefix_sum == interp(S, i_old);
 
             i := i + 1;
+
+            assert interp(A, i_old) - interp(B, i_old) == interp(S, i_old) - b_old as int * postional_weight(i_old);
+            assert interp(S, i) == masked as int * postional_weight(i_old) + interp(S, i_old);
+            assert interp(B, i) == B[i - 1] as int * postional_weight(i - 1) + interp(B, i - 1);
+            assert interp(A, i) == A[i - 1] as int * postional_weight(i - 1) + interp(A, i - 1);
+
+            calc == {
+                interp(A, i) - interp(B, i);
+                ==
+                A[i - 1] as int * postional_weight(i - 1) + interp(A, i_old) -
+                B[i - 1] as int * postional_weight(i - 1) - interp(B, i_old);
+                ==
+                A[i - 1] as int * postional_weight(i - 1) - 
+                B[i - 1] as int * postional_weight(i - 1) +
+                interp(S, i_old) - b_old as int * postional_weight(i_old);
+                ==
+                postional_weight(i - 1) * (A[i - 1] as int - B[i - 1] as int - b_old as int) +
+                interp(S, i_old);
+            }
 
             if diff < 0 {
                 b := 1;
             } else {
                 assume masked as int == diff as int;
-
                 b := 0;
+                assert interp(A, i) - interp(B, i) == interp(S, i);
             }
 
         }
