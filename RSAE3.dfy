@@ -44,6 +44,14 @@ module RSAE3 {
 
     }
 
+    lemma {:induction i} prefix_sum_lemma(S: seq<uint32>, S': seq<uint32>, i: nat)
+        requires 0 <= i <= |S| && 0 <= i <= |S'|;
+        requires S[..i] == S'[..i];
+        ensures interp(S, i) == interp(S', i);
+    {
+        assert true;
+    }
+
     // |A[..i]| == i, interp A[..i] as an int 
     function interp(A: seq<uint32>, i: int) : int
         decreases i; 
@@ -74,15 +82,19 @@ module RSAE3 {
             var sum: uint64 := A[i] as uint64 + B[i] as uint64 + c as uint64;
             var masked := and64(sum, UINT32_MAX as uint64) as uint32;
 
-            ghost var prefix_sum := interp(S, i);
-
+            ghost var S_old := S;
+            ghost var prefix_sum := interp(S_old, i);
             S := S[i := masked];
-            assume prefix_sum == interp(S, i_old);
+
+            assert interp(S, i_old) == interp(S_old, i_old) by {
+                prefix_sum_lemma(S, S_old, i_old);
+            }
+
+            assert prefix_sum == interp(S, i_old);
 
             i := i + 1;
 
             assert interp(A, i_old) + interp(B, i_old) == interp(S, i_old) + c_old as int * postional_weight(i_old);
-
             assert interp(S, i) == masked as int * postional_weight(i_old) + interp(S, i_old);
             assert interp(B, i) == B[i - 1] as int * postional_weight(i - 1) + interp(B, i - 1);
             assert interp(A, i) == A[i - 1] as int * postional_weight(i - 1) + interp(A, i - 1);
