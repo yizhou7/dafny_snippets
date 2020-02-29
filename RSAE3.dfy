@@ -9,10 +9,24 @@ module RSAE3 {
 
     function method reinterpret_cast(a: int64) : uint64
 
+    // |A[..i]| == i, interp A[..i] as an int 
+    function interp(A: seq<uint32>, i: int) : int
+        decreases i; 
+        requires 0 <= i <= |A|;
+    {
+        if i == 0 then 0
+        else word_interp(A, i - 1) + interp(A, i - 1)
+    }
+
     function word_interp(A: seq<uint32>, i: nat) : int
         requires i < |A|;
     {
         A[i] as int * postional_weight(i)
+    }
+
+    function seq_interp(A: seq<uint32>) : int
+    {
+        interp(A, |A|)
     }
 
     function postional_weight(i: nat) : int
@@ -52,23 +66,14 @@ module RSAE3 {
         assert true;
     }
 
-    // |A[..i]| == i, interp A[..i] as an int 
-    function interp(A: seq<uint32>, i: int) : int
-        decreases i; 
-        requires 0 <= i <= |A|;
-    {
-        if i == 0 then 0
-        else word_interp(A, i - 1) + interp(A, i - 1)
-    }
-
-    method seq_add(A: seq<uint32>, B: seq<uint32>)
+    method seq_add(A: seq<uint32>, B: seq<uint32>) returns (c: uint32, S:seq<uint32>)
         requires |A| == |B|;
+        ensures seq_interp(A) + seq_interp(B) == seq_interp(S) + c as int * postional_weight(|A|);
     {
-        var c: uint32 := 0;
-        var i: nat := 0;
         var temp := new uint32[|A|];
-        var S := temp[..];
-        assert |S| == |A|;
+        c, S := 0, temp[..];
+
+        var i: nat := 0;
 
         while i < |A|
             invariant |S| == |A|;
@@ -135,6 +140,8 @@ module RSAE3 {
 
             assert interp(A, i) + interp(B, i) == interp(S, i) + c as int * postional_weight(i);
         }
+
+        assert seq_interp(A) + seq_interp(B) == seq_interp(S) + c as int * postional_weight(i);
     }
 
     /*
