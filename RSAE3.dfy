@@ -26,12 +26,60 @@ module RSAE3 {
         else interp_aux(A, |A| - 1)
     }
 
-    function interp_aux(A: seq<uint32>, i: nat) : int
+    function interp_aux(A: seq<uint32>, i: int) : int
         decreases i; 
-        requires 0 <= i < |A|;
+        requires -1 <= i < |A|;
     {
-        if i == 0 then word_interp(A, 0)
+        if i == -1 then 0
         else word_interp(A, i) + interp_aux(A, i - 1)
+    }
+
+    method seq_add(A: seq<uint32>, B: seq<uint32>) returns (S : seq<uint32>)
+        requires |A| == |B|;
+        // ensures interpret(A) + interpret(B) == interpret(S);
+    {
+        var c: uint32 := 0;
+        var i: nat := 0;
+        S := [];
+
+        assert(|A| > 1 ==> |A[..1]| == 1);
+
+        while i < |A|
+            invariant |S| == i as int;
+            decreases |A| - i
+        {
+            assume interp(A[..i]) + interp(B[..i]) + c as int * postional_weight(i) == interp(S);
+
+            var S_old, i_old: int := S, i;
+
+            var sum: uint64 := A[i_old] as uint64 + B[i_old] as uint64 + c as uint64;
+            var masked := and64(sum, UINT32_MAX as uint64) as uint32;
+
+            i := i_old + 1;
+            S := S_old + [masked];
+
+            assert interp(A[..i_old]) + interp(B[..i_old]) + c as int * postional_weight(i_old) == interp(S_old);
+
+            calc == {
+                interp(S);
+                ==
+                interp_aux(S, |S| - 1);
+                ==
+                interp_aux(S, i - 1);
+                ==
+                interp_aux(S, i_old);
+                ==
+                interp_aux(S, i_old - 1) + word_interp(S, i_old);
+            }
+
+            if sum > UINT32_MAX as uint64 {
+                c := 1;
+            } else {
+                assert masked as int == sum as int;
+                c := 0;
+            }
+
+        }
     }
 
     /*
@@ -68,46 +116,6 @@ module RSAE3 {
     }
     */
 
-    /*
-    method seq_add(A: seq<uint32>, B: seq<uint32>) returns (S : seq<uint32>)
-        requires |A| == |B|;
-        // ensures interpret(A) + interpret(B) == interpret(S);
-    {
-        var c: uint32 := 0;
-        var i := 0;
-        S := [];
-
-        assert(|A| > 1 ==> |A[..1]| == 1);
-
-        while i < |A|
-            decreases |A| - i
-        {
-            assume hd_rec_interp(A[..i]) + hd_rec_interp(B[..i]) + c as int * postional_weight(i) == hd_rec_interp(S);
-
-            var S_old, i_old := S, i;
-
-            var sum: uint64 := A[i_old] as uint64 + B[i_old] as uint64 + c as uint64;
-            var masked := and64(sum, UINT32_MAX as uint64) as uint32;
-
-            i := i_old + 1;
-            S := S_old + [masked];
-
-           calc == {
-                hd_rec_interp(S);
-                ==
-                word_interp(S, 0) + hd_rec_interp_aux(S,  1);
-            }
-
-            if sum > UINT32_MAX as uint64 {
-                c := 1;
-            } else {
-                assert masked as int == sum as int;
-                c := 0;
-            }
-
-        }
-    }
-    */
 
     // method rec_seq_add(A: seq<uint32>, B: seq<uint32>, carry: uint32) returns (S : seq<uint32>)
     //     decreases A, B;
