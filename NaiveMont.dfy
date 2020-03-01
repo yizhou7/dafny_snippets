@@ -1,9 +1,9 @@
 include "Powers.dfy"
-include "Congruence.dfy"
+include "Congruences.dfy"
 
 module NaiveMont {
     import opened Powers
-    import opened Congruence
+    import opened Congruences
 
     predicate divs(d:nat, n:int)
         requires d != 0;
@@ -34,9 +34,9 @@ module NaiveMont {
         42
     }
 
-    lemma mont_divisibility(T: int, M: nat, N: nat, N':nat, R: nat)
+    lemma mont_divisibe(T: int, M: nat, N: nat, N':nat, R: nat)
         requires 0 < N < R && gcd_def(N, R, 1);
-        requires M == T * N' % R;
+        requires M == (T * N') % R;
         requires cong(N' * N, -1, R);
         ensures (M * N + T) % R == 0;
     {
@@ -93,60 +93,28 @@ module NaiveMont {
         }
     }
 
+    lemma mont_congruent(T: nat, M: nat, N: nat, N_inv: nat, N':nat, R: nat)
+        requires T < N * R;
+        requires 0 < N < R && gcd_def(N, R, 1);
+        requires M == (T * N') % R;
+        ensures cong(T + M * N, T, N);
+
     method mont_mul(A: nat, B: nat, N: nat, N_inv: nat, N':nat, R: nat, R_inv: nat) returns (P: nat)
         requires 0 < N < R && gcd_def(N, R, 1);
+        requires A * B < N * R;
         // requires R_inv == mod_inverse(R, N);
         requires N_inv == mod_inverse(N, R);
         requires cong(N' * N, -1, R);
         // ensures P == A * B * R_inv % N;
     {
         var T := A * B;
-        var M := T * N' % R;
+        var M := (T * N') % R;
 
-        // assert cong(T * N' % R, T * N', R) by {
-        //     mod_mod_lemma(T * N', R);
-        // }
+        assert ((M * N) + T) % R == 0 by {
+            mont_divisibe(T, M, N, N', R);
+        }
 
-        // calc ==> {
-        //     cong(T * N' % R, T * N', R);
-        //     {
-        //         cong_mul_lemma(T * N' % R, T * N', N, R);
-        //     }
-        //     cong(T * N' % R * N, T * N' * N, R);
-        //     {
-        //         calc ==> {
-        //             cong(N' * N, -1, R);
-        //             {
-        //                 cong_mul_lemma(N' * N, -1, T, R);
-        //             }
-        //             cong(T * N' * N, -T, R);
-        //             {
-        //                 cong_trans(T * N' % R * N, T * N' * N, -T, R);
-        //             }
-        //             cong(T * N' % R * N, -T, R);
-        //             {
-        //                 assert M == T * N' % R;
-        //             }
-        //             cong(M * N, -T, R);
-        //         }
-        //     }
-        //     cong(M * N, -T, R);
-        //     {
-        //         cong_add_lemma(M * N, -T, T, R);
-        //     }
-        //     cong(M * N + T, 0, R);
-        //     (M * N + T) % R == 0 % R;
-        // }
-
-        assume false;
-        // assert ((M * N) + T) % R == 0 % R by {
-        //     assert cong((M * N) + T, 0, R);
-        // }
-
-        assume ((T + M * N) % R == 0);
         P := (T + M * N) / R;
-
-        // assume false;
     }
 
 }

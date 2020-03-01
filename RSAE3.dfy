@@ -1,5 +1,6 @@
 include "NativeTypes.dfy"
 include "Powers.dfy"
+include "Congruences.dfy"
 
 module RSAE3 {
     import opened NativeTypes
@@ -208,6 +209,14 @@ module RSAE3 {
             }
             assert interp(A, i) - interp(B, i) == interp(S, i) - b as int * postional_weight(i);
         }
+    }
+
+    method mont_mul_2(A: seq<uint32>, B: seq<uint32>, n0: uint32, n0': uint32)
+        requires |A| == |B|;
+        requires 
+    {
+
+
     }
 
     // method modpow3(A: nat, N:nat, R: nat, RR: nat)
