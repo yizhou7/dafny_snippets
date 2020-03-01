@@ -30,7 +30,7 @@ module Congruence {
 
     lemma mod_mod_lemma(a: int, n: int)
         requires n != 0;
-        ensures cong((a %n), a, n);
+        ensures cong((a % n), a, n);
     {
         reveal cong();
     }

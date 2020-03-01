@@ -38,6 +38,7 @@ module NaiveMont {
         requires 0 < N < R && gcd_def(N, R, 1);
         requires M == T * N' % R;
         requires cong(N' * N, -1, R);
+        ensures (M * N + T) % R == 0;
     {
         assert cong(T * N' % R, T * N', R) by {
             mod_mod_lemma(T * N', R);
@@ -70,21 +71,26 @@ module NaiveMont {
             }
         }
 
-        calc ==> {
-            cong(M * N, T * N' * N, R) && cong(T * N' * N, -T, R);
-            {
-                cong_trans_lemma(M * N, T * N' * N, -T, R);
+        assert (M * N + T) % R == 0 by {
+            calc ==> {
+                cong(M * N, T * N' * N, R) && cong(T * N' * N, -T, R);
+                {
+                    cong_trans_lemma(M * N, T * N' * N, -T, R);
+                }
+                cong(M * N, -T, R);
+                {
+                    cong_add_lemma(M * N, -T, T, R);
+                }
+                cong(M * N + T, 0, R);
+                {
+                    reveal cong();
+                }
+                (M * N + T) % R == 0 % R;
+                {
+                    assume 0 % R == 0;
+                }
             }
-            cong(M * N, -T, R);
-            {
-                cong_add_lemma(M * N, -T, T, R);
-            }
-            cong(M * N + T, 0, R);
         }
-
-    
-        assume false;
-        
     }
 
     method mont_mul(A: nat, B: nat, N: nat, N_inv: nat, N':nat, R: nat, R_inv: nat) returns (P: nat)
