@@ -5,6 +5,7 @@ include "Congruences.dfy"
 module RSAE3 {
     import opened NativeTypes
     import opened Powers
+    import opened Congruences
 
     const E_2_32 :int := UINT32_MAX as int + 1;
 
@@ -211,12 +212,40 @@ module RSAE3 {
         }
     }
 
-    method mont_mul_2(A: seq<uint32>, B: seq<uint32>, n0: uint32, n0': uint32)
-        requires |A| == |B|;
-        requires 
+    method mont_red(A: seq<uint32>, n: nat, m: int, m': uint32, R: nat)
+        requires |A| == 2 * n as int;
+        requires R == power(E_2_32, n as nat);
     {
+        var i := 0;
+        while i < |A|
+            decreases |A| - i; 
+        {
+            // A := mont_red_step(A, n, i, m, m', R);
+            i := i + 1;
+        }
+    }
 
+    method mont_red_step(A: seq<uint32>, n: nat, i: nat, m: int, m': uint32, R: nat)
+        returns (A': seq<uint32>)
+        requires |A| == 2 * n as int;
+        requires 0 <= i < |A|;
+        requires forall j :: 0 <= j < i ==> A[j] == 0;
+        ensures forall j :: 0 <= j <= i ==> A[j] == 0;
+    {
+        var p_i := A[i] as nat * m' as nat; // there should be a better way
+        var u_i :uint32 := (p_i % E_2_32) as uint32;
 
+        A' := seq_add_pos(A, n, i, u_i, m, m');
+    }
+
+    method seq_add_pos(A: seq<uint32>, n: nat, i: nat, u_i: uint32, m: int, m': uint32) 
+        returns (A': seq<uint32>)
+        requires 0 <= i < |A|;
+        requires forall j :: 0 <= j < i ==> A[j] == 0;
+        ensures seq_interp(A) == seq_interp(A') + (u_i as int) * m * power(E_2_32, i);
+        ensures forall j :: 0 <= j <= i ==> A[j] == 0;
+    {
+        assume false;
     }
 
     // method modpow3(A: nat, N:nat, R: nat, RR: nat)
