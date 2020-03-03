@@ -212,9 +212,9 @@ module RSAE3 {
         }
     }
 
-    method mont_red(T: seq<uint32>, n: nat, m: int, m': uint32, R: nat)
+    method mont_red(T: seq<uint32>, M: seq<uint32>, n: nat, m': uint32, R: nat)
         returns (A': seq<uint32>)
-
+        requires |M| == n as int;
         requires |T| == 2 * n as int;
         requires R == power(E_2_32, n as nat);
     {
@@ -227,14 +227,17 @@ module RSAE3 {
             decreases |A| - i;
             invariant forall j :: 0 <= j < i ==> A[j] == 0;
         {
-            A := mont_red_step(A, n, i, m, m', R);
+            A := mont_red_step(A, M, n, i, m', R);
             i := i + 1;
         }
     }
 
-    method mont_red_step(A: seq<uint32>, n: nat, i: nat, m: int, m': uint32, R: nat)
+    method mont_red_step(A: seq<uint32>, M: seq<uint32>, n: nat, i: nat, m': uint32, R: nat)
         returns (A': seq<uint32>)
+
         requires |A| == 2 * n as int;
+        requires |M| == n as int;
+
         requires 0 <= i < n;
         requires forall j :: 0 <= j < i ==> A[j] == 0;
 
@@ -244,19 +247,20 @@ module RSAE3 {
         var p_i := A[i] as nat * m' as nat; // there should be a better way
         var u_i :uint32 := (p_i % E_2_32) as uint32;
 
-        A' := seq_add_pos(A, n, i, u_i, m, m');
+        A' := seq_add_pos(A, M, n, i, u_i, m');
     }
 
-    method seq_add_pos(A: seq<uint32>, n: nat, i: nat, u_i: uint32, m: int, m': uint32) 
+    method seq_add_pos(A: seq<uint32>, M:seq<uint32>, n: nat, i: nat, u_i: uint32, m': uint32) 
         returns (A': seq<uint32>)
         requires |A| == 2 * n as int;
         requires 0 <= i < n;
         requires forall j :: 0 <= j < i ==> A[j] == 0;
 
         ensures |A| == |A'|;
-        ensures seq_interp(A) == seq_interp(A') + (u_i as int) * m * power(E_2_32, i);
+        ensures seq_interp(A) == seq_interp(A') + (u_i as int) * seq_interp(M) * power(E_2_32, i);
         ensures forall j :: 0 <= j <= i ==> A'[j] == 0;
     {
+
         assume false;
     }
 
