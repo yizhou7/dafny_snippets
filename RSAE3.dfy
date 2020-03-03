@@ -212,15 +212,22 @@ module RSAE3 {
         }
     }
 
-    method mont_red(A: seq<uint32>, n: nat, m: int, m': uint32, R: nat)
-        requires |A| == 2 * n as int;
+    method mont_red(T: seq<uint32>, n: nat, m: int, m': uint32, R: nat)
+        returns (A': seq<uint32>)
+
+        requires |T| == 2 * n as int;
         requires R == power(E_2_32, n as nat);
     {
+        var A := T;
+
         var i := 0;
-        while i < |A|
-            decreases |A| - i; 
+        while i < n
+            invariant 0 <= i <= n;
+            invariant |A| == 2 * n as int;
+            decreases |A| - i;
+            invariant forall j :: 0 <= j < i ==> A[j] == 0;
         {
-            // A := mont_red_step(A, n, i, m, m', R);
+            A := mont_red_step(A, n, i, m, m', R);
             i := i + 1;
         }
     }
@@ -228,9 +235,11 @@ module RSAE3 {
     method mont_red_step(A: seq<uint32>, n: nat, i: nat, m: int, m': uint32, R: nat)
         returns (A': seq<uint32>)
         requires |A| == 2 * n as int;
-        requires 0 <= i < |A|;
+        requires 0 <= i < n;
         requires forall j :: 0 <= j < i ==> A[j] == 0;
-        ensures forall j :: 0 <= j <= i ==> A[j] == 0;
+
+        ensures |A| == |A'|;
+        ensures forall j :: 0 <= j <= i ==> A'[j] == 0;
     {
         var p_i := A[i] as nat * m' as nat; // there should be a better way
         var u_i :uint32 := (p_i % E_2_32) as uint32;
@@ -240,10 +249,13 @@ module RSAE3 {
 
     method seq_add_pos(A: seq<uint32>, n: nat, i: nat, u_i: uint32, m: int, m': uint32) 
         returns (A': seq<uint32>)
-        requires 0 <= i < |A|;
+        requires |A| == 2 * n as int;
+        requires 0 <= i < n;
         requires forall j :: 0 <= j < i ==> A[j] == 0;
+
+        ensures |A| == |A'|;
         ensures seq_interp(A) == seq_interp(A') + (u_i as int) * m * power(E_2_32, i);
-        ensures forall j :: 0 <= j <= i ==> A[j] == 0;
+        ensures forall j :: 0 <= j <= i ==> A'[j] == 0;
     {
         assume false;
     }
