@@ -26,14 +26,51 @@ module RSAE3 {
         A[i] as int * postional_weight(i)
     }
 
+    lemma word_interp_upper_bound(A: seq<uint32>, i: nat)
+        requires i < |A|;
+        // ensures word_interp(A, i) <= power(E_2_32, i + 1)
+    {
+        assert A[i] as int <= E_2_32;
+        calc ==> {
+            A[i] as int <= E_2_32;
+            A[i] as int * postional_weight(i) <= E_2_32 * postional_weight(i);
+
+        }
+    }
+
     function seq_interp(A: seq<uint32>) : int
     {
         interp(A, |A|)
     }
 
-    function postional_weight(i: nat) : int
+    lemma {:induction A} seq_interp_max_bound(A: seq<uint32>)
+        requires |A| != 0;
+        ensures seq_interp(A) < power(E_2_32, |A|)
     {
-        power(E_2_32, i) as int
+        if |A| == 1 {
+            reveal power();
+        } else {
+            ghost var A' := A[..(|A| - 1)];
+
+            calc ==> {
+                seq_interp(A) == word_interp(A, |A| - 1) + interp(A, |A| - 1);
+                {
+                    assume seq_interp(A') == interp(A, |A| - 1);
+                }
+                seq_interp(A) == word_interp(A, |A| - 1) + seq_interp(A');
+                {
+                    assert seq_interp(A') < power(E_2_32, |A'|);
+                }
+                seq_interp(A) < word_interp(A, |A| - 1) + power(E_2_32, |A'|);
+
+            }
+            assume false;
+        }
+    }
+
+    function postional_weight(i: nat) : nat
+    {
+        power(E_2_32, i) as nat
     }
 
     lemma postional_shift_lemma(i: int)
@@ -250,7 +287,7 @@ module RSAE3 {
         A' := seq_add_pos(A, M, n, i, u_i, m');
     }
 
-    method seq_add_pos(A: seq<uint32>, M:seq<uint32>, n: nat, i: nat, u_i: uint32, m': uint32) 
+    method seq_add_pos(A: seq<uint32>, M: seq<uint32>, n: nat, i: nat, u_i: uint32, m': uint32) 
         returns (A': seq<uint32>)
         requires |A| == 2 * n as int;
         requires 0 <= i < n;
@@ -260,6 +297,16 @@ module RSAE3 {
         ensures seq_interp(A) == seq_interp(A') + (u_i as int) * seq_interp(M) * power(E_2_32, i);
         ensures forall j :: 0 <= j <= i ==> A'[j] == 0;
     {
+        A' := A;
+        var i := i;
+
+
+
+        // while i < |M| 
+        // {
+
+        //     i := i + 1;
+        // }
 
         assume false;
     }
