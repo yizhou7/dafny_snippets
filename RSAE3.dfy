@@ -7,7 +7,7 @@ module RSAE3 {
     import opened Powers
     import opened Congruences
 
-    const E_2_32 :int := UINT32_MAX as int + 1;
+    const BASE :int := UINT32_MAX as int + 1;
 
     function method reinterpret_cast(a: int64) : uint64
 
@@ -26,15 +26,29 @@ module RSAE3 {
         A[i] as int * postional_weight(i)
     }
 
+    function postional_weight(i: nat) : nat
+    {
+        power(BASE, i) as nat
+    }
+
     lemma word_interp_upper_bound(A: seq<uint32>, i: nat)
         requires i < |A|;
-        // ensures word_interp(A, i) <= power(E_2_32, i + 1)
+        ensures word_interp(A, i) <= power(BASE, i + 1) - power(BASE, i);
     {
-        assert A[i] as int <= E_2_32;
+        assert A[i] as int <= BASE;
         calc ==> {
-            A[i] as int <= E_2_32;
-            A[i] as int * postional_weight(i) <= E_2_32 * postional_weight(i);
-
+            A[i] as int <= BASE;
+            A[i] as int * postional_weight(i) <= (BASE - 1) * postional_weight(i);
+            {
+                assert word_interp(A, i) == A[i] as int * postional_weight(i);
+            }
+             word_interp(A, i) <= (BASE - 1) * postional_weight(i);
+             word_interp(A, i) <= (BASE - 1) * power(BASE, i);
+             word_interp(A, i) <= BASE * power(BASE, i) - power(BASE, i);
+             {
+                power_add_one_lema(BASE, i);
+             }
+             word_interp(A, i) <= power(BASE, i + 1) - power(BASE, i);
         }
     }
 
@@ -45,7 +59,7 @@ module RSAE3 {
 
     lemma {:induction A} seq_interp_max_bound(A: seq<uint32>)
         requires |A| != 0;
-        ensures seq_interp(A) < power(E_2_32, |A|)
+        ensures seq_interp(A) < power(BASE, |A|)
     {
         if |A| == 1 {
             reveal power();
@@ -59,32 +73,34 @@ module RSAE3 {
                 }
                 seq_interp(A) == word_interp(A, |A| - 1) + seq_interp(A');
                 {
-                    assert seq_interp(A') < power(E_2_32, |A'|);
+                    assert seq_interp(A') < power(BASE, |A'|);
                 }
-                seq_interp(A) < word_interp(A, |A| - 1) + power(E_2_32, |A'|);
-
+                seq_interp(A) < word_interp(A, |A| - 1) + power(BASE, |A'|);
+                {
+                    assert word_interp(A, |A| - 1) <= power(BASE, |A|) by {
+                        word_interp_upper_bound(A, |A| - 1);
+                    }
+                }
+                seq_interp(A) < power(BASE, |A|) + power(BASE, |A'|);
             }
+            
             assume false;
         }
     }
 
-    function postional_weight(i: nat) : nat
-    {
-        power(E_2_32, i) as nat
-    }
 
     lemma postional_shift_lemma(i: int)
         requires i > 0;
-        ensures postional_weight(i - 1) * E_2_32 == postional_weight(i);
+        ensures postional_weight(i - 1) * BASE == postional_weight(i);
     {
         calc == {
-            postional_weight(i - 1) * E_2_32;
+            postional_weight(i - 1) * BASE;
             ==
-            power(E_2_32, i - 1) * E_2_32;
+            power(BASE, i - 1) * BASE;
             {
-                power_add_one_lema(E_2_32, i - 1);
+                power_add_one_lema(BASE, i - 1);
             }
-            power(E_2_32, i);
+            power(BASE, i);
             ==
             postional_weight(i);
         }
@@ -125,7 +141,7 @@ module RSAE3 {
 
             var sum: uint64 := A[i] as uint64 + B[i] as uint64 + c as uint64;
             var masked := and64(sum, UINT32_MAX as uint64) as uint32;
-            assume masked as int + E_2_32 == sum as int;
+            assume masked as int + BASE == sum as int;
 
             ghost var S_old := S;
             ghost var prefix_sum := interp(S_old, i);
@@ -163,7 +179,7 @@ module RSAE3 {
                 c := 1;
                 calc == {
                     postional_weight(i - 1) * (sum as int) + interp(S, i_old);
-                    postional_weight(i - 1) * masked as int + postional_weight(i - 1) * E_2_32 + interp(S, i_old);
+                    postional_weight(i - 1) * masked as int + postional_weight(i - 1) * BASE + interp(S, i_old);
                     {
                         postional_shift_lemma(i);
                     }
@@ -198,7 +214,7 @@ module RSAE3 {
             var diff: int64 := A[i] as int64 - B[i] as int64 - b as int64;
             var masked := and64(reinterpret_cast(diff), UINT32_MAX as uint64) as uint32;
 
-            assume diff < 0 ==> masked as int == diff as int + E_2_32 as int;
+            assume diff < 0 ==> masked as int == diff as int + BASE as int;
             assume diff >= 0 ==> masked as int == diff as int;
 
             ghost var S_old := S;
@@ -235,7 +251,7 @@ module RSAE3 {
                 b := 1;
                 calc == {
                     postional_weight(i - 1) * (diff as int) + interp(S, i_old);
-                    postional_weight(i - 1) * masked as int - postional_weight(i - 1) * E_2_32 + interp(S, i_old);
+                    postional_weight(i - 1) * masked as int - postional_weight(i - 1) * BASE + interp(S, i_old);
                     {
                         postional_shift_lemma(i);
                     }
@@ -253,7 +269,7 @@ module RSAE3 {
         returns (A': seq<uint32>)
         requires |M| == n as int;
         requires |T| == 2 * n as int;
-        requires R == power(E_2_32, n as nat);
+        requires R == power(BASE, n as nat);
     {
         var A := T;
 
@@ -282,7 +298,7 @@ module RSAE3 {
         ensures forall j :: 0 <= j <= i ==> A'[j] == 0;
     {
         var p_i := A[i] as nat * m' as nat; // there should be a better way
-        var u_i :uint32 := (p_i % E_2_32) as uint32;
+        var u_i :uint32 := (p_i % BASE) as uint32;
 
         A' := seq_add_pos(A, M, n, i, u_i, m');
     }
@@ -294,7 +310,7 @@ module RSAE3 {
         requires forall j :: 0 <= j < i ==> A[j] == 0;
 
         ensures |A| == |A'|;
-        ensures seq_interp(A) == seq_interp(A') + (u_i as int) * seq_interp(M) * power(E_2_32, i);
+        ensures seq_interp(A) == seq_interp(A') + (u_i as int) * seq_interp(M) * power(BASE, i);
         ensures forall j :: 0 <= j <= i ==> A'[j] == 0;
     {
         A' := A;
