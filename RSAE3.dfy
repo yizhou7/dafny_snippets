@@ -20,6 +20,13 @@ module RSAE3 {
         else word_interp(A, i - 1) + interp(A, i - 1)
     }
 
+    function MOD(A: seq<uint32>) : int
+        ensures MOD(A) != 0;
+    {
+        reveal power();
+        power(BASE, |A|)
+    }
+
     function word_interp(A: seq<uint32>, i: nat) : int
         requires i < |A|;
     {
@@ -31,7 +38,7 @@ module RSAE3 {
         power(BASE, i) as nat
     }
 
-    lemma word_interp_upper_bound(A: seq<uint32>, i: nat)
+    lemma word_interp_upper_bound_lemma(A: seq<uint32>, i: nat)
         requires i < |A|;
         ensures word_interp(A, i) <= power(BASE, i + 1) - power(BASE, i);
     {
@@ -57,9 +64,9 @@ module RSAE3 {
         interp(A, |A|)
     }
 
-    lemma {:induction A} seq_interp_max_bound(A: seq<uint32>)
+    lemma {:induction A} seq_interp_max_bound_lemma(A: seq<uint32>)
         requires |A| != 0;
-        ensures seq_interp(A) < power(BASE, |A|)
+        ensures seq_interp(A) < MOD(A);
     {
         if |A| == 1 {
             reveal power();
@@ -78,7 +85,7 @@ module RSAE3 {
                 seq_interp(A) < word_interp(A, |A| - 1) + power(BASE, |A'|);
                 {
                     assert word_interp(A, |A| - 1) <= power(BASE, |A|) - power(BASE, |A| - 1) by {
-                        word_interp_upper_bound(A, |A| - 1);
+                        word_interp_upper_bound_lemma(A, |A| - 1);
                     }
                 }
                 seq_interp(A) < power(BASE, |A|) - power(BASE, |A| - 1) + power(BASE, |A'|);
@@ -86,7 +93,6 @@ module RSAE3 {
             }
         }
     }
-
 
     lemma postional_shift_lemma(i: int)
         requires i > 0;
@@ -105,13 +111,6 @@ module RSAE3 {
         }
     }
 
-    lemma interp_expand(A: seq<uint32>, i: nat)
-        requires 0  < i <= |A|;
-        ensures interp(A, i) == A[i - 1] as int * postional_weight(i - 1) + interp(A, i - 1);
-    {
-
-    }
-
     lemma {:induction i} prefix_sum_lemma(S: seq<uint32>, S': seq<uint32>, i: nat)
         requires 0 <= i <= |S| && 0 <= i <= |S'|;
         requires S[..i] == S'[..i];
@@ -123,6 +122,8 @@ module RSAE3 {
     method seq_add(A: seq<uint32>, B: seq<uint32>) returns (c: uint32, S:seq<uint32>)
         requires |A| == |B|;
         ensures seq_interp(A) + seq_interp(B) == seq_interp(S) + c as int * postional_weight(|A|);
+        ensures |S| == |A|;
+        ensures cong(seq_interp(A) + seq_interp(B), seq_interp(S), MOD(A));
     {
         var temp := new uint32[|A|];
         c, S := 0, temp[..];
@@ -190,6 +191,21 @@ module RSAE3 {
 
             assert interp(A, i) + interp(B, i) == interp(S, i) + c as int * postional_weight(i);
         }
+
+        if c == 0 {
+            ghost var N := MOD(A);
+            assert seq_interp(A) + seq_interp(B) == seq_interp(S);
+            assert (seq_interp(A) + seq_interp(B)) % N == seq_interp(S) % N;
+            reveal cong();
+        } else {
+            assume false;
+        }
+    }
+
+    lemma seq_add_warp_lemma(A: seq<uint32>, B: seq<uint32>, c: uint32, S:seq<uint32>)
+        requires seq_interp(A) + seq_interp(B) == seq_interp(S) + c as int * postional_weight(|A|);
+    {
+
     }
 
     method seq_sub(A: seq<uint32>, B: seq<uint32>) returns (b: uint32, S:seq<uint32>)
@@ -313,18 +329,20 @@ module RSAE3 {
         ensures forall j :: 0 <= j <= i ==> A'[j] == 0;
     {
         A' := A;
+        
         var i := i;
-
-
-
-        // while i < |M| 
-        // {
-
-        //     i := i + 1;
-        // }
 
         assume false;
     }
+
+    method magic_mul(M: seq<uint32>, n: nat, i: nat, u_i: uint32)
+        returns (P: seq<uint32>)
+        ensures |P| == 2 * n as int;
+        ensures seq_interp(P) == (u_i as int) * seq_interp(M) * power(BASE, i)
+    {
+        assume false;
+    }
+
 
     // method modpow3(A: nat, N:nat, R: nat, RR: nat)
     //     requires RR == R * R;
