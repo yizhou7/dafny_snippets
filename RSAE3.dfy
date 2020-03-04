@@ -77,14 +77,13 @@ module RSAE3 {
                 }
                 seq_interp(A) < word_interp(A, |A| - 1) + power(BASE, |A'|);
                 {
-                    assert word_interp(A, |A| - 1) <= power(BASE, |A|) by {
+                    assert word_interp(A, |A| - 1) <= power(BASE, |A|) - power(BASE, |A| - 1) by {
                         word_interp_upper_bound(A, |A| - 1);
                     }
                 }
-                seq_interp(A) < power(BASE, |A|) + power(BASE, |A'|);
+                seq_interp(A) < power(BASE, |A|) - power(BASE, |A| - 1) + power(BASE, |A'|);
+                seq_interp(A) < power(BASE, |A|);
             }
-            
-            assume false;
         }
     }
 
