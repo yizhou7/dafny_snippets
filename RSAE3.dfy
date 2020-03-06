@@ -310,15 +310,54 @@ module RSAE3 {
             var S := seq_add(P_1, P_2, n + 1);
             var A' := seq_add(A, S, n + 1);
 
+            assert cong(S[0] as int, P_1[0] as int + P_2[0] as int, BASE) by {
+                seq_add_0_index_lemma(P_1, P_2, S, n + 1); 
+            }
+
+            calc ==> {
+                cong(S[0] as int, P_1[0] as int + P_2[0] as int, BASE);
+                {
+                    cong_add_lemma_1(S[0] as int, P_1[0] as int + P_2[0] as int, A[0] as int,BASE);
+                }
+                cong(S[0] as int + A[0] as int, P_1[0] as int + P_2[0] as int + A[0] as int, BASE);
+                {
+                    assert cong(A'[0] as int, A[0] as int + S[0] as int, BASE) by {
+                        seq_add_0_index_lemma(A, S, A', n + 1); 
+                    }
+                    cong_trans_lemma(A'[0] as int, A[0] as int + S[0] as int,
+                        P_1[0] as int + P_2[0] as int + A[0] as int,
+                        BASE);
+                }
+                cong(A'[0] as int, P_1[0] as int + P_2[0] as int + A[0] as int, BASE);
+            }
+
+            assert cong(P_1[0] as int + P_2[0] as int, y[0] as int * x[i] as int + m[0] as int * u_i as int, BASE) by {
+                    assert cong(P_1[0] as int, y[0] as int * x[i] as int, BASE);
+                    assert cong(P_2[0] as int, m[0] as int * u_i as int, BASE);
+                    cong_add_lemma_2(P_1[0] as int, y[0] as int * x[i] as int, 
+                        P_2[0] as int, m[0] as int * u_i as int, BASE);
+                }
+                assert cong(P_1[0] as int + P_2[0] as int + A[0] as int, y[0] as int * x[i] as int + m[0] as int * u_i as int + A[0] as int, BASE) by {
+                    assert cong(P_1[0] as int + P_2[0] as int, y[0] as int * x[i] as int + m[0] as int * u_i as int, BASE);
+                    cong_add_lemma_1(P_1[0] as int + P_2[0] as int, y[0] as int * x[i] as int + m[0] as int * u_i as int, A[0] as int, BASE);
+                }
+            }
+
+            // assert cong(A'[0] as int, A[0] as int + S[0] as int, BASE) by {
+            //     seq_add_0_index_lemma(A, S, A', n + 1); 
+            // }
+
             i := i + 1;
         }
     }
 
     method magic_mul(A: seq<uint32>, b: uint32, n: nat)
         returns (P: seq<uint32>)
+        requires n != 0;
         requires |A| == n;
         ensures |P| == n + 1;
         ensures seq_interp(P) == seq_interp(A) * b as int;
+        ensures cong(P[0] as int, A[0] as int * b as int, BASE);
     {
         assume false;
     }

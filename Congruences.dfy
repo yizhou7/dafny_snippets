@@ -62,8 +62,15 @@ module Congruences {
         // assert (a * c) % n == (b * c) % n;
     }
 
-    lemma cong_add_lemma(a: int, b: int, c: int, n: int)
+    lemma cong_add_lemma_1(a: int, b: int, c: int, n: int)
         requires n != 0;
         requires cong(a, b, n);
         ensures cong(a + c, b + c, n);
+
+    lemma cong_add_lemma_2(a: int, b: int, c: int, d: int, n: int)
+        requires n != 0;
+        requires cong(a, b, n);
+        requires cong(c, d, n);
+        ensures cong(a + c, b + d, n);
+
 }
