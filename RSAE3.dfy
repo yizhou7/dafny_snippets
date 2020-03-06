@@ -289,44 +289,60 @@ module RSAE3 {
         }
     }
 
+    lemma mont_mul_div_aux_lemma(y: int, x: int, m: int, a: int, m': int)
+        requires cong(m' * m, -1, BASE);
+    {
+        // assert cong(((a + x * y) * m') % BASE, (a + x * y) * m', BASE) by {
+        //     mod_mod_lemma((a + x * y) * m', BASE);
+        // }
+   
+        // calc ==> {
+        //     cong(((a + x * y) * m') % BASE, (a + x * y) * m', BASE);
+        //     {
+        //         cong_mul_lemma(((a + x * y) * m') % BASE, (a + x * y) * m', m, BASE);
+        //     }
+        //     cong(temp_1, m * (a + x * y) * m', BASE);
+        //     cong(temp_1, m * m' * (a + x * y), BASE);
+        //     {
+        //         assert cong(m * m' * (a + x * y), -(a + x * y), BASE) by {
+        //             assert cong(m' * m, -1, BASE);
+        //             cong_mul_lemma(m' * m, -1, (a + x * y), BASE);
+        //         }
+        //         cong_trans_lemma(temp_1, m * m' * (a + x * y), -(a + x * y), BASE);
+        //     }
+        //     cong(temp_1, -(a + x * y), BASE);
+        //     cong(temp_1, temp_2, BASE);
+        // }
+    }
+
     lemma mont_mul_div_lemma(y: int, x: int, m: int, a: int, m': int)
         requires cong(m' * m, -1, BASE);
-        // ensures cong(y * x + m * (((a + x * y) * m') % BASE) + a, BASE);
+        ensures cong(y * x + m * (((a + x * y) * m') % BASE) + a, 0, BASE);
     {
-        assert cong(((a + x * y) * m') % BASE, (a + x * y) * m', BASE) by {
-            mod_mod_lemma((a + x * y) * m', BASE);
-        }
+        ghost var temp_1 := m * (((a + x * y) * m') % BASE);
+        ghost var temp_2 := -(a + x * y);
+        ghost var temp_3 := x * y;
+
+        assume cong(temp_1, temp_2, BASE);
 
         calc ==> {
-            cong(((a + x * y) * m') % BASE, (a + x * y) * m', BASE);
+            cong(temp_1, temp_2, BASE);
             {
-                cong_mul_lemma(((a + x * y) * m') % BASE, (a + x * y) * m', m, BASE);
+                cong_add_lemma_1(temp_1, temp_2, temp_3, BASE);
             }
-            cong(m * (((a + x * y) * m') % BASE), m * (a + x * y) * m', BASE);
-            cong(m * (((a + x * y) * m') % BASE), m * m' * (a + x * y), BASE);
+            cong(temp_1 + temp_3, temp_2 + temp_3, BASE);
+            cong(temp_1 + temp_3, -(a + x * y) + x * y, BASE);
+            cong(temp_1 + temp_3, -a - x * y + x * y, BASE);
+            cong(temp_1 + temp_3, -a, BASE);
             {
-                assert cong(m * m' * (a + x * y), -(a + x * y), BASE) by {
-                    assert cong(m' * m, -1, BASE);
-                    cong_mul_lemma(m' * m, -1, (a + x * y), BASE);
-                }
-                cong_trans_lemma(m * (((a + x * y) * m') % BASE), m * m' * (a + x * y), -(a + x * y), BASE);
+                cong_add_lemma_1(temp_1 + temp_3, -a, a, BASE);
             }
-            cong(m * (((a + x * y) * m') % BASE), -(a + x * y), BASE);
-            {
-                // ghost var temp_1 := m * (((a + x * y) * m') % BASE);
-                // ghost var temp_2 := -(a + x * y);
-                // ghost var temp_3 := x * y;
-                // assert cong(temp_1, temp_2, BASE);
-
-                // assert cong(temp_1 + temp_3, temp_2 + temp_3, BASE) by {
-                //     cong_add_lemma_1(temp_1, temp_2, temp_3, BASE);
-                // }
-
-                // cong_add_lemma_1(m * (((a + x * y) * m') % BASE), -(a + x * y), a , BASE);
-            }
+            cong(temp_1 + temp_3 + a, 0, BASE);
+            cong(temp_3 + temp_1 + a, 0, BASE);
+            cong(x * y + temp_1 + a, 0, BASE);
+            cong(x * y + m * (((a + x * y) * m') % BASE) + a, 0, BASE);
         }
-        assume false;
-
+        assert cong(x * y + m * (((a + x * y) * m') % BASE) + a, 0, BASE);
     }
 
     method mont_mul(m: seq<uint32>, x: seq<uint32>, y: seq<uint32>, m': uint32, n: nat, ghost R: int)
