@@ -291,8 +291,9 @@ module RSAE3 {
 
     lemma mont_mul_div_aux_lemma(y: int, x: int, m: int, a: int, m': int)
         requires cong(m' * m, -1, BASE);
+        ensures cong(m * (((a + x * y) * m') % BASE), -(a + x * y), BASE);
     {
-        assert A: cong(((a + x * y) * m') % BASE, (a + x * y) * m', BASE) by {
+        assert A_1: cong(((a + x * y) * m') % BASE, (a + x * y) * m', BASE) by {
             mod_mod_lemma((a + x * y) * m', BASE);
         }
 
@@ -320,10 +321,17 @@ module RSAE3 {
             cong(temp_1, temp_2, BASE);
         }
 
-        // assert cong(temp_1, temp_2, BASE);
-        // cong(m * (((a + x * y) * m') % BASE), temp_2, BASE);
-        // cong(m * (((a + x * y) * m') % BASE), -(a + x * y), BASE);
-        // assert cong(m * (((a + x * y) * m') % BASE), -(a + x * y), BASE);
+        assert cong(temp_1, temp_2, BASE) by {
+            reveal A_1;
+        }
+
+        calc ==> {
+            cong(temp_1, temp_2, BASE);
+            cong(m * (((a + x * y) * m') % BASE), temp_2, BASE);
+            cong(m * (((a + x * y) * m') % BASE), -(a + x * y), BASE);
+        }
+
+        assert cong(m * (((a + x * y) * m') % BASE), -(a + x * y), BASE);
     }
 
     lemma mont_mul_div_lemma(y: int, x: int, m: int, a: int, m': int)
