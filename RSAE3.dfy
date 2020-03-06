@@ -289,7 +289,7 @@ module RSAE3 {
         }
     }
 
-    lemma mont_mul_div_aux_lemma(y: int, x: int, m: int, a: int, m': int)
+    lemma mont_mul_div_aux_lemma_1(y: int, x: int, m: int, a: int, m': int)
         requires cong(m' * m, -1, BASE);
         ensures cong(m * (((a + x * y) * m') % BASE), -(a + x * y), BASE);
     {
@@ -334,7 +334,7 @@ module RSAE3 {
         assert cong(m * (((a + x * y) * m') % BASE), -(a + x * y), BASE);
     }
 
-    lemma mont_mul_div_lemma(y: int, x: int, m: int, a: int, m': int)
+    lemma mont_mul_div_aux_lemma_2(y: int, x: int, m: int, a: int, m': int)
         requires cong(m' * m, -1, BASE);
         ensures cong(y * x + m * (((a + x * y) * m') % BASE) + a, 0, BASE);
     {
@@ -342,7 +342,9 @@ module RSAE3 {
         ghost var temp_2 := -(a + x * y);
         ghost var temp_3 := x * y;
 
-        assume cong(temp_1, temp_2, BASE);
+        assert cong(temp_1, temp_2, BASE) by {
+            mont_mul_div_aux_lemma_1(y, x, m, a, m');
+        }
 
         calc ==> {
             cong(temp_1, temp_2, BASE);
@@ -364,6 +366,66 @@ module RSAE3 {
         assert cong(x * y + m * (((a + x * y) * m') % BASE) + a, 0, BASE);
     }
 
+    lemma mont_mul_divisible_lemma(m: seq<uint32>,
+        x: seq<uint32>,
+        y: seq<uint32>,
+        P_1: seq<uint32>,
+        P_2: seq<uint32>,
+        S: seq<uint32>,
+        A: seq<uint32>,
+        A': seq<uint32>,
+        i: nat,
+        u_i: uint32,
+        m': uint32,
+        n: nat)
+
+        requires n > 2 && i < n;
+        requires |m| == |x| == |y| == n;
+        requires |P_1| ==|P_2| == n + 1;
+        requires |A'| == |S| == |A| == n + 1;
+
+        requires cong(P_1[0] as int, y[0] as int * x[i] as int, BASE);
+        requires cong(P_2[0] as int, m[0] as int * u_i as int, BASE);
+
+        requires cong(seq_interp(A) + seq_interp(S), seq_interp(A'), power(BASE, n + 1));
+            // var S := seq_add(P_1, P_2, n + 1);
+            // var A' := seq_add(A, S, n + 1);
+    {
+        calc ==> {
+            cong(S[0] as int, P_1[0] as int + P_2[0] as int, BASE);
+            {
+                cong_add_lemma_1(S[0] as int, P_1[0] as int + P_2[0] as int, A[0] as int,BASE);
+            }
+            cong(S[0] as int + A[0] as int, P_1[0] as int + P_2[0] as int + A[0] as int, BASE);
+            {
+                assert cong(A'[0] as int, A[0] as int + S[0] as int, BASE) by {
+                    seq_add_0_index_lemma(A, S, A', n + 1); 
+                }
+                // cong_trans_lemma(A'[0] as int, A[0] as int + S[0] as int,
+                //     P_1[0] as int + P_2[0] as int + A[0] as int,
+                //     BASE);
+            }
+            // cong(A'[0] as int, P_1[0] as int + P_2[0] as int + A[0] as int, BASE);
+            // {
+            //     assert cong(P_1[0] as int + P_2[0] as int + A[0] as int, y[0] as int * x[i] as int + m[0] as int * u_i as int + A[0] as int, BASE) by {
+            //         assert cong(P_1[0] as int + P_2[0] as int, y[0] as int * x[i] as int + m[0] as int * u_i as int, BASE) by {
+            //             assert cong(P_1[0] as int, y[0] as int * x[i] as int, BASE);
+            //             assert cong(P_2[0] as int, m[0] as int * u_i as int, BASE);
+            //             cong_add_lemma_2(P_1[0] as int, y[0] as int * x[i] as int, P_2[0] as int, m[0] as int * u_i as int, BASE);
+            //         }
+            //         cong_add_lemma_1(P_1[0] as int + P_2[0] as int, y[0] as int * x[i] as int + m[0] as int * u_i as int, A[0] as int, BASE);
+            //     }
+            //     cong_trans_lemma(A'[0] as int, P_1[0] as int + P_2[0] as int + A[0] as int, y[0] as int * x[i] as int + m[0] as int * u_i as int + A[0] as int, BASE);
+            // }
+            // cong(A'[0] as int, y[0] as int * x[i] as int + m[0] as int * u_i as int + A[0] as int, BASE);
+            // {
+            //     assert u_i as int == ((A[0] as int + x[i] as int * y[0] as int) * m' as int) % BASE;
+            // }
+            // cong(A'[0] as int, y[0] as int * x[i] as int + m[0] as int * (((A[0] as int + x[i] as int * y[0] as int) * m' as int) % BASE) + A[0] as int, BASE);
+        }
+    }
+
+
     method mont_mul(m: seq<uint32>, x: seq<uint32>, y: seq<uint32>, m': uint32, n: nat, ghost R: int)
         requires n > 2;
         requires |m| == n && |x| == n && |y| == n;
@@ -384,49 +446,7 @@ module RSAE3 {
             var P_2 := magic_mul(m, u_i, n);
             var S := seq_add(P_1, P_2, n + 1);
             var A' := seq_add(A, S, n + 1);
-
-            // assert cong(S[0] as int, P_1[0] as int + P_2[0] as int, BASE) by {
-            //     seq_add_0_index_lemma(P_1, P_2, S, n + 1); 
-            // }
-
-            calc ==> {
-                cong(S[0] as int, P_1[0] as int + P_2[0] as int, BASE);
-                {
-                    cong_add_lemma_1(S[0] as int, P_1[0] as int + P_2[0] as int, A[0] as int,BASE);
-                }
-                cong(S[0] as int + A[0] as int, P_1[0] as int + P_2[0] as int + A[0] as int, BASE);
-                {
-                    assert cong(A'[0] as int, A[0] as int + S[0] as int, BASE) by {
-                        seq_add_0_index_lemma(A, S, A', n + 1); 
-                    }
-                    cong_trans_lemma(A'[0] as int, A[0] as int + S[0] as int,
-                        P_1[0] as int + P_2[0] as int + A[0] as int,
-                        BASE);
-                }
-                cong(A'[0] as int, P_1[0] as int + P_2[0] as int + A[0] as int, BASE);
-                {
-                    assert cong(P_1[0] as int + P_2[0] as int + A[0] as int, y[0] as int * x[i] as int + m[0] as int * u_i as int + A[0] as int, BASE) by {
-                        assert cong(P_1[0] as int + P_2[0] as int, y[0] as int * x[i] as int + m[0] as int * u_i as int, BASE) by {
-                            assert cong(P_1[0] as int, y[0] as int * x[i] as int, BASE);
-                            assert cong(P_2[0] as int, m[0] as int * u_i as int, BASE);
-                            cong_add_lemma_2(P_1[0] as int, y[0] as int * x[i] as int, P_2[0] as int, m[0] as int * u_i as int, BASE);
-                        }
-                        cong_add_lemma_1(P_1[0] as int + P_2[0] as int, y[0] as int * x[i] as int + m[0] as int * u_i as int, A[0] as int, BASE);
-                    }
-                    cong_trans_lemma(A'[0] as int, P_1[0] as int + P_2[0] as int + A[0] as int, y[0] as int * x[i] as int + m[0] as int * u_i as int + A[0] as int, BASE);
-                }
-                cong(A'[0] as int, y[0] as int * x[i] as int + m[0] as int * u_i as int + A[0] as int, BASE);
-                {
-                    assert u_i as int == ((A[0] as int + x[i] as int * y[0] as int) * m' as int) % BASE;
-                }
-                cong(A'[0] as int, y[0] as int * x[i] as int + m[0] as int * (((A[0] as int + x[i] as int * y[0] as int) * m' as int) % BASE) + A[0] as int, BASE);
-
-            }
-
-            // assert cong(A'[0] as int, A[0] as int + S[0] as int, BASE) by {
-            //     seq_add_0_index_lemma(A, S, A', n + 1); 
-            // }
-
+   
             i := i + 1;
         }
     }
