@@ -122,7 +122,7 @@ module RSAE3 {
     method seq_add_c(A: seq<uint32>, B: seq<uint32>, n: nat) returns (c: uint32, S:seq<uint32>)
         requires |A| == |B| == n;
         ensures |S| == n;
-        ensures seq_interp(A) + seq_interp(B) == seq_interp(S) + c as int * postional_weight(|A|);
+        ensures seq_interp(A) + seq_interp(B) == seq_interp(S) + c as int * postional_weight(n);
     {
         var temp := new uint32[|A|];
         c, S := 0, temp[..];
@@ -189,6 +189,15 @@ module RSAE3 {
             }
             assert interp(A, i) + interp(B, i) == interp(S, i) + c as int * postional_weight(i);
         }
+    }
+
+    lemma seq_add_0_index_lemma(A: seq<uint32>, B: seq<uint32>, S: seq<uint32>, n: nat) 
+        requires n != 0
+        requires |A| == |B| == |S| == n;
+        requires cong(seq_interp(A) + seq_interp(B), seq_interp(S), power(BASE, n));
+        ensures cong(S[0] as int, A[0] as int + B[0] as int, BASE);
+    {
+        assume false;
     }
 
     method seq_add(A: seq<uint32>, B: seq<uint32>, n: nat) returns (S: seq<uint32>)
