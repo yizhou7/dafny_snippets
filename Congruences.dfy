@@ -69,8 +69,7 @@ module Congruences {
 
     lemma cong_add_lemma_2(a: int, b: int, c: int, d: int, n: int)
         requires n != 0;
-        requires cong(a, b, n);
-        requires cong(c, d, n);
+        requires cong(a, b, n) && cong(c, d, n);
         ensures cong(a + c, b + d, n);
 
 }

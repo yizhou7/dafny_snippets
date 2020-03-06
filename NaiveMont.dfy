@@ -79,7 +79,7 @@ module NaiveMont {
                 }
                 cong(M * N, -T, R);
                 {
-                    cong_add_lemma(M * N, -T, T, R);
+                    cong_add_lemma_1(M * N, -T, T, R);
                 }
                 cong(M * N + T, 0, R);
                 {
@@ -99,7 +99,7 @@ module NaiveMont {
         requires M == (T * N') % R;
         ensures cong(T + M * N, T, N);
 
-    method mont_mul(A: nat, B: nat, N: nat, N_inv: nat, N':nat, R: nat, R_inv: nat) returns (P: nat)
+    method mm_big_nat(A: nat, B: nat, N: nat, N_inv: nat, N':nat, R: nat, R_inv: nat) returns (P: nat)
         requires 0 < N < R && gcd_def(N, R, 1);
         requires A * B < N * R;
         // requires R_inv == mod_inverse(R, N);
