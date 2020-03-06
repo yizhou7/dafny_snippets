@@ -280,68 +280,93 @@ module RSAE3 {
         }
     }
 
-    method mont_red(T: seq<uint32>, M: seq<uint32>, n: nat, m': uint32, R: nat)
-        returns (A': seq<uint32>)
-        requires |M| == n as int;
-        requires |T| == 2 * n as int;
-        requires R == power(BASE, n as nat);
+    method mont_mul(m: seq<uint32>, x: seq<uint32>, y: seq<uint32>, m': uint32, n: nat, ghost R: int)
+        requires |m| == n && |x| == n && |y| == n;
+        requires R == power(BASE, n);
+        requires cong(m' as int * seq_interp(m) as int, -1, BASE);
     {
-        var A := T;
-
+        var temp := new uint32[n + 1];
+        var A :seq<uint32> := temp[..];
         var i := 0;
+
         while i < n
-            invariant 0 <= i <= n;
-            invariant |A| == 2 * n as int;
-            decreases |A| - i;
-            invariant forall j :: 0 <= j < i ==> A[j] == 0;
+            decreases n - i;
         {
-            A := mont_red_step(A, M, n, i, m', R);
+            var u_i_ := ((A[0] as int + x[i] as int * y[0] as int) * m' as int) % BASE; 
+            var u_i := u_i_ as uint32;
+
+            var P_1 := magic_mul(y, x[i], n);
+            var P_2 := magic_mul(m, u_i, n);
+            var c, S := seq_add(P_1, P_2);
+
             i := i + 1;
         }
     }
 
-    method mont_red_step(A: seq<uint32>, M: seq<uint32>, n: nat, i: nat, m': uint32, R: nat)
-        returns (A': seq<uint32>)
-
-        requires |A| == 2 * n as int;
-        requires |M| == n as int;
-
-        requires 0 <= i < n;
-        requires forall j :: 0 <= j < i ==> A[j] == 0;
-
-        ensures |A| == |A'|;
-        ensures forall j :: 0 <= j <= i ==> A'[j] == 0;
-    {
-        var p_i := A[i] as nat * m' as nat; // there should be a better way
-        var u_i :uint32 := (p_i % BASE) as uint32;
-
-        A' := seq_add_pos(A, M, n, i, u_i, m');
-    }
-
-    method seq_add_pos(A: seq<uint32>, M: seq<uint32>, n: nat, i: nat, u_i: uint32, m': uint32) 
-        returns (A': seq<uint32>)
-        requires |A| == 2 * n as int;
-        requires 0 <= i < n;
-        requires forall j :: 0 <= j < i ==> A[j] == 0;
-
-        ensures |A| == |A'|;
-        ensures seq_interp(A) == seq_interp(A') + (u_i as int) * seq_interp(M) * power(BASE, i);
-        ensures forall j :: 0 <= j <= i ==> A'[j] == 0;
-    {
-        A' := A;
-        
-        var i := i;
-
-        assume false;
-    }
-
-    method magic_mul(M: seq<uint32>, n: nat, i: nat, u_i: uint32)
+    method magic_mul(A: seq<uint32>, b: uint32, n: nat)
         returns (P: seq<uint32>)
-        ensures |P| == 2 * n as int;
-        ensures seq_interp(P) == (u_i as int) * seq_interp(M) * power(BASE, i)
+        requires |A| == n;
+        ensures |P| == 2 * n;
+        ensures seq_interp(P) == seq_interp(A) * b as int;
     {
         assume false;
     }
+
+    // method mont_red(T: seq<uint32>, M: seq<uint32>, n: nat, m': uint32, R: nat)
+    //     returns (A': seq<uint32>)
+    //     requires |M| == n as int;
+    //     requires |T| == 2 * n as int;
+    //     requires R == power(BASE, n as nat);
+    // {
+    //     var A := T;
+
+    //     var i := 0;
+    //     while i < n
+    //         invariant 0 <= i <= n;
+    //         invariant |A| == 2 * n as int;
+    //         decreases |A| - i;
+    //         invariant forall j :: 0 <= j < i ==> A[j] == 0;
+    //     {
+    //         A := mont_red_step(A, M, n, i, m', R);
+    //         i := i + 1;
+    //     }
+    // }
+
+    // method mont_red_step(A: seq<uint32>, M: seq<uint32>, n: nat, i: nat, m': uint32, R: nat)
+    //     returns (A': seq<uint32>)
+
+    //     requires |A| == 2 * n as int;
+    //     requires |M| == n as int;
+
+    //     requires 0 <= i < n;
+    //     requires forall j :: 0 <= j < i ==> A[j] == 0;
+
+    //     ensures |A| == |A'|;
+    //     ensures forall j :: 0 <= j <= i ==> A'[j] == 0;
+    // {
+    //     var p_i := A[i] as nat * m' as nat; // there should be a better way
+    //     var u_i :uint32 := (p_i % BASE) as uint32;
+
+    //     A' := seq_add_pos(A, M, n, i, u_i, m');
+    // }
+
+    // method seq_add_pos(A: seq<uint32>, M: seq<uint32>, n: nat, i: nat, u_i: uint32, m': uint32) 
+    //     returns (A': seq<uint32>)
+    //     requires |A| == 2 * n as int;
+    //     requires 0 <= i < n;
+    //     requires forall j :: 0 <= j < i ==> A[j] == 0;
+
+    //     ensures |A| == |A'|;
+    //     ensures cong(seq_interp(A), seq_interp(A') + (u_i as int) * seq_interp(M) * power(BASE, i), MOD(A));
+    //     ensures forall j :: 0 <= j <= i ==> A'[j] == 0;
+    // {
+    //     A' := A;
+    //     var i := i;
+    //     var P := magic_mul(M, n, i, u_i);
+        
+    //     assume false;
+    // }
+
 
 
     // method modpow3(A: nat, N:nat, R: nat, RR: nat)
