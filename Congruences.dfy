@@ -15,17 +15,16 @@ module Congruences {
 
     lemma cong_equiv_lemma(a: int, b: int, n: int)
         requires n != 0;
-        ensures (a % n == b % n) == ((a - b) % n == 0);
+        ensures cong(a, b, n) == ((a - b) % n == 0);
     {
+        reveal cong();
         assume (a % n == b % n) ==> ((a - b) % n == 0);
         assume (a % n == b % n) <== ((a - b) % n == 0);
     }
 
     lemma cong_residual_lemma(a: int, b: nat, n: nat)
         requires n != 0;
-        requires cong(a, b, n);
-        requires b < n;
-        ensures b == a % n;
+        ensures (cong(a, b, n) && b < n) == (b == a % n);
     {
         reveal cong();        
     }

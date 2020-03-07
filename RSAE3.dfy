@@ -463,24 +463,54 @@ module RSAE3 {
         } else {
             ghost var n := |A|;
             assert n >= 1;
-            calc == {
-                seq_interp(A) % BASE;
-                interp(A, n) % BASE;
-                (word_interp(A, n - 1) + interp(A, n - 1)) % BASE;
-                // calc == {
-                //     word_interp(A, n - 1) % BASE;
-                //     (A[n - 1] as int * power(BASE, n - 1) as nat) % BASE;
-                //     {
-                //         power_mod_lemma(BASE, n - 1);
-                //     }
-                //     0;
-                // }
-                // assert word_interp(A, n - 1) % BASE == 0 by {
-                //     reveal power();
-                // }
-                // cong_add_lemma_3(interp(A, n - 1), word_interp(A, n - 1), BASE);
+            ghost var A' := A[..n - 1];
+
+            calc ==> {
+                seq_interp(A') % BASE == A'[0] as int;
+                {
+                    cong_residual_lemma(seq_interp(A'), A[0] as int, BASE);
+                }
+                cong(seq_interp(A'), A[0] as int, BASE);
+                {
+                    assert seq_interp(A') == interp(A', n - 1);
+                }
+                cong(interp(A', n - 1), A[0] as int, BASE);
+                {
+                    assert interp(A, n - 1) == interp(A', n - 1) by {
+                        prefix_sum_lemma(A, A', n - 1);
+                    }
+                }
+                cong(interp(A, n - 1), A[0] as int, BASE);
+                {
+                    assert cong(word_interp(A, n - 1), 0, BASE) by {
+                        assert power(BASE, n - 1) % BASE == 0 by {
+                            power_mod_lemma(BASE, n - 1);
+                        }
+                        calc ==> {
+                            power(BASE, n - 1) % BASE == 0;
+                            {
+                                cong_residual_lemma(power(BASE, n - 1), 0, BASE);
+                            }
+                            cong(power(BASE, n - 1), 0, BASE);
+                            {
+                                cong_mul_lemma(power(BASE, n - 1), 0, A[n - 1] as int, BASE);
+                            }
+                            cong(power(BASE, n - 1) * A[n - 1] as int, 0, BASE);
+                            {
+                                assert word_interp(A, n - 1) == A[n - 1] as int * power(BASE, n - 1);
+                            }
+                            cong(word_interp(A, n - 1), 0, BASE);
+                        }
+                    }
+                    cong_add_lemma_2(interp(A, n - 1), A[0] as int, word_interp(A, n - 1), 0, BASE);
+                }
+                cong(interp(A, n - 1) + word_interp(A, n - 1), A[0] as int, BASE);
+                cong(seq_interp(A), A[0] as int, BASE);
             }
-            assume false;
+
+            assert cong( seq_interp(A), A[0] as int, BASE);
+            assert A[0] as int < BASE;
+            cong_residual_lemma(seq_interp(A), A[0] as nat, BASE);
         }
     }
 
