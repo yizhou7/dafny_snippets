@@ -21,6 +21,15 @@ module Congruences {
         assume (a % n == b % n) <== ((a - b) % n == 0);
     }
 
+    lemma cong_residual_lemma(a: int, b: nat, n: nat)
+        requires n != 0;
+        requires cong(a, b, n);
+        requires b < n;
+        ensures b == a % n;
+    {
+        reveal cong();        
+    }
+
     lemma mul_mod_lemma(a: int, n: int)
         requires n != 0;
         ensures a * n % n == 0;
