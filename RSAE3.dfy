@@ -123,17 +123,20 @@ module RSAE3 {
         requires |A| == |B| == n;
         ensures |S| == n;
         ensures seq_interp(A) + seq_interp(B) == seq_interp(S) + c as int * postional_weight(n);
+        ensures n != 0 ==> cong(S[0] as int, A[0] as int + B[0] as int, BASE);
     {
         var temp := new uint32[|A|];
         c, S := 0, temp[..];
 
         var i: nat := 0;
+        ghost var S_old;
 
         while i < n
             invariant |S| == |A|;
             invariant 0 <= i <= |A|;
             decreases |A| - i;
             invariant interp(A, i) + interp(B, i) == interp(S, i) + c as int * postional_weight(i);
+            invariant i > 0 ==> cong(S[0] as int, A[0] as int + B[0] as int, BASE);
         {
             ghost var c_old, i_old: int := c, i;
             assert interp(A, i_old) + interp(B, i_old) == interp(S, i_old) + c_old as int * postional_weight(i_old);
@@ -142,9 +145,15 @@ module RSAE3 {
             var masked := and64(sum, UINT32_MAX as uint64) as uint32;
             assume masked as int + BASE == sum as int;
 
-            ghost var S_old := S;
+            S_old := S;
             ghost var prefix_sum := interp(S_old, i);
             S := S[i := masked];
+
+            if i == 0 {
+                assert cong(S[0] as int, A[0] as int + B[0] as int, BASE);
+            } else {
+                assert S[0] == S_old[0];
+            }
 
             assert prefix_sum == interp(S, i_old) by {
                 prefix_sum_lemma(S, S_old, i_old);
