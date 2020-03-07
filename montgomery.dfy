@@ -8,7 +8,7 @@ module MONTGOMERY {
         exists k : int :: a - b == n * k
     }
 
-    lemma congruent_add_lema(a: int, b: int, c: int, d: int, n: int)
+    lemma congruent_add_lemma(a: int, b: int, c: int, d: int, n: int)
         requires n != 0;
         requires cong_def(a, b, n) && cong_def(c, d, n)
         ensures cong_def(a + c, b + d, n)
@@ -29,7 +29,7 @@ module MONTGOMERY {
         assert (a + c) - (b + d) == n * k;
     }
 
-    lemma congruent_sub_lema(a: int, b: int, c: int, d: int, n: int)
+    lemma congruent_sub_lemma(a: int, b: int, c: int, d: int, n: int)
         requires n != 0;
         requires cong_def(a, b, n) && cong_def(c, d, n)
         ensures cong_def(a - c, b - d, n)
@@ -48,7 +48,7 @@ module MONTGOMERY {
         assert (a - c) - (b - d) == n * k;
     }
 
-    lemma residue_congruent_lema(a: int, b: int, n: int) 
+    lemma residue_congruent_lemma(a: int, b: int, n: int) 
         requires n != 0;
         requires a == b % n;
         ensures cong_def(a, b, n);
@@ -63,7 +63,7 @@ module MONTGOMERY {
         }
     }
 
-    lemma residue_smaller_lema(a: nat, n:nat)
+    lemma residue_smaller_lemma(a: nat, n:nat)
         requires n != 0;
         requires a < n;
         ensures a % n == a;
@@ -71,13 +71,13 @@ module MONTGOMERY {
 
     }
 
-    lemma mul_distrubtive_lema(n: int, a: int, b: int, c: int)
+    lemma mul_distrubtive_lemma(n: int, a: int, b: int, c: int)
         ensures n * (a + b + c) == n * a + n * b  + n * c;
     {
         assert true;
     }
 
-    lemma congruent_mul_lema(a_1: int, b_1: int, a_2: int, b_2: int, n: int)
+    lemma congruent_mul_lemma(a_1: int, b_1: int, a_2: int, b_2: int, n: int)
         requires cong_def(a_1, b_1, n) && cong_def(a_2, b_2, n);
         ensures cong_def(a_1 * a_2, b_1 * b_2, n);
     {
@@ -98,7 +98,7 @@ module MONTGOMERY {
             n * (n * k_1 * k_2) + n * (b_1 * k_2) + n * (k_1 * b_2);
             ==
             {
-                mul_distrubtive_lema(n, n * k_1 * k_2, b_1 * k_2, k_1 * b_2);
+                mul_distrubtive_lemma(n, n * k_1 * k_2, b_1 * k_2, k_1 * b_2);
             }
             n * (n * k_1 * k_2 + b_1 * k_2 + k_1 * b_2);
         }
@@ -107,15 +107,15 @@ module MONTGOMERY {
         assert cong_def(a_1 * a_2, b_1 * b_2, n);
     }
 
-    lemma congruent_mul_const_lema(a: int, b: int, c: int, n: int)
+    lemma congruent_mul_const_lemma(a: int, b: int, c: int, n: int)
         requires n != 0;
         requires cong_def(a, b, n);
         ensures cong_def(a * c, b * c, n);
     {
         assert cong_def(c, c, n) by {
-            congruent_identity_lema(c, n);
+            congruent_identity_lemma(c, n);
         }
-        congruent_mul_lema(a, b, c, c, n);
+        congruent_mul_lemma(a, b, c, c, n);
     }
 
     predicate divides_def(d:nat, n:int)
@@ -164,7 +164,7 @@ module MONTGOMERY {
             m == temp % N;
             m % N == temp % N;
             {
-                congruent_mod_connection_sufficient_lema(m, temp, N);
+                congruent_mod_connection_sufficient_lemma(m, temp, N);
             }
             cong_def(m, temp, N);
             {
@@ -175,7 +175,7 @@ module MONTGOMERY {
     }
 
     // flaky
-    lemma {:induction a} mulitiple_congruent_zero_lema(a: nat, b: nat)
+    lemma {:induction a} mulitiple_congruent_zero_lemma(a: nat, b: nat)
         requires b != 0;
         ensures cong_def(a * b, 0, b);
     {
@@ -197,7 +197,7 @@ module MONTGOMERY {
         }
     }
 
-    lemma congruent_identity_lema(a:int, n:int)
+    lemma congruent_identity_lemma(a:int, n:int)
         requires n != 0;
         ensures cong_def(a, a, n);
     {
@@ -205,21 +205,21 @@ module MONTGOMERY {
         assert a - a == n * k;
     }
 
-    lemma mulitiple_mod_zero_lema(a: int, b: int)
+    lemma mulitiple_mod_zero_lemma(a: int, b: int)
         requires b != 0;
         ensures (a * b) % b == 0;
     {
         assume false;
     }
 
-    lemma reaminder_mod_lema(a: nat, b: nat)
+    lemma reaminder_mod_lemma(a: nat, b: nat)
         requires b != 0;
         requires a < b;
         ensures a % b == a;
     {
     }
 
-    lemma congruent_mod_connection_sufficient_lema(a: int, b: int, n: int)
+    lemma congruent_mod_connection_sufficient_lemma(a: int, b: int, n: int)
         requires n != 0;
         requires a % n == b % n;
         ensures cong_def(a, b, n);
@@ -246,7 +246,7 @@ module MONTGOMERY {
         assert a - b == n * k;
     }
 
-    lemma congruent_mod_connection_necessary_lema(a: int, b: int, n: nat)
+    lemma congruent_mod_connection_necessary_lemma(a: int, b: int, n: nat)
         requires n != 0;
         requires cong_def(a, b, n);
         ensures a % n == b % n;
@@ -298,7 +298,7 @@ module MONTGOMERY {
             ((k + k2 - k1) * n) % n;
             ==
             {
-                mulitiple_mod_zero_lema(k + k2 - k1, n);
+                mulitiple_mod_zero_lemma(k + k2 - k1, n);
             }
             0;
         }
@@ -307,7 +307,7 @@ module MONTGOMERY {
 
     }
 
-    lemma congruent_mul_inv_lema(a: int, b: int, b_inv: int, n: int)
+    lemma congruent_mul_inv_lemma(a: int, b: int, b_inv: int, n: int)
         requires n != 0;
         requires mod_inverse_def(b, b_inv, n);
         ensures cong_def(a, a * b * b_inv, n);
@@ -322,50 +322,50 @@ module MONTGOMERY {
                     }
                     1 % n == (b * b_inv) % n;
                     {
-                        congruent_mod_connection_sufficient_lema(1, b * b_inv, n);
+                        congruent_mod_connection_sufficient_lemma(1, b * b_inv, n);
                     }
                     cong_def(1, b * b_inv, n);
                 }
             }
             assert cong_def(a, a, n) by {
-                congruent_identity_lema(a, n);
+                congruent_identity_lemma(a, n);
             }
-            congruent_mul_lema(1, b * b_inv, a, a, n);
+            congruent_mul_lemma(1, b * b_inv, a, a, n);
         }
     }
 
-    lemma congruent_transitivity_lema(a: int, b: int, c: int, n: nat)
+    lemma congruent_transitivity_lemma(a: int, b: int, c: int, n: nat)
         requires n != 0;
         requires cong_def(a, b, n) && cong_def(b, c, n);
         ensures cong_def(a, c, n);
     {
         assert a % n == b % n by {
-            congruent_mod_connection_necessary_lema(a, b, n);
+            congruent_mod_connection_necessary_lemma(a, b, n);
         }
         assert b % n == c % n by {
-            congruent_mod_connection_necessary_lema(b, c, n);
+            congruent_mod_connection_necessary_lemma(b, c, n);
         }
         assert cong_def(a, c, n) by {
             assert a % n == c % n;
-            congruent_mod_connection_sufficient_lema(a, c, n);
+            congruent_mod_connection_sufficient_lemma(a, c, n);
         }
     }
 
-    lemma congruent_reflexivity_lema(a: int, b: int, n: nat)
+    lemma congruent_reflexivity_lemma(a: int, b: int, n: nat)
         requires n != 0;
         requires cong_def(a, b, n);
         ensures cong_def(b, a, n);
     {
         assert a % n == b % n by {
-            congruent_mod_connection_necessary_lema(a, b, n);
+            congruent_mod_connection_necessary_lemma(a, b, n);
         }
         assert cong_def(b, a, n) by {
             assert b % n == a % n;
-            congruent_mod_connection_sufficient_lema(b, a, n);
+            congruent_mod_connection_sufficient_lemma(b, a, n);
         }
     }
 
-    lemma mod_inv_identity_lema(R: int, R_inv: int, N: nat)
+    lemma mod_inv_identity_lemma(R: int, R_inv: int, N: nat)
         requires 0 < N < R;
         requires R_inv == mod_inverse(R, N);
         ensures cong_def(R * R_inv, 1, N);
@@ -374,34 +374,34 @@ module MONTGOMERY {
             (R * R_inv) % N == 1;
             (R * R_inv) % N == 1 % N;
             {
-                congruent_mod_connection_sufficient_lema(R * R_inv, 1, N);
+                congruent_mod_connection_sufficient_lemma(R * R_inv, 1, N);
             }
             cong_def(R * R_inv, 1, N);
         }
     }
 
-    lemma mod_inv_identity_lema_2(A: int, R: int, R_inv: int, N: nat)
+    lemma mod_inv_identity_lemma_2(A: int, R: int, R_inv: int, N: nat)
         requires 0 < N < R;
         requires R_inv == mod_inverse(R, N);
         ensures A * R * R_inv % N == A % N;
     {
         assert cong_def(R * R_inv, 1, N) by {
-            mod_inv_identity_lema(R, R_inv, N);
+            mod_inv_identity_lemma(R, R_inv, N);
         }
         calc ==> {
             cong_def(R * R_inv, 1, N);
             {
-                congruent_mul_const_lema(R * R_inv, 1, A, N);
+                congruent_mul_const_lemma(R * R_inv, 1, A, N);
             }
             cong_def(A * R * R_inv, A, N);
             {
-                congruent_mod_connection_necessary_lema(A * R * R_inv, A, N);
+                congruent_mod_connection_necessary_lemma(A * R * R_inv, A, N);
             }
             A * R * R_inv % N == A % N;
         }
     }
 
-    lemma montgomery_reduction_sufficient_lema(N: nat, R: nat, T: nat, t: nat)
+    lemma montgomery_reduction_sufficient_lemma(N: nat, R: nat, T: nat, t: nat)
         requires gcd_def(N, R, 1);
         requires 0 <= T < N * R;
         requires (t * R) % N == T % N;
@@ -413,25 +413,25 @@ module MONTGOMERY {
 
         assert cong_def(t * R, T, N) by {
             assert (t * R) % N == T % N;
-            congruent_mod_connection_sufficient_lema(t * R, T, N);
+            congruent_mod_connection_sufficient_lemma(t * R, T, N);
         }
 
         assert cong_def(R_inv, R_inv, N) by {
-            congruent_identity_lema(R_inv, N); 
+            congruent_identity_lemma(R_inv, N); 
         }
 
         calc ==> {
             cong_def(t * R, T, N) && cong_def(R_inv, R_inv, N);
             {
-                congruent_mul_lema(t * R, T, R_inv, R_inv, N);
+                congruent_mul_lemma(t * R, T, R_inv, R_inv, N);
             }
             cong_def(t * R * R_inv, T * R_inv, N);
             {
                 assert cong_def(t, t * R * R_inv, N) by {
-                    congruent_mul_inv_lema(t, R, R_inv, N);
+                    congruent_mul_inv_lemma(t, R, R_inv, N);
                 }
                 assert cong_def(t, T * R_inv, N) by {
-                    congruent_transitivity_lema(t, t * R * R_inv, T * R_inv, N);
+                    congruent_transitivity_lemma(t, t * R * R_inv, T * R_inv, N);
                 }
             }
             cong_def(t, T * R_inv, N);
@@ -439,14 +439,14 @@ module MONTGOMERY {
         
         assert cong_def(t, T * R_inv, N);
         assert t % N == (T * R_inv) % N by {
-            congruent_mod_connection_necessary_lema(t, T * R_inv, N);
+            congruent_mod_connection_necessary_lemma(t, T * R_inv, N);
         }
 
         calc == {
             t % N - (T * R_inv) % N;
             ==
             {
-                reaminder_mod_lema(t, N);
+                reaminder_mod_lemma(t, N);
                 assert t % N == t;
             }
             t - (T * R_inv) % N;
@@ -501,17 +501,17 @@ module MONTGOMERY {
     {
         assert cong_def(m, T * N', R) by {
             assert m % R == (T * N') % R;
-            congruent_mod_connection_sufficient_lema(m, T * N', R);
+            congruent_mod_connection_sufficient_lemma(m, T * N', R);
         }
 
         assert cong_def(N, N, R) by {
-            congruent_identity_lema(N, R);
+            congruent_identity_lemma(N, R);
         }
 
         calc ==> {
             cong_def(m, T * N', R) && cong_def(N, N, R);
             {
-                congruent_mul_lema(m, T * N', N, N, R);
+                congruent_mul_lemma(m, T * N', N, N, R);
                 assert cong_def(m * N, N * T * N', R);
             }
             cong_def(m * N, N * T * N', R);
@@ -525,7 +525,7 @@ module MONTGOMERY {
             cong_def(N' * N, -1, R);
             {
                 assert cong_def(T, T, R);
-                congruent_mul_lema(N' * N, -1, T, T, R);
+                congruent_mul_lemma(N' * N, -1, T, T, R);
             }
             cong_def(N' * N * T, -1 * T, R);
             {
@@ -537,12 +537,12 @@ module MONTGOMERY {
         calc ==> {
             cong_def(m * N, N' * T * N, R) && cong_def(N' * N * T, -T, R);
             {
-                congruent_transitivity_lema(m * N, N' * N * T, -T, R);
+                congruent_transitivity_lemma(m * N, N' * N * T, -T, R);
             }
             cong_def(m * N, -T, R);
             {
                 assert cong_def(T, T, R);
-                congruent_add_lema(m * N, -T, T, T, R);
+                congruent_add_lemma(m * N, -T, T, T, R);
             }
             cong_def(m * N + T, -T + T, R);
             {
@@ -551,7 +551,7 @@ module MONTGOMERY {
             }
             cong_def(T + m * N, 0, R);
             {
-                congruent_mod_connection_necessary_lema(T + m * N, 0, R);
+                congruent_mod_connection_necessary_lemma(T + m * N, 0, R);
             }
             (T + m * N) % R == 0 % R; 
             (T + m * N) % R == 0; 
@@ -566,7 +566,7 @@ module MONTGOMERY {
         ensures cong_def(t' * R, T, N);
     {
         assert cong_def(N * R, 0, N) by {
-            mulitiple_congruent_zero_lema(N, R);
+            mulitiple_congruent_zero_lemma(N, R);
         }
 
         ghost var a, d := t * R, 0;
@@ -577,7 +577,7 @@ module MONTGOMERY {
         calc ==> {
             cong_def(a, T, N) && cong_def(N * R, d, N);
             {
-                congruent_sub_lema(a, T, N * R, d, N);
+                congruent_sub_lemma(a, T, N * R, d, N);
             }
             cong_def(a - N * R, T - d, N);
             {
@@ -614,15 +614,15 @@ module MONTGOMERY {
                     (N_inv * N) % R == 1;
                     (N_inv * N) % R == 1 % R;
                     {
-                        congruent_mod_connection_sufficient_lema(N_inv * N, 1, R);
+                        congruent_mod_connection_sufficient_lemma(N_inv * N, 1, R);
                     }
                     cong_def(N_inv * N, 1, R);
                 }
             }
             assert cong_def(N * R, 0, R) by {
-                mulitiple_congruent_zero_lema(N, R);
+                mulitiple_congruent_zero_lemma(N, R);
             }
-            congruent_sub_lema(N * R, 0, N_inv * N, 1, R);
+            congruent_sub_lemma(N * R, 0, N_inv * N, 1, R);
         }
 
         calc ==> {
@@ -669,11 +669,11 @@ module MONTGOMERY {
 
         assert (t * R) % N == T % N by {
             assert cong_def(t * R, T, N);
-            congruent_mod_connection_necessary_lema(t * R, T, N);
+            congruent_mod_connection_necessary_lemma(t * R, T, N);
         }
 
         assert montgomery_reduction_def(N, R, T, t) by {
-            montgomery_reduction_sufficient_lema(N, R, T, t);
+            montgomery_reduction_sufficient_lemma(N, R, T, t);
         }
     }
 
@@ -686,18 +686,18 @@ module MONTGOMERY {
         calc ==> {
             cong_def(a', a * R, N);
             {
-                congruent_mul_const_lema(a', a * R, R_inv, N);
+                congruent_mul_const_lemma(a', a * R, R_inv, N);
             }
             cong_def(a' * R_inv, a * R * R_inv, N);
             {
                 assert cong_def(R * R_inv, 1, N) by {
-                    mod_inv_identity_lema(R, R_inv, N);
+                    mod_inv_identity_lemma(R, R_inv, N);
                 }
                 calc ==>
                 {
                     cong_def(R * R_inv, 1, N);
                     {
-                        congruent_mul_const_lema(R * R_inv, 1, a, N);
+                        congruent_mul_const_lemma(R * R_inv, 1, a, N);
                     }
                     cong_def(R * R_inv * a, a, N);
                     {
@@ -706,14 +706,14 @@ module MONTGOMERY {
                     cong_def(a * R * R_inv, a, N);
                 }
                 assert cong_def(a' * R_inv, a, N) by {
-                    congruent_transitivity_lema(a' * R_inv, a * R * R_inv, a, N);
+                    congruent_transitivity_lemma(a' * R_inv, a * R * R_inv, a, N);
                 }
             }
             cong_def(a' * R_inv, a, N);
         }
     }
 
-    lemma montgomery_mul_mod_lema(a: nat, b: nat, c: nat, a': nat, b': nat,  c': nat, R: nat, R_inv: nat, N: nat)
+    lemma montgomery_mul_mod_lemma(a: nat, b: nat, c: nat, a': nat, b': nat,  c': nat, R: nat, R_inv: nat, N: nat)
         requires 0 < N < R && gcd_def(N, R, 1);
         requires R_inv == mod_inverse(R, N);
         requires cong_def(c', (a' * b') * R_inv, N);
@@ -725,12 +725,12 @@ module MONTGOMERY {
         calc ==> {
             cong_def(c', (a' * b') * R_inv, N);
             {
-                congruent_mul_const_lema(c', (a' * b') * R_inv, R_inv, N);
+                congruent_mul_const_lemma(c', (a' * b') * R_inv, R_inv, N);
             }
             cong_def(c' * R_inv, (a' * b') * R_inv * R_inv, N);
             {
                 assert cong_def(c, c' * R_inv, N);
-                congruent_transitivity_lema(c, c' * R_inv, (a' * b') * R_inv * R_inv, N); 
+                congruent_transitivity_lemma(c, c' * R_inv, (a' * b') * R_inv * R_inv, N); 
             }
             cong_def(c, (a' * b') * R_inv * R_inv, N);
             {
@@ -747,10 +747,10 @@ module MONTGOMERY {
                 assert cong_def(b' * R_inv, b, N) by {
                     montgomery_representation_lemma(b, b', R, R_inv, N);
                 }
-                congruent_mul_lema(a' * R_inv, a, b' * R_inv, b, N);
+                congruent_mul_lemma(a' * R_inv, a, b' * R_inv, b, N);
             }
             assert cong_def(c, a' * R_inv * b' * R_inv, N);
-            congruent_transitivity_lema(c, a' * R_inv * b' * R_inv, a * b, N); 
+            congruent_transitivity_lemma(c, a' * R_inv * b' * R_inv, a * b, N); 
         }
     }
 
@@ -771,12 +771,12 @@ module MONTGOMERY {
         assert cong_def(c, a * b, N) by {
             assert cong_def(a', a * R, N) by {
                 assert a' == (a * R) % N;
-                residue_congruent_lema(a', a * R, N);
+                residue_congruent_lemma(a', a * R, N);
             }
 
             assert cong_def(b', b * R, N) by {
                 assert b' == (b * R) % N;
-                residue_congruent_lema(b', b * R, N);
+                residue_congruent_lemma(b', b * R, N);
             }
             assert cong_def(c', (a' * b') * R_inv, N) by {
                 assert montgomery_reduction_def(N, R, a' * b', c');
@@ -788,15 +788,15 @@ module MONTGOMERY {
                 montgomery_reduction_properties_lemma(N, R, c', c);
             }
 
-            montgomery_mul_mod_lema(a, b, c, a', b', c', R, R_inv, N);
+            montgomery_mul_mod_lemma(a, b, c, a', b', c', R, R_inv, N);
         }
 
         assert c % N == (a * b) % N by {
-            congruent_mod_connection_necessary_lema(c, a * b, N);
+            congruent_mod_connection_necessary_lemma(c, a * b, N);
         }
 
         assert c % N == c by {
-            residue_smaller_lema(c, N);
+            residue_smaller_lemma(c, N);
         }
 
         assert c == (a * b) % N;
@@ -809,13 +809,13 @@ module MONTGOMERY {
     {
         ghost var d := (b * c) % n;
         assert cong_def(a, b, n) by {
-            residue_congruent_lema(a, b, n);
+            residue_congruent_lemma(a, b, n);
         }
         assert cong_def(a * c, b * c, n) by {
-            congruent_mul_const_lema(a, b, c, n);
+            congruent_mul_const_lemma(a, b, c, n);
         }
         assert a * c % n == b * c % n by {
-            congruent_mod_connection_necessary_lema(a * c, b * c, n);
+            congruent_mod_connection_necessary_lemma(a * c, b * c, n);
         }
     }
 
@@ -910,13 +910,13 @@ module MONTGOMERY {
             ((power(M', i) * M') * (power(R_inv, i - 1) * R_inv)) % N;
             {
                 assert (power(M', i) * M') == power(M', i + 1) by {
-                    power_add_one_lema(M', i); 
+                    power_add_one_lemma(M', i); 
                 }
             }
             (power(M', i + 1) * (power(R_inv, i - 1) * R_inv)) % N;
             {
                 assert power(R_inv, i - 1) * R_inv == power(R_inv, i) by {
-                    power_add_one_lema(R_inv, i - 1); 
+                    power_add_one_lemma(R_inv, i - 1); 
                 }
             }
             (power(M', i + 1) * power(R_inv, i)) % N;
@@ -961,13 +961,13 @@ module MONTGOMERY {
             ==
             {
                 assert(power(R_inv, E - 1) * R_inv) == power(R_inv, E) by {
-                    power_add_one_lema(R_inv, E - 1);
+                    power_add_one_lemma(R_inv, E - 1);
                 }
             }
             power(R_inv, E) * power(M', E) % N;
             ==
             {
-                power_same_exp_lema(R_inv, M', E);
+                power_same_exp_lemma(R_inv, M', E);
             }
             power(M' * R_inv, E) % N;
             ==
@@ -996,7 +996,7 @@ module MONTGOMERY {
                     (M * R * R_inv) % N;
                     ==
                     {
-                        mod_inv_identity_lema_2(M, R, R_inv, N );
+                        mod_inv_identity_lemma_2(M, R, R_inv, N );
                     }
                     M % N;
                 }

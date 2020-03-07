@@ -11,13 +11,13 @@ module RSAE3 {
 
     function method reinterpret_cast(a: int64) : uint64
 
-    // |A[..i]| == i, interp A[..i] as an int 
-    function interp(A: seq<uint32>, i: int) : int
-        decreases i;
-        requires 0 <= i <= |A|;
+    // |A[..n]| == n, interp A[..n] as an int 
+    function interp(A: seq<uint32>, n: int) : int
+        decreases n;
+        requires 0 <= n <= |A|;
     {
-        if i == 0 then 0
-        else word_interp(A, i - 1) + interp(A, i - 1)
+        if n == 0 then 0
+        else word_interp(A, n - 1) + interp(A, n - 1)
     }
 
     function R(n: nat) : int
@@ -53,7 +53,7 @@ module RSAE3 {
              word_interp(A, i) <= (BASE - 1) * power(BASE, i);
              word_interp(A, i) <= BASE * power(BASE, i) - power(BASE, i);
              {
-                power_add_one_lema(BASE, i);
+                power_add_one_lemma(BASE, i);
              }
              word_interp(A, i) <= power(BASE, i + 1) - power(BASE, i);
         }
@@ -103,7 +103,7 @@ module RSAE3 {
             ==
             power(BASE, i - 1) * BASE;
             {
-                power_add_one_lema(BASE, i - 1);
+                power_add_one_lemma(BASE, i - 1);
             }
             power(BASE, i);
             ==
@@ -200,15 +200,6 @@ module RSAE3 {
         }
     }
 
-    lemma seq_add_0_index_lemma(A: seq<uint32>, B: seq<uint32>, S: seq<uint32>, n: nat) 
-        requires n != 0
-        requires |A| == |B| == |S| == n;
-        requires cong(seq_interp(A) + seq_interp(B), seq_interp(S), power(BASE, n));
-        ensures cong(S[0] as int, A[0] as int + B[0] as int, BASE);
-    {
-        assume false;
-    }
-
     method seq_add(A: seq<uint32>, B: seq<uint32>, n: nat) returns (S: seq<uint32>)
         requires |A| == |B| == n;
         ensures |S| == n;
@@ -230,13 +221,12 @@ module RSAE3 {
                     reveal cong();
                 }
                 assert cong(seq_interp(S) + power(BASE, n), seq_interp(S), power(BASE, n)) by {
-                    cong_add_lemma_3(seq_interp(S), power(BASE, n));
+                    cong_add_lemma_3(seq_interp(S), power(BASE, n), power(BASE, n));
                     reveal cong();
                 }
                 cong_trans_lemma(seq_interp(A) + seq_interp(B), seq_interp(S) + power(BASE, n), seq_interp(S), power(BASE, n));
             }
         }
-        assume false;
     }
 
     method seq_zero_extend(A: seq<uint32>, n: nat, m: nat) returns (A': seq<uint32>)
@@ -420,6 +410,7 @@ module RSAE3 {
 
         requires cong(P_1[0] as int, y[0] as int * x[i] as int, BASE);
         requires cong(P_2[0] as int, m[0] as int * u_i as int, BASE);
+        requires cong(A'[0] as int, A[0] as int + S[0] as int, BASE);
 
         requires cong(seq_interp(A) + seq_interp(S), seq_interp(A'), power(BASE, n + 1));
         requires cong(S[0] as int, P_1[0] as int + P_2[0] as int, BASE);
@@ -432,9 +423,6 @@ module RSAE3 {
             }
             cong(S[0] as int + A[0] as int, P_1[0] as int + P_2[0] as int + A[0] as int, BASE);
             {
-                assert cong(A'[0] as int, A[0] as int + S[0] as int, BASE) by {
-                    seq_add_0_index_lemma(A, S, A', n + 1); 
-                }
                 cong_trans_lemma(A'[0] as int, A[0] as int + S[0] as int,
                     P_1[0] as int + P_2[0] as int + A[0] as int,
                     BASE);
@@ -467,11 +455,48 @@ module RSAE3 {
         assert cong(A'[0] as int, 0, BASE);
     }
 
+    lemma {:induction A} lsw_mod_lemma(A: seq<uint32>)
+        ensures |A| != 0 ==> (seq_interp(A) % BASE == A[0] as int);
+    {
+        if |A| == 0 || |A| == 1 {
+            reveal power();
+        } else {
+            ghost var n := |A|;
+            assert n >= 1;
+            calc == {
+                seq_interp(A) % BASE;
+                interp(A, n) % BASE;
+                (word_interp(A, n - 1) + interp(A, n - 1)) % BASE;
+                {
+                    calc == {
+                        word_interp(A, n - 1);
+                        A[n - 1] as int * power(BASE, n - 1) as nat;
+
+                    }
+
+
+
+
+                    // assert word_interp(A, n - 1) % BASE == 0 by {
+                    //     reveal power();
+                    // }
+                    cong_add_lemma_3(interp(A, n - 1), word_interp(A, n - 1), BASE);
+                }
+
+            }
+            assume false;
+        }
+    }
+
     lemma lsw_inverse_lemma(m: seq<uint32>, m': uint32)
         requires |m| != 0;
         requires cong(m' as int * seq_interp(m), -1, BASE);
         ensures cong(m' as int * m[0] as int, -1, BASE);
     {
+        calc ==> {
+            cong(seq_interp(m), seq_interp(m) % BASE, BASE);
+
+        }
         assume false;
     }
 
@@ -487,6 +512,7 @@ module RSAE3 {
 
         while i < n
             decreases n - i;
+            invariant |A| == n + 1;
         {
             var u_i_ := ((A[0] as int + x[i] as int * y[0] as int) * m' as int) % BASE; 
             var u_i := u_i_ as uint32;
@@ -503,7 +529,8 @@ module RSAE3 {
             assert cong(A'[0] as int, 0, BASE) by {
                 mont_mul_divisible_lemma(m, x, y, P_1, P_2, S, A, A', i, u_i, m', n);
             }
-   
+
+            A := A';
             i := i + 1;
         }
     }
@@ -518,61 +545,6 @@ module RSAE3 {
     {
         assume false;
     }
-
-    // method mont_red(T: seq<uint32>, M: seq<uint32>, n: nat, m': uint32, R: nat)
-    //     returns (A': seq<uint32>)
-    //     requires |M| == n as int;
-    //     requires |T| == 2 * n as int;
-    //     requires R == power(BASE, n as nat);
-    // {
-    //     var A := T;
-
-    //     var i := 0;
-    //     while i < n
-    //         invariant 0 <= i <= n;
-    //         invariant |A| == 2 * n as int;
-    //         decreases |A| - i;
-    //         invariant forall j :: 0 <= j < i ==> A[j] == 0;
-    //     {
-    //         A := mont_red_step(A, M, n, i, m', R);
-    //         i := i + 1;
-    //     }
-    // }
-
-    // method mont_red_step(A: seq<uint32>, M: seq<uint32>, n: nat, i: nat, m': uint32, R: nat)
-    //     returns (A': seq<uint32>)
-
-    //     requires |A| == 2 * n as int;
-    //     requires |M| == n as int;
-
-    //     requires 0 <= i < n;
-    //     requires forall j :: 0 <= j < i ==> A[j] == 0;
-
-    //     ensures |A| == |A'|;
-    //     ensures forall j :: 0 <= j <= i ==> A'[j] == 0;
-    // {
-    //     var p_i := A[i] as nat * m' as nat; // there should be a better way
-    //     var u_i :uint32 := (p_i % BASE) as uint32;
-
-    //     A' := seq_add_pos(A, M, n, i, u_i, m');
-    // }
-
-    // method seq_add_pos(A: seq<uint32>, M: seq<uint32>, n: nat, i: nat, u_i: uint32, m': uint32) 
-    //     returns (A': seq<uint32>)
-    //     requires |A| == 2 * n as int;
-    //     requires 0 <= i < n;
-    //     requires forall j :: 0 <= j < i ==> A[j] == 0;
-
-    //     ensures |A| == |A'|;
-    //     ensures cong(seq_interp(A), seq_interp(A') + (u_i as int) * seq_interp(M) * power(BASE, i), MOD(A));
-    //     ensures forall j :: 0 <= j <= i ==> A'[j] == 0;
-    // {
-    //     A' := A;
-    //     var i := i;
-    //     var P := magic_mul(M, n, i, u_i);
-        
-    //     assume false;
-    // }
 
     // method modpow3(A: nat, N:nat, R: nat, RR: nat)
     //     requires RR == R * R;
