@@ -76,7 +76,9 @@ module RSAE3 {
             calc ==> {
                 seq_interp(A) == word_interp(A, |A| - 1) + interp(A, |A| - 1);
                 {
-                    assume seq_interp(A') == interp(A, |A| - 1);
+                    assert seq_interp(A') == interp(A, |A| - 1) by {
+                        prefix_sum_lemma(A, A', |A| - 1);
+                    }   
                 }
                 seq_interp(A) == word_interp(A, |A| - 1) + seq_interp(A');
                 {
