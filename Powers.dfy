@@ -26,5 +26,6 @@ module Powers
         assume false;
     }
 
-    lemma power_mod_lemma
+    lemma power_mod_lemma(a: int, b: nat) 
+        ensures (b != 0 && a != 0) ==> (power(a, b) % a == 0);
 }

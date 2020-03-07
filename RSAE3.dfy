@@ -467,22 +467,18 @@ module RSAE3 {
                 seq_interp(A) % BASE;
                 interp(A, n) % BASE;
                 (word_interp(A, n - 1) + interp(A, n - 1)) % BASE;
-                {
-                    calc == {
-                        word_interp(A, n - 1);
-                        A[n - 1] as int * power(BASE, n - 1) as nat;
-
-                    }
-
-
-
-
-                    // assert word_interp(A, n - 1) % BASE == 0 by {
-                    //     reveal power();
-                    // }
-                    cong_add_lemma_3(interp(A, n - 1), word_interp(A, n - 1), BASE);
-                }
-
+                // calc == {
+                //     word_interp(A, n - 1) % BASE;
+                //     (A[n - 1] as int * power(BASE, n - 1) as nat) % BASE;
+                //     {
+                //         power_mod_lemma(BASE, n - 1);
+                //     }
+                //     0;
+                // }
+                // assert word_interp(A, n - 1) % BASE == 0 by {
+                //     reveal power();
+                // }
+                // cong_add_lemma_3(interp(A, n - 1), word_interp(A, n - 1), BASE);
             }
             assume false;
         }
@@ -493,11 +489,28 @@ module RSAE3 {
         requires cong(m' as int * seq_interp(m), -1, BASE);
         ensures cong(m' as int * m[0] as int, -1, BASE);
     {
+        assert cong(seq_interp(m), seq_interp(m) % BASE, BASE) by {
+            mod_mod_lemma(seq_interp(m), BASE);
+            reveal cong();
+        }
+
         calc ==> {
             cong(seq_interp(m), seq_interp(m) % BASE, BASE);
-
+            {
+                assert (seq_interp(m) % BASE == m[0] as int) by {
+                    lsw_mod_lemma(m);
+                }
+            }
+            cong(seq_interp(m),  m[0] as int, BASE);
+            {
+                cong_mul_lemma(seq_interp(m), m[0] as int, m' as int, BASE);
+            }
+            cong(seq_interp(m) * m' as int,  m[0] as int * m' as int, BASE);
+            {
+                reveal cong();
+            }
+            cong(m[0] as int * m' as int, -1, BASE);
         }
-        assume false;
     }
 
     method mont_mul(m: seq<uint32>, x: seq<uint32>, y: seq<uint32>, m': uint32, n: nat, ghost R: int)
