@@ -119,7 +119,7 @@ module RSAE3 {
         assert true;
     }
 
-    method seq_add_c(A: seq<uint32>, B: seq<uint32>, n: nat) returns (c: uint32, S:seq<uint32>)
+    method seq_add_c(A: seq<uint32>, B: seq<uint32>, n: nat) returns (c: uint2, S:seq<uint32>)
         requires |A| == |B| == n;
         ensures |S| == n;
         ensures seq_interp(A) + seq_interp(B) == seq_interp(S) + c as int * postional_weight(n);
@@ -204,7 +204,29 @@ module RSAE3 {
         requires |A| == |B| == n;
         ensures |S| == n;
         ensures cong(seq_interp(A) + seq_interp(B), seq_interp(S), power(BASE, n));
+        ensures n != 0 ==> cong(S[0] as int, A[0] as int + B[0] as int, BASE);
     {
+        var c;
+        c, S := seq_add_c(A, B, n);
+
+        if c == 0 {
+            assert cong(seq_interp(A) + seq_interp(B), seq_interp(S), power(BASE, n)) by {
+                assert seq_interp(A) + seq_interp(B) == seq_interp(S);
+                reveal cong();
+            }
+        } else {
+            assert cong(seq_interp(A) + seq_interp(B), seq_interp(S), power(BASE, n)) by {
+                assert cong(seq_interp(A) + seq_interp(B), seq_interp(S) + postional_weight(n), power(BASE, n)) by {
+                    assert seq_interp(A) + seq_interp(B) == seq_interp(S) + postional_weight(n);
+                    reveal cong();
+                }
+                assert cong(seq_interp(S) + power(BASE, n), seq_interp(S), power(BASE, n)) by {
+                    cong_add_lemma_3(seq_interp(S), power(BASE, n));
+                    reveal cong();
+                }
+                cong_trans_lemma(seq_interp(A) + seq_interp(B), seq_interp(S) + power(BASE, n), seq_interp(S), power(BASE, n));
+            }
+        }
         assume false;
     }
 
@@ -217,7 +239,7 @@ module RSAE3 {
         assume false;
     }
 
-    method seq_sub(A: seq<uint32>, B: seq<uint32>) returns (b: uint32, S:seq<uint32>)
+    method seq_sub(A: seq<uint32>, B: seq<uint32>) returns (b: uint2, S:seq<uint32>)
         requires |A| == |B|;
         ensures seq_interp(A) - seq_interp(B) == seq_interp(S) - b as int * postional_weight(|A|);
     {
@@ -436,6 +458,14 @@ module RSAE3 {
         assert cong(A'[0] as int, 0, BASE);
     }
 
+    lemma lsw_inverse_lemma(m: seq<uint32>, m': uint32)
+        requires |m| != 0;
+        requires cong(m' as int * seq_interp(m), -1, BASE);
+        ensures cong(m' as int * m[0] as int, -1, BASE);
+    {
+        assume false;
+    }
+
     method mont_mul(m: seq<uint32>, x: seq<uint32>, y: seq<uint32>, m': uint32, n: nat, ghost R: int)
         requires n > 2;
         requires |m| == n && |x| == n && |y| == n;
@@ -456,6 +486,14 @@ module RSAE3 {
             var P_2 := magic_mul(m, u_i, n);
             var S := seq_add(P_1, P_2, n + 1);
             var A' := seq_add(A, S, n + 1);
+
+            assert cong(m' as int * m[0] as int, -1, BASE) by {
+                lsw_inverse_lemma(m, m');
+            }
+
+            assert cong(A'[0] as int, 0, BASE) by {
+                mont_mul_divisible_lemma(m, x, y, P_1, P_2, S, A, A', i, u_i, m', n);
+            }
    
             i := i + 1;
         }
@@ -526,8 +564,6 @@ module RSAE3 {
         
     //     assume false;
     // }
-
-
 
     // method modpow3(A: nat, N:nat, R: nat, RR: nat)
     //     requires RR == R * R;
