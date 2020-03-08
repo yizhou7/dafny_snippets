@@ -574,6 +574,26 @@ module RSAE3 {
         }
     }
 
+    lemma {:induction T} seq_div_base_lemma(T: seq<uint32>, n: nat)
+        requires |T| == n > 0;
+        requires cong(T[0] as int, 0, BASE);
+        ensures seq_interp(T) / BASE == seq_interp(T[1..]);
+    {
+        if n == 1 {
+            reveal cong();
+        } else {
+            var T' := T[..n-1];
+
+            assert seq_interp(T') / BASE == seq_interp(T'[1..]) by {
+                seq_div_base_lemma(T', n - 1);
+            }
+
+            // assert seq_interp(T[1..]) == seq_interp(T'[1..]) + T[n-1] as int * postional_weight(n - 1);
+
+            assume false;
+        }
+    }
+
     lemma mont_mul_bound_lemma(
         m: seq<uint32>,
         x: seq<uint32>,
@@ -646,7 +666,9 @@ module RSAE3 {
         }
 
         var T_1 := A'[1..];
-        assume seq_interp(T_1) == seq_interp(A') / BASE;
+        assert seq_interp(T_1) == seq_interp(A') / BASE by {
+            seq_div_base_lemma(A', n + 3);
+        }
         assert seq_interp(T_1) < 2 * seq_interp(m) - 1;
 
         var T_2 := T_1[..n+1];
