@@ -121,7 +121,7 @@ module RSAE3 {
         assert true;
     }
 
-    method seq_add_c(A: seq<uint32>, B: seq<uint32>, n: nat) returns (c: uint2, S:seq<uint32>)
+    method seq_add_impl(A: seq<uint32>, B: seq<uint32>, n: nat) returns (c: uint2, S:seq<uint32>)
         requires |A| == |B| == n;
         ensures |S| == n;
         ensures seq_interp(A) + seq_interp(B) == seq_interp(S) + c as int * postional_weight(n);
@@ -209,7 +209,7 @@ module RSAE3 {
         ensures n != 0 ==> cong(S[0] as int, A[0] as int + B[0] as int, BASE);
     {
         var c;
-        c, S := seq_add_c(A, B, n);
+        c, S := seq_add_impl(A, B, n);
 
         if c == 0 {
             assert cong(seq_interp(A) + seq_interp(B), seq_interp(S), power(BASE, n)) by {
@@ -228,6 +228,27 @@ module RSAE3 {
                 }
                 cong_trans_lemma(seq_interp(A) + seq_interp(B), seq_interp(S) + power(BASE, n), seq_interp(S), power(BASE, n));
             }
+        }
+    }
+
+    method seq_add_c(A: seq<uint32>, B: seq<uint32>, n: nat) returns (S: seq<uint32>)
+        requires |A| == |B| == n;
+        ensures |S| == n + 1;
+        ensures seq_interp(A) + seq_interp(B) == seq_interp(S)
+        ensures n != 0 ==> cong(S[0] as int, A[0] as int + B[0] as int, BASE);
+    {
+        var c, S' := seq_add_impl(A, B, n);
+        S := S' + [c as uint32];
+        calc == {
+            seq_interp(A) + seq_interp(B);
+            seq_interp(S') + c as int * postional_weight(n);
+            seq_interp(S') + word_interp(S, n);
+            interp(S', n) + word_interp(S, n);
+            {
+                prefix_sum_lemma(S, S', n);
+            }
+            interp(S, n) + word_interp(S, n);
+            seq_interp(S);
         }
     }
 
