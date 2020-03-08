@@ -590,6 +590,8 @@ module RSAE3 {
 
         requires i < n;
         requires |m| == n && |x| == n && |y| == n;
+        requires |A| == n + 2;
+        requires |A'| == n + 3;
 
         requires seq_interp(A) < 2 * seq_interp(m) - 1;
         requires seq_interp(A) + seq_interp(S) == seq_interp(A');
@@ -600,7 +602,9 @@ module RSAE3 {
         requires 0 <= seq_interp(x) < seq_interp(m);
         requires 0 <= seq_interp(y) < seq_interp(m);
 
-        ensures seq_interp(A') <= BASE * (2 * seq_interp(m) - 1);
+        requires cong(A'[0] as int, 0, BASE);
+
+        ensures seq_interp(A'[1..n+2]) < 2 * seq_interp(m) - 1;
     {
         ghost var m_val := seq_interp(m);
         ghost var m_bound := m_val - 1;
@@ -625,20 +629,32 @@ module RSAE3 {
             }
             seq_interp(A) + m_bound * base_bound + seq_interp(m) * base_bound;
             seq_interp(A) + m_bound * base_bound + m_val * base_bound;
-            2 * m_val - 1 + m_bound * base_bound + m_val * base_bound;
-            2 * m_val - 1 + (m_val - 1) * base_bound + m_val * base_bound;
-            2 * m_val - 1 + m_val * base_bound - base_bound + m_val * base_bound;
-            2 * m_val - 1 + m_val * (BASE - 1) - (BASE - 1) + m_val * (BASE - 1);
-            2 * m_val + m_val * (BASE - 1) - BASE + m_val * (BASE - 1);
-            2 * m_val + m_val * BASE - m_val - BASE + m_val * (BASE - 1);
-            2 * m_val + m_val * BASE - m_val - BASE + m_val * BASE - m_val;
-            m_val * BASE - BASE + m_val * BASE;
-            2 * m_val * BASE - BASE;
-            BASE * (2 * m_val - 1);
-            BASE * (2 * seq_interp(m) - 1);
         }
-    }
 
+        calc ==> {
+            seq_interp(A') < 2 * m_val - 1 + m_bound * base_bound + m_val * base_bound;
+            seq_interp(A') < 2 * m_val - 1 + (m_val - 1) * base_bound + m_val * base_bound;
+            seq_interp(A') < 2 * m_val - 1 + m_val * base_bound - base_bound + m_val * base_bound;
+            seq_interp(A') < 2 * m_val - 1 + m_val * (BASE - 1) - (BASE - 1) + m_val * (BASE - 1);
+            seq_interp(A') < 2 * m_val + m_val * (BASE - 1) - BASE + m_val * (BASE - 1);
+            seq_interp(A') < 2 * m_val + m_val * BASE - m_val - BASE + m_val * (BASE - 1);
+            seq_interp(A') < 2 * m_val + m_val * BASE - m_val - BASE + m_val * BASE - m_val;
+            seq_interp(A') < m_val * BASE - BASE + m_val * BASE;
+            seq_interp(A') < 2 * m_val * BASE - BASE;
+            seq_interp(A') < BASE * (2 * m_val - 1);
+            seq_interp(A') < BASE * (2 * seq_interp(m) - 1);
+        }
+
+        var T_1 := A'[1..];
+        assume seq_interp(T_1) == seq_interp(A') / BASE;
+        assert seq_interp(T_1) < 2 * seq_interp(m) - 1;
+
+        var T_2 := T_1[..n+1];
+        assume seq_interp(T_2) == seq_interp(T_1);
+        assume T_2 == A'[1..n+2];
+
+        assert seq_interp(A'[1..n+2]) < 2 * seq_interp(m) - 1;
+    }
 
     method mont_mul(m: seq<uint32>, x: seq<uint32>, y: seq<uint32>, m': uint32, n: nat, ghost R: int)
         requires n > 2;
@@ -656,10 +672,8 @@ module RSAE3 {
         while i < n
             decreases n - i;
             invariant |A| == n + 1;
-            // invariant seq_interp(A) < 2 * seq_interp(m) - 1;
+            invariant seq_interp(A) < 2 * seq_interp(m) - 1;
         {
-            assume seq_interp(A) < 2 * seq_interp(m) - 1;
-
             var u_i_ := ((A[0] as int + x[i] as int * y[0] as int) * m' as int) % BASE; 
             var u_i := u_i_ as uint32;
 
@@ -673,7 +687,9 @@ module RSAE3 {
                 mont_mul_divisible_lemma(m, x, y, P_1, P_2, S, A, A', i, u_i, m', n);
             }
         
-
+            assert seq_interp(A'[1..n+2]) < 2 * seq_interp(m) - 1 by {
+                mont_mul_bound_lemma(m, x, y, P_1, P_2, S, A, A', i, u_i, m', n);
+            }
 
             A := A'[1..n+2];
             i := i + 1;
