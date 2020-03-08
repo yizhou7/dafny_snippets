@@ -257,6 +257,8 @@ module RSAE3 {
         requires m > n;
         ensures |A'| == m;
         ensures seq_interp(A') == seq_interp(A); 
+        ensures forall i :: 0 <= i < n ==> A[i] == A'[i];
+        ensures forall i :: n <= i < m ==> A'[i] == 0;
     {
         assume false;
     }
@@ -426,7 +428,8 @@ module RSAE3 {
         requires n > 2 && i < n;
         requires |m| == |x| == |y| == n;
         requires |P_1| ==|P_2| == n + 1;
-        requires |A'| == |S| == |A| == n + 1;
+        requires |S| == |A| == n + 2;
+        requires |A'| == n + 3;
         requires cong(m' as int * m[0] as int, -1, BASE);
 
         requires u_i as int == ((A[0] as int + x[i] as int * y[0] as int) * m' as int) % BASE;
@@ -585,18 +588,23 @@ module RSAE3 {
 
             var P_1 := magic_mul(y, x[i], n);
             var P_2 := magic_mul(m, u_i, n);
-            var S := seq_add(P_1, P_2, n + 1);
-            var A' := seq_add(A, S, n + 1);
-
-            assert cong(m' as int * m[0] as int, -1, BASE) by {
-                lsw_inverse_lemma(m, m');
-            }
+            var S := seq_add_c(P_1, P_2, n + 1);
+            A := seq_zero_extend(A, n + 1, n + 2);
+            var A' := seq_add_c(A, S, n + 2);
 
             assert cong(A'[0] as int, 0, BASE) by {
+                assert cong(m' as int * m[0] as int, -1, BASE) by {
+                   lsw_inverse_lemma(m, m');
+                }
+                assert cong(seq_interp(A) + seq_interp(S), seq_interp(A'), power(BASE, n + 1)) by {
+                    assert seq_interp(A) + seq_interp(S) == seq_interp(A');
+                    reveal cong();
+                }
                 mont_mul_divisible_lemma(m, x, y, P_1, P_2, S, A, A', i, u_i, m', n);
             }
 
-            A := A';
+            A := A'[1..n+2];
+            assert (|A| == n + 1);
             i := i + 1;
         }
     }
