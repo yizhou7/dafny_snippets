@@ -586,21 +586,35 @@ module RSAE3 {
             var T' := T[..n-1];
 
             calc =={
-                seq_interp(T) / BASE;  
-                (T[n-1] as int * postional_weight(n-1) + interp(T, n - 1)) / BASE;
+                seq_interp(T); 
+                (T[n-1] as int * postional_weight(n-1) + interp(T, n - 1));
                 {
                     prefix_sum_lemma(T, T', n - 1);
                 }
-                (T[n-1] as int * postional_weight(n-1) + interp(T', n - 1)) / BASE;
-                (T[n-1] as int * postional_weight(n-1) + seq_interp(T')) / BASE;
+                (T[n-1] as int * postional_weight(n-1) + interp(T', n - 1));
+                (T[n-1] as int * postional_weight(n-1) + seq_interp(T'));
+                (T[n-1] as int * power(BASE, n-1) + seq_interp(T'));
+            }
+
+            assert A1: power(BASE, n-1) % BASE == 0 by {
+                power_mod_lemma(BASE, n-1);
+            }
+
+            assert A2: seq_interp(T') % BASE == 0 by {
+                seq_div_base_lemma(T', n - 1);
+            }
+
+            assert seq_interp(T) % BASE == 0 by {
+                assume (T[n-1] as int * power(BASE, n-1)) % BASE == 0;
+                reveal A1, A2;
+                assert (T[n-1] as int * power(BASE, n-1) + seq_interp(T')) % BASE == 0;
+            }
+
+            calc == {
+                seq_interp(T) / BASE;
                 (T[n-1] as int * power(BASE, n-1) + seq_interp(T')) / BASE;
                 {
-                    assert power(BASE, n-1) % BASE == 0 by {
-                        power_mod_lemma(BASE, n-1);
-                    }
-                    assert seq_interp(T') % BASE == 0 by {
-                        seq_div_base_lemma(T', n - 1);
-                    }
+                    reveal A1, A2;
                 }
                 T[n-1] as int * (power(BASE, n-1) / BASE) + seq_interp(T') / BASE;
                 {
@@ -616,13 +630,19 @@ module RSAE3 {
                 }
                 T[n-1] as int * power(BASE, n-2) + seq_interp(T'[1..]);
                 T[n-1] as int * power(BASE, n-2) + seq_interp(T[1..n-1]);
+                {
+                    assert seq_interp(T[1..n-1]) == interp(T[1..n-1], n - 2);
+                }
+                T[n-1] as int * power(BASE, n-2) + interp(T[1..n-1], n - 2);
+                {
+                    assert interp(T[1..n-1], n - 2) == interp(T[1..], n -2) by {
+                        prefix_sum_lemma(T[1..n-1], T[1..], n - 2);
+                    }
+                }
+                T[n-1] as int * power(BASE, n-2) + interp(T[1..], n -2);
+                word_interp(T[1..], n - 2) + interp(T[1..], n - 2);
+                seq_interp(T[1..]);
             }
-
-            // calc == {
-            //     seq_interp(T[1..]);
-            //     word_interp(T[1..], n - 2) + interp(T[1..], n - 2);
-            // }
-
             assume false;
         }
     }
