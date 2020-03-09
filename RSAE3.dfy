@@ -260,7 +260,24 @@ module RSAE3 {
         ensures forall i :: 0 <= i < n ==> A[i] == A'[i];
         ensures forall i :: n <= i < m ==> A'[i] == 0;
     {
+        var temp := new uint32[m];
+        var i := 0;
+
+        while i < m 
+            decreases m - i;
+            invariant forall j:: 0 <= j < i < n ==> temp[j] == A[j];
+            invariant forall j:: n <=  j < i < m ==> temp[j] == 0;
+        {
+            if i < n {
+                temp[i] := A[i];
+            } else {
+                temp[i] := 0;
+            }
+            i := i + 1;
+        }
+
         assume false;
+        A' := temp[..];
     }
 
     method seq_sub(A: seq<uint32>, B: seq<uint32>) returns (b: uint2, S:seq<uint32>)
@@ -605,8 +622,10 @@ module RSAE3 {
             }
 
             assert seq_interp(T) % BASE == 0 by {
-                assume (T[n-1] as int * power(BASE, n-1)) % BASE == 0;
                 reveal A1, A2;
+                assert (T[n-1] as int * power(BASE, n-1)) % BASE == 0 by {
+                    mul_mod_lemma(T[n-1] as int, power(BASE, n-1), BASE);
+                }
                 assert (T[n-1] as int * power(BASE, n-1) + seq_interp(T')) % BASE == 0;
             }
 
@@ -643,7 +662,6 @@ module RSAE3 {
                 word_interp(T[1..], n - 2) + interp(T[1..], n - 2);
                 seq_interp(T[1..]);
             }
-            assume false;
         }
     }
 

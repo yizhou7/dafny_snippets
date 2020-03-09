@@ -29,9 +29,10 @@ module Congruences {
         reveal cong();        
     }
 
-    lemma mul_mod_lemma(a: int, n: int)
+    lemma mul_mod_lemma(a: int, b: int, n: int)
         requires n != 0;
-        ensures a * n % n == 0;
+        requires b % n == 0;
+        ensures a * b % n == 0;
     {
         assume false;
     }
