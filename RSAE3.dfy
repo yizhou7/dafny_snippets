@@ -577,6 +577,7 @@ module RSAE3 {
     lemma {:induction T} seq_div_base_lemma(T: seq<uint32>, n: nat)
         requires |T| == n > 0;
         requires cong(T[0] as int, 0, BASE);
+        ensures seq_interp(T) % BASE == 0;
         ensures seq_interp(T) / BASE == seq_interp(T[1..]);
     {
         if n == 1 {
@@ -584,11 +585,43 @@ module RSAE3 {
         } else {
             var T' := T[..n-1];
 
-            assert seq_interp(T') / BASE == seq_interp(T'[1..]) by {
-                seq_div_base_lemma(T', n - 1);
+            calc =={
+                seq_interp(T) / BASE;  
+                (T[n-1] as int * postional_weight(n-1) + interp(T, n - 1)) / BASE;
+                {
+                    prefix_sum_lemma(T, T', n - 1);
+                }
+                (T[n-1] as int * postional_weight(n-1) + interp(T', n - 1)) / BASE;
+                (T[n-1] as int * postional_weight(n-1) + seq_interp(T')) / BASE;
+                (T[n-1] as int * power(BASE, n-1) + seq_interp(T')) / BASE;
+                {
+                    assert power(BASE, n-1) % BASE == 0 by {
+                        power_mod_lemma(BASE, n-1);
+                    }
+                    assert seq_interp(T') % BASE == 0 by {
+                        seq_div_base_lemma(T', n - 1);
+                    }
+                }
+                T[n-1] as int * (power(BASE, n-1) / BASE) + seq_interp(T') / BASE;
+                {
+                    assert seq_interp(T') / BASE == seq_interp(T'[1..]) by {
+                        seq_div_base_lemma(T', n - 1);
+                    }
+                }
+                T[n-1] as int * (power(BASE, n-1) / BASE) + seq_interp(T'[1..]);
+                {
+                    assert  power(BASE, n-1) / BASE ==  power(BASE, n-2) by {
+                        power_sub_one_lemma(BASE, n-1);
+                    }
+                }
+                T[n-1] as int * power(BASE, n-2) + seq_interp(T'[1..]);
+                T[n-1] as int * power(BASE, n-2) + seq_interp(T[1..n-1]);
             }
 
-            // assert seq_interp(T[1..]) == seq_interp(T'[1..]) + T[n-1] as int * postional_weight(n - 1);
+            // calc == {
+            //     seq_interp(T[1..]);
+            //     word_interp(T[1..], n - 2) + interp(T[1..], n - 2);
+            // }
 
             assume false;
         }
