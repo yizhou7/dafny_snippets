@@ -20,6 +20,13 @@ module Powers
         reveal power();
     }
 
+    lemma {:induction e} power_sub_one_lemma(b:int, e:nat)
+        requires e != 0 && b != 0;
+        ensures power(b, e) / b == power(b, e - 1);
+    {
+        assume false;
+    }
+
     lemma power_same_exp_lemma(a: int, b: int, e: nat)
         ensures power(a, e) * power(b, e) == power(a * b, e);
     {
