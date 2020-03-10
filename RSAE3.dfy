@@ -252,6 +252,18 @@ module RSAE3 {
         }
     }
 
+    lemma {:induction m} zero_extend_lemma(A: seq<uint32>, n: nat, A': seq<uint32>, m: nat)
+        requires |A| == n && |A'| == m;
+        requires n < m;
+        requires forall i :: 0 <= i < n ==> A[i] == A'[i];
+        requires forall i :: n <= i < m ==> A'[i] == 0;
+        ensures seq_interp(A') == seq_interp(A); 
+    {
+        if m != n {
+            assume false;
+        }
+    }
+
     method seq_zero_extend(A: seq<uint32>, n: nat, m: nat) returns (A': seq<uint32>)
         requires |A| == n;
         requires m > n;
