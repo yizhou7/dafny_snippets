@@ -38,7 +38,7 @@ module RSAE3 {
         power(BASE, i) as nat
     }
 
-    lemma word_interp_upper_bound_lemma(A: seq<uint32>, i: nat)
+    lemma {:induction i} word_interp_upper_bound_lemma(A: seq<uint32>, i: nat)
         requires i < |A|;
         ensures word_interp(A, i) <= power(BASE, i + 1) - power(BASE, i);
     {
@@ -772,12 +772,14 @@ module RSAE3 {
         }
 
         var T_1 := A'[1..];
+    
         assert seq_interp(T_1) == seq_interp(A') / BASE by {
             seq_div_base_lemma(A', n + 3);
         }
         assert seq_interp(T_1) < 2 * seq_interp(m) - 1;
 
         var T_2 := T_1[..n+1];
+        assert T_2 == A'[1..n+2];
 
         assert seq_interp(T_2) == seq_interp(T_1) by {
             assert seq_interp(T_1) < 2 * R(n) - 1 by {
@@ -786,8 +788,6 @@ module RSAE3 {
             msw_zero_lemma(T_1, n);
             zero_extend_lemma(T_2, n + 1, T_1, n + 2);
         }
-
-        assume T_2 == A'[1..n+2];
 
         assert seq_interp(A'[1..n+2]) < 2 * seq_interp(m) - 1;
     }
