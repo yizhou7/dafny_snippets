@@ -64,7 +64,7 @@ module RSAE3 {
         interp(A, |A|)
     }
 
-    lemma {:induction A} seq_interp_max_bound_lemma(A: seq<uint32>, n: nat)
+    lemma {:induction A} seq_interp_upper_bound_lemma(A: seq<uint32>, n: nat)
         requires |A| == n != 0;
         ensures seq_interp(A) < R(n);
     {
@@ -778,7 +778,15 @@ module RSAE3 {
         assert seq_interp(T_1) < 2 * seq_interp(m) - 1;
 
         var T_2 := T_1[..n+1];
-        assume seq_interp(T_2) == seq_interp(T_1);
+
+        assert seq_interp(T_2) == seq_interp(T_1) by {
+            assert seq_interp(T_1) < 2 * R(n) - 1 by {
+                seq_interp_upper_bound_lemma(m, n);
+            }
+            msw_zero_lemma(T_1, n);
+            zero_extend_lemma(T_2, n + 1, T_1, n + 2);
+        }
+
         assume T_2 == A'[1..n+2];
 
         assert seq_interp(A'[1..n+2]) < 2 * seq_interp(m) - 1;
