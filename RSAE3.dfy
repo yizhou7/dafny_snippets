@@ -12,7 +12,7 @@ module RSAE3 {
     function method reinterpret_cast(a: int64) : uint64
 
     // |A[..n]| == n, interp A[..n] as an int 
-    function interp(A: seq<uint32>, n: int) : int
+    function interp(A: seq<uint32>, n: nat) : nat
         decreases n;
         requires 0 <= n <= |A|;
     {
@@ -20,17 +20,17 @@ module RSAE3 {
         else word_interp(A, n - 1) + interp(A, n - 1)
     }
 
-    function R(n: nat) : int
+    function R(n: nat) : nat
         ensures R(n) != 0;
     {
         reveal power();
         power(BASE, n)
     }
 
-    function word_interp(A: seq<uint32>, i: nat) : int
+    function word_interp(A: seq<uint32>, i: nat) : nat
         requires i < |A|;
     {
-        A[i] as int * postional_weight(i)
+        A[i] as nat * postional_weight(i)
     }
 
     function postional_weight(i: nat) : nat
@@ -59,14 +59,14 @@ module RSAE3 {
         }
     }
 
-    function seq_interp(A: seq<uint32>) : int
+    function seq_interp(A: seq<uint32>) : nat
     {
         interp(A, |A|)
     }
 
-    lemma {:induction A} seq_interp_max_bound_lemma(A: seq<uint32>)
-        requires |A| != 0;
-        ensures seq_interp(A) < R(|A|);
+    lemma {:induction A} seq_interp_max_bound_lemma(A: seq<uint32>, n: nat)
+        requires |A| == n != 0;
+        ensures seq_interp(A) < R(n);
     {
         if |A| == 1 {
             reveal power();
@@ -662,6 +662,29 @@ module RSAE3 {
                 word_interp(T[1..], n - 2) + interp(T[1..], n - 2);
                 seq_interp(T[1..]);
             }
+        }
+    }
+
+    lemma msw_zero_lemma(T: seq<uint32>, n: nat)
+        requires |T| == n + 2;
+        requires seq_interp(T) < 2 * R(n) - 1;
+        ensures T[n+1] == 0;
+    {
+        if T[n+1] != 0 {
+            calc >= {
+                seq_interp(T);
+                interp(T, n + 2);
+                word_interp(T, n + 1) + interp(T, n + 1);
+                T[n+1] as int * postional_weight(n+1) + interp(T, n + 1);
+                {
+                    assert T[n+1] as int >= 1;
+                }
+                postional_weight(n+1) + interp(T, n + 1);
+                power(BASE, n + 1) + interp(T, n + 1);
+                power(BASE, n + 1);
+                2 * R(n);
+            }
+            assert false;
         }
     }
 
