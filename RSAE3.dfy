@@ -160,191 +160,6 @@ module RSAE3 {
         assert cong(A'[0] as int, 0, BASE);
     }
 
-    lemma {:induction A} lsw_mod_lemma(A: seq<uint32>)
-        ensures |A| != 0 ==> (seq_interp(A) % BASE == A[0] as int);
-    {
-        if |A| == 0 || |A| == 1 {
-            reveal power();
-        } else {
-            ghost var n := |A|;
-            assert n >= 1;
-            ghost var A' := A[..n - 1];
-
-            calc ==> {
-                seq_interp(A') % BASE == A'[0] as int;
-                {
-                    cong_residual_lemma(seq_interp(A'), A[0] as int, BASE);
-                }
-                cong(seq_interp(A'), A[0] as int, BASE);
-                {
-                    assert seq_interp(A') == interp(A', n - 1);
-                }
-                cong(interp(A', n - 1), A[0] as int, BASE);
-                {
-                    assert interp(A, n - 1) == interp(A', n - 1) by {
-                        prefix_sum_lemma(A, A', n - 1);
-                    }
-                }
-                cong(interp(A, n - 1), A[0] as int, BASE);
-                {
-                    assert cong(word_interp(A, n - 1), 0, BASE) by {
-                        assert power(BASE, n - 1) % BASE == 0 by {
-                            power_mod_lemma(BASE, n - 1);
-                        }
-                        calc ==> {
-                            power(BASE, n - 1) % BASE == 0;
-                            {
-                                cong_residual_lemma(power(BASE, n - 1), 0, BASE);
-                            }
-                            cong(power(BASE, n - 1), 0, BASE);
-                            {
-                                cong_mul_lemma(power(BASE, n - 1), 0, A[n - 1] as int, BASE);
-                            }
-                            cong(power(BASE, n - 1) * A[n - 1] as int, 0, BASE);
-                            {
-                                assert word_interp(A, n - 1) == A[n - 1] as int * power(BASE, n - 1);
-                            }
-                            cong(word_interp(A, n - 1), 0, BASE);
-                        }
-                    }
-                    cong_add_lemma_2(interp(A, n - 1), A[0] as int, word_interp(A, n - 1), 0, BASE);
-                }
-                cong(interp(A, n - 1) + word_interp(A, n - 1), A[0] as int, BASE);
-                cong(seq_interp(A), A[0] as int, BASE);
-            }
-
-            assert cong( seq_interp(A), A[0] as int, BASE);
-            assert A[0] as int < BASE;
-            cong_residual_lemma(seq_interp(A), A[0] as nat, BASE);
-        }
-    }
-
-    lemma lsw_inverse_lemma(m: seq<uint32>, m': uint32)
-        requires |m| != 0;
-        requires cong(m' as int * seq_interp(m), -1, BASE);
-        ensures cong(m' as int * m[0] as int, -1, BASE);
-    {
-        assert cong(seq_interp(m), seq_interp(m) % BASE, BASE) by {
-            mod_mod_lemma(seq_interp(m), BASE);
-            reveal cong();
-        }
-
-        calc ==> {
-            cong(seq_interp(m), seq_interp(m) % BASE, BASE);
-            {
-                assert (seq_interp(m) % BASE == m[0] as int) by {
-                    lsw_mod_lemma(m);
-                }
-            }
-            cong(seq_interp(m),  m[0] as int, BASE);
-            {
-                cong_mul_lemma(seq_interp(m), m[0] as int, m' as int, BASE);
-            }
-            cong(seq_interp(m) * m' as int,  m[0] as int * m' as int, BASE);
-            {
-                reveal cong();
-            }
-            cong(m[0] as int * m' as int, -1, BASE);
-        }
-    }
-
-    lemma {:induction T} seq_div_base_lemma(T: seq<uint32>, n: nat)
-        requires |T| == n > 0;
-        requires cong(T[0] as int, 0, BASE);
-        ensures seq_interp(T) % BASE == 0;
-        ensures seq_interp(T) / BASE == seq_interp(T[1..]);
-    {
-        if n == 1 {
-            reveal cong();
-        } else {
-            var T' := T[..n-1];
-
-            calc =={
-                seq_interp(T); 
-                (T[n-1] as int * postional_weight(n-1) + interp(T, n - 1));
-                {
-                    prefix_sum_lemma(T, T', n - 1);
-                }
-                (T[n-1] as int * postional_weight(n-1) + interp(T', n - 1));
-                (T[n-1] as int * postional_weight(n-1) + seq_interp(T'));
-                (T[n-1] as int * power(BASE, n-1) + seq_interp(T'));
-            }
-
-            assert A1: power(BASE, n-1) % BASE == 0 by {
-                power_mod_lemma(BASE, n-1);
-            }
-
-            assert A2: seq_interp(T') % BASE == 0 by {
-                seq_div_base_lemma(T', n - 1);
-            }
-
-            assert seq_interp(T) % BASE == 0 by {
-                reveal A1, A2;
-                assert (T[n-1] as int * power(BASE, n-1)) % BASE == 0 by {
-                    mul_mod_lemma(T[n-1] as int, power(BASE, n-1), BASE);
-                }
-                assert (T[n-1] as int * power(BASE, n-1) + seq_interp(T')) % BASE == 0;
-            }
-
-            calc == {
-                seq_interp(T) / BASE;
-                (T[n-1] as int * power(BASE, n-1) + seq_interp(T')) / BASE;
-                {
-                    reveal A1, A2;
-                }
-                T[n-1] as int * (power(BASE, n-1) / BASE) + seq_interp(T') / BASE;
-                {
-                    assert seq_interp(T') / BASE == seq_interp(T'[1..]) by {
-                        seq_div_base_lemma(T', n - 1);
-                    }
-                }
-                T[n-1] as int * (power(BASE, n-1) / BASE) + seq_interp(T'[1..]);
-                {
-                    assert  power(BASE, n-1) / BASE ==  power(BASE, n-2) by {
-                        power_sub_one_lemma(BASE, n-1);
-                    }
-                }
-                T[n-1] as int * power(BASE, n-2) + seq_interp(T'[1..]);
-                T[n-1] as int * power(BASE, n-2) + seq_interp(T[1..n-1]);
-                {
-                    assert seq_interp(T[1..n-1]) == interp(T[1..n-1], n - 2);
-                }
-                T[n-1] as int * power(BASE, n-2) + interp(T[1..n-1], n - 2);
-                {
-                    assert interp(T[1..n-1], n - 2) == interp(T[1..], n -2) by {
-                        prefix_sum_lemma(T[1..n-1], T[1..], n - 2);
-                    }
-                }
-                T[n-1] as int * power(BASE, n-2) + interp(T[1..], n -2);
-                word_interp(T[1..], n - 2) + interp(T[1..], n - 2);
-                seq_interp(T[1..]);
-            }
-        }
-    }
-
-    lemma msw_zero_lemma(T: seq<uint32>, n: nat)
-        requires |T| == n + 2;
-        requires seq_interp(T) < 2 * R(n) - 1;
-        ensures T[n+1] == 0;
-    {
-        if T[n+1] != 0 {
-            calc >= {
-                seq_interp(T);
-                interp(T, n + 2);
-                word_interp(T, n + 1) + interp(T, n + 1);
-                T[n+1] as int * postional_weight(n+1) + interp(T, n + 1);
-                {
-                    assert T[n+1] as int >= 1;
-                }
-                postional_weight(n+1) + interp(T, n + 1);
-                power(BASE, n + 1) + interp(T, n + 1);
-                power(BASE, n + 1);
-                2 * R(n);
-            }
-            assert false;
-        }
-    }
-
     lemma mont_mul_bounded_lemma(
         m: seq<uint32>,
         x: seq<uint32>,
@@ -494,6 +309,24 @@ module RSAE3 {
                 assume false;
             }
             ((y_val * seq_interp(x[..i]) + y_val * x[i] as int * p) / p) % m_val;
+            ((y_val * (seq_interp(x[..i]) + x[i] as int * p)) / p) % m_val;
+            {
+                prefix_sum_lemma(x[..i], x[..i+1], i);
+
+                // calc == {
+                //     seq_interp(x[..i+1]);
+                //     interp(x[..i+1], i + 1);
+                //     word_interp(x[..i+1], i) + interp(x[..i+1], i);
+                //     x[i] as nat * postional_weight(i) + interp(x[..i+1], i);
+                //     x[i] as nat * p + interp(x[..i+1], i);
+                //     {
+                //     }
+                //     // x[i] as nat * p + interp(x[..i], i);
+                // }
+
+                // assert seq_interp(x[..i]) + x[i] as int * p == seq_interp(x[..i+1]);
+            }
+
         }
     }
 
