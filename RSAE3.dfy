@@ -437,8 +437,62 @@ module RSAE3 {
         assert seq_interp(A'[1..n+2]) < 2 * seq_interp(m) - 1;
     }
 
-    lemma mont_mul_congruent_lemma()
+    lemma mont_mul_congruent_lemma(
+        m: seq<uint32>,
+        x: seq<uint32>,
+        y: seq<uint32>,
+        P_1: seq<uint32>,
+        P_2: seq<uint32>,
+        S: seq<uint32>,
+        A: seq<uint32>,
+        A': seq<uint32>,
+        i: nat,
+        u_i: uint32,
+        m': uint32,
+        n: nat)
+
+        requires i < n;
+        requires |m| == n && |x| == n && |y| == n;
+        requires |A| == n + 2;
+        requires |A'| == n + 3;
+
+        requires seq_interp(m) != 0;
+        requires seq_interp(A) + seq_interp(S) == seq_interp(A');
+        requires seq_interp(P_1) + seq_interp(P_2) == seq_interp(S);
+        requires seq_interp(P_1) == seq_interp(y) * x [i] as int;
+        requires seq_interp(P_2) == seq_interp(m) * u_i as int;
+
+        requires seq_interp(A) == (seq_interp(x[..i]) * seq_interp(y) / power(BASE, i)) % seq_interp(m);
     {
+        ghost var m_val := seq_interp(m);
+
+        calc == {
+            seq_interp(A') % m_val;
+            (seq_interp(A) + seq_interp(S)) % m_val;
+            (seq_interp(A) + seq_interp(P_1) + seq_interp(P_2)) % m_val;
+            {
+                assume false;
+            }
+            (seq_interp(A) + seq_interp(P_1)) % m_val;
+            (seq_interp(A) + seq_interp(y) * x[i] as int) % m_val;
+            ((seq_interp(x[..i]) * seq_interp(y) / power(BASE, i)) % m_val + seq_interp(y) * x[i] as int) % m_val;
+            {
+                assume false;
+            }
+            (seq_interp(x[..i]) * seq_interp(y) / power(BASE, i) + seq_interp(y) * x[i] as int) % m_val;
+            {
+                assume false;
+            }
+            (seq_interp(y) * seq_interp(x[..i]) / power(BASE, i) + seq_interp(y) * x[i] as int) % m_val;
+            {
+                assert power(BASE, i) / power(BASE, i) == 1;
+            }
+            (seq_interp(y) * seq_interp(x[..i]) / power(BASE, i) + seq_interp(y) * x[i] as int * (power(BASE, i) / power(BASE, i))) % m_val;
+            {
+                assume false;
+            }
+            ((seq_interp(y) * seq_interp(x[..i]) + seq_interp(y) * x[i] as int * power(BASE, i)) / power(BASE, i)) % m_val;
+        }
 
     }
 
@@ -455,8 +509,7 @@ module RSAE3 {
         assume seq_interp(A) == 0;
         var i := 0;
 
-        ghost var m_val := seq_interp(m);
-        assert seq_interp(A) == (seq_interp(x[..i]) * seq_interp(y) / power(BASE, i)) % m_val;
+        assert seq_interp(A) == (seq_interp(x[..i]) * seq_interp(y) / power(BASE, i)) % seq_interp(m);
 
         while i < n
             decreases n - i;
@@ -464,7 +517,7 @@ module RSAE3 {
             invariant seq_interp(A) < 2 * seq_interp(m) - 1;
             // invariant seq_interp(A) == (seq_interp(x[..i]) * seq_interp(y) * power(BASE_INV, i)) % seq_interp(m);
         {
-            assume seq_interp(A) == (seq_interp(x[..i]) * seq_interp(y) / power(BASE, i)) % m_val;
+            assume seq_interp(A) == (seq_interp(x[..i]) * seq_interp(y) / power(BASE, i)) % seq_interp(m);
 
             var u_i_ := ((A[0] as int + x[i] as int * y[0] as int) * m' as int) % BASE; 
             var u_i := u_i_ as uint32;
@@ -477,34 +530,6 @@ module RSAE3 {
 
             assert cong(A'[0] as int, 0, BASE) by {
                 mont_mul_divisible_lemma(m, x, y, P_1, P_2, S, A, A', i, u_i, m', n);
-            }
-        
-            calc == {
-                seq_interp(A') % m_val ;
-                (seq_interp(A) + seq_interp(S)) % m_val;
-                (seq_interp(A) + seq_interp(P_1) + seq_interp(P_2)) % m_val;
-                {
-                    assume false;
-                }
-                (seq_interp(A) + seq_interp(P_1)) % m_val;
-                (seq_interp(A) + seq_interp(y) * x[i] as int) % m_val;
-                ((seq_interp(x[..i]) * seq_interp(y) / power(BASE, i)) % m_val + seq_interp(y) * x[i] as int) % m_val;
-                {
-                    assume false;
-                }
-                (seq_interp(x[..i]) * seq_interp(y) / power(BASE, i) + seq_interp(y) * x[i] as int) % m_val;
-                {
-                    assume false;
-                }
-                (seq_interp(y) * seq_interp(x[..i]) / power(BASE, i) + seq_interp(y) * x[i] as int) % m_val;
-                {
-                    assert power(BASE, i) / power(BASE, i) == 1;
-                }
-                (seq_interp(y) * seq_interp(x[..i]) / power(BASE, i) + seq_interp(y) * x[i] as int * (power(BASE, i) / power(BASE, i))) % m_val;
-                {
-                    assume false;
-                }
-                ((seq_interp(y) * seq_interp(x[..i]) + seq_interp(y) * x[i] as int * power(BASE, i)) / power(BASE, i)) % m_val;
             }
 
             assert seq_interp(A'[1..n+2]) < 2 * seq_interp(m) - 1 by {
