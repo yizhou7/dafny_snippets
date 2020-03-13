@@ -465,6 +465,8 @@ module RSAE3 {
         requires seq_interp(A) == (seq_interp(x[..i]) * seq_interp(y) / power(BASE, i)) % seq_interp(m);
     {
         ghost var m_val := seq_interp(m);
+        ghost var y_val := seq_interp(y);
+        ghost var p := power(BASE, i);
 
         calc == {
             seq_interp(A') % m_val;
@@ -474,26 +476,25 @@ module RSAE3 {
                 assume false;
             }
             (seq_interp(A) + seq_interp(P_1)) % m_val;
-            (seq_interp(A) + seq_interp(y) * x[i] as int) % m_val;
-            ((seq_interp(x[..i]) * seq_interp(y) / power(BASE, i)) % m_val + seq_interp(y) * x[i] as int) % m_val;
+            (seq_interp(A) + y_val * x[i] as int) % m_val;
+            ((seq_interp(x[..i]) * y_val / p) % m_val + y_val * x[i] as int) % m_val;
             {
                 assume false;
             }
-            (seq_interp(x[..i]) * seq_interp(y) / power(BASE, i) + seq_interp(y) * x[i] as int) % m_val;
+            (seq_interp(x[..i]) * y_val / p + y_val * x[i] as int) % m_val;
             {
                 assume false;
             }
-            (seq_interp(y) * seq_interp(x[..i]) / power(BASE, i) + seq_interp(y) * x[i] as int) % m_val;
+            (y_val * seq_interp(x[..i]) / p + y_val * x[i] as int) % m_val;
             {
-                assert power(BASE, i) / power(BASE, i) == 1;
+                assert p / p == 1;
             }
-            (seq_interp(y) * seq_interp(x[..i]) / power(BASE, i) + seq_interp(y) * x[i] as int * (power(BASE, i) / power(BASE, i))) % m_val;
+            (y_val * seq_interp(x[..i]) / p + y_val * x[i] as int * (p / p)) % m_val;
             {
                 assume false;
             }
-            ((seq_interp(y) * seq_interp(x[..i]) + seq_interp(y) * x[i] as int * power(BASE, i)) / power(BASE, i)) % m_val;
+            ((y_val * seq_interp(x[..i]) + y_val * x[i] as int * p) / p) % m_val;
         }
-
     }
 
     method mont_mul(m: seq<uint32>, x: seq<uint32>, y: seq<uint32>, m': uint32, n: nat, ghost R: int)
