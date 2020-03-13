@@ -261,6 +261,7 @@ module RSAE3 {
         S: seq<uint32>,
         A: seq<uint32>,
         A': seq<uint32>,
+        A'': seq<uint32>,
         i: nat,
         u_i: uint32,
         m': uint32,
@@ -271,63 +272,89 @@ module RSAE3 {
         requires |A| == n + 2;
         requires |A'| == n + 3;
 
+        requires A'' == A'[1..n+2];
+        requires seq_interp(A'') == seq_interp(A') / BASE;
+
         requires seq_interp(m) != 0;
         requires seq_interp(A) + seq_interp(S) == seq_interp(A');
         requires seq_interp(P_1) + seq_interp(P_2) == seq_interp(S);
         requires seq_interp(P_1) == seq_interp(y) * x [i] as int;
         requires seq_interp(P_2) == seq_interp(m) * u_i as int;
 
-        requires seq_interp(A) == (seq_interp(x[..i]) * seq_interp(y) / power(BASE, i)) % seq_interp(m);
+        requires cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) / power(BASE, i), seq_interp(m));
+
+        // ensures seq_interp(A'') == (seq_interp(y) * seq_interp(x[..i+1]) / power(BASE, i+1)) % seq_interp(m);
     {
-        ghost var m_val := seq_interp(m);
-        ghost var y_val := seq_interp(y);
-        ghost var p := power(BASE, i);
+        // ghost var m_val := seq_interp(m);
+        // ghost var y_val := seq_interp(y);
+        // ghost var p := power(BASE, i);
 
-        calc == {
-            seq_interp(A') % m_val;
-            (seq_interp(A) + seq_interp(S)) % m_val;
-            (seq_interp(A) + seq_interp(P_1) + seq_interp(P_2)) % m_val;
-            {
-                assume false;
-            }
-            (seq_interp(A) + seq_interp(P_1)) % m_val;
-            (seq_interp(A) + y_val * x[i] as int) % m_val;
-            ((seq_interp(x[..i]) * y_val / p) % m_val + y_val * x[i] as int) % m_val;
-            {
-                assume false;
-            }
-            (seq_interp(x[..i]) * y_val / p + y_val * x[i] as int) % m_val;
-            {
-                assume false;
-            }
-            (y_val * seq_interp(x[..i]) / p + y_val * x[i] as int) % m_val;
-            {
-                assert p / p == 1;
-            }
-            (y_val * seq_interp(x[..i]) / p + y_val * x[i] as int * (p / p)) % m_val;
-            {
-                assume false;
-            }
-            ((y_val * seq_interp(x[..i]) + y_val * x[i] as int * p) / p) % m_val;
-            ((y_val * (seq_interp(x[..i]) + x[i] as int * p)) / p) % m_val;
-            {
-                prefix_sum_lemma(x[..i], x[..i+1], i);
+        // calc == {
+        //     seq_interp(A') % m_val;
+        //     (seq_interp(A) + seq_interp(S)) % m_val;
+        //     (seq_interp(A) + seq_interp(P_1) + seq_interp(P_2)) % m_val;
+        //     {
+        //         assume false;
+        //     }
+        //     (seq_interp(A) + seq_interp(P_1)) % m_val;
+        //     (seq_interp(A) + y_val * x[i] as int) % m_val;
+        //     ((seq_interp(x[..i]) * y_val / p) % m_val + y_val * x[i] as int) % m_val;
+        //     {
+        //         assume false;
+        //     }
+        //     (seq_interp(x[..i]) * y_val / p + y_val * x[i] as int) % m_val;
+        //     {
+        //         assume false;
+        //     }
+        //     (y_val * seq_interp(x[..i]) / p + y_val * x[i] as int) % m_val;
+        //     {
+        //         assert p / p == 1;
+        //     }
+        //     (y_val * seq_interp(x[..i]) / p + y_val * x[i] as int * (p / p)) % m_val;
+        //     {
+        //         assume false;
+        //     }
+        //     ((y_val * seq_interp(x[..i]) + y_val * x[i] as int * p) / p) % m_val;
+        //     ((y_val * (seq_interp(x[..i]) + x[i] as int * p)) / p) % m_val;
+        //     {
+        //         // ghost var x_1 := x[..i+1];
+        //         // ghost var x_2 := x[..i];
 
-                // calc == {
-                //     seq_interp(x[..i+1]);
-                //     interp(x[..i+1], i + 1);
-                //     word_interp(x[..i+1], i) + interp(x[..i+1], i);
-                //     x[i] as nat * postional_weight(i) + interp(x[..i+1], i);
-                //     x[i] as nat * p + interp(x[..i+1], i);
-                //     {
-                //     }
-                //     // x[i] as nat * p + interp(x[..i], i);
-                // }
+        //         // calc == {
+        //         //     seq_interp(x_1);
+        //         //     interp(x_1, i + 1);
+        //         //     word_interp(x_1, i) + interp(x_1, i);
+        //         //     x[i] as nat * postional_weight(i) + interp(x_1, i);
+        //         //     x[i] as nat * p + interp(x_1, i);
+        //         //     {
+        //         //         assert interp(x_2, i) == interp(x_1, i) by {
+        //         //             prefix_sum_lemma(x_2, x_1, i);
+        //         //         }
+        //         //     }
+        //         //     x[i] as nat * p + interp(x_2, i);
+        //         //     {
+        //         //         assert seq_interp(x_2)  == interp(x_2, i);
+        //         //     }
+        //         //     x[i] as nat * p + seq_interp(x_2);
+        //         // }
+        //         // assert seq_interp(x_1) == x[i] as nat * p + seq_interp(x_2);
+        //         assume seq_interp(x[..i]) + x[i] as int * p == seq_interp(x[..i+1]);
+        //     }
+        //     (y_val * seq_interp(x[..i+1]) / p) % m_val;
+        // }
 
-                // assert seq_interp(x[..i]) + x[i] as int * p == seq_interp(x[..i+1]);
-            }
-
-        }
+        // calc == {
+        //     seq_interp(A'') % m_val;
+        //     (seq_interp(A') / BASE) % m_val;
+        //     {
+        //         assume false;
+        //     }
+        //     (y_val * seq_interp(x[..i+1]) / p / BASE) % m_val;
+        //     {
+        //         assume false;
+        //     }
+        //     (y_val * seq_interp(x[..i+1]) / power(BASE, i+1)) % m_val;
+        // }
     }
 
     method mont_mul(m: seq<uint32>, x: seq<uint32>, y: seq<uint32>, m': uint32, n: nat, ghost R: int)
