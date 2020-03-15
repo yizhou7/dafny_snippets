@@ -299,13 +299,26 @@ module RSAE3 {
             (seq_interp(A) + seq_interp(S)) % m_val;
             (seq_interp(A) + seq_interp(P_1) + seq_interp(P_2)) % m_val;
             {
-                assume false;
+                calc ==> {
+                    seq_interp(P_2) == seq_interp(m) * u_i as int;
+                    {
+                        mod_mul_lemma(u_i as int, seq_interp(m), m_val);
+                    }
+                    seq_interp(P_2) % m_val == 0;
+                    {
+                         cong_add_lemma_3(seq_interp(A) + seq_interp(P_1), seq_interp(P_2), m_val);
+                     }
+                    cong(seq_interp(A) + seq_interp(P_1), seq_interp(A) + seq_interp(P_1) + seq_interp(P_2), m_val);
+                }
+                reveal cong();
             }
             (seq_interp(A) + seq_interp(P_1)) % m_val;
-            (seq_interp(A) + y_val * x[i] as int) % m_val;
             {
-                // assert cong(seq_interp(A), seq_interp(x_2) * y_val / p, seq_interp(m));
                 assume false;
+            }
+            (seq_interp(x_2) * y_val / p + seq_interp(P_1)) % m_val;
+            {
+                assert seq_interp(P_1) == seq_interp(y) * x [i] as int;
             }
             (seq_interp(x_2) * y_val / p + y_val * x[i] as int) % m_val;
             {
