@@ -13,6 +13,35 @@ module Congruences {
         assume false;
     }
 
+    lemma mod_div_inv_leamma(a: int, b: int, b_inv: int, n: int)
+        requires n != 0 && b != 0
+        requires cong(b * b_inv, 1, n);
+        requires a % b == 0;
+        ensures cong(a * b_inv, a / b, n);
+    {
+        assert cong(a / b, a / b, n) by {
+            reveal cong();
+        }
+
+        calc ==> {
+            cong(a / b, a / b, n);
+            {
+                cong_mul_lemma_1(a / b, a / b, b * b_inv, n);
+            }
+            cong(a * b_inv,  (a / b) * b_inv * b, n);
+            {
+                assert cong((a / b) * b * b_inv, a / b, n) by {
+                    assert cong(b * b_inv, 1, n);
+                    cong_mul_lemma_1(b * b_inv, 1, a / b, n);
+                }
+                assert cong(a * b_inv, a / b, n) by {
+                    cong_trans_lemma(a * b_inv,  (a / b) * b_inv * b, a / b, n);
+                } 
+            }
+            cong(a * b_inv, a / b, n);
+        }
+    }
+
     lemma cong_trans_lemma(a: int, b: int, c: int, n: int)
         requires n != 0;
         requires cong(a, b, n) && cong(b, c, n);
@@ -44,7 +73,7 @@ module Congruences {
         reveal cong();
     }
 
-    lemma cong_mul_lemma(a: int, b: int, c: int, n: int)
+    lemma cong_mul_lemma_1(a: int, b: int, c: int, n: int)
         requires n != 0;
         requires cong(a, b, n);
         ensures cong(a * c, b * c, n);

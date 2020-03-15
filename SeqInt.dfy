@@ -402,7 +402,7 @@ module SeqInt {
                             }
                             cong(power(BASE, n - 1), 0, BASE);
                             {
-                                cong_mul_lemma(power(BASE, n - 1), 0, A[n - 1] as int, BASE);
+                                cong_mul_lemma_1(power(BASE, n - 1), 0, A[n - 1] as int, BASE);
                             }
                             cong(power(BASE, n - 1) * A[n - 1] as int, 0, BASE);
                             {
@@ -442,7 +442,7 @@ module SeqInt {
             }
             cong(seq_interp(m),  m[0] as int, BASE);
             {
-                cong_mul_lemma(seq_interp(m), m[0] as int, m' as int, BASE);
+                cong_mul_lemma_1(seq_interp(m), m[0] as int, m' as int, BASE);
             }
             cong(seq_interp(m) * m' as int,  m[0] as int * m' as int, BASE);
             {

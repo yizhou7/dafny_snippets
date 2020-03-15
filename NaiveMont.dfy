@@ -48,7 +48,7 @@ module NaiveMont {
             calc ==> {
                 cong(N' * N, -1, R);
                 {
-                    cong_mul_lemma(N' * N, -1, T, R);
+                    cong_mul_lemma_1(N' * N, -1, T, R);
                 }
                 cong((N' * N) * T, -T, R);
             }
@@ -61,7 +61,7 @@ module NaiveMont {
             calc ==> {
                 cong(T * N' % R, T * N', R);
                 {
-                    cong_mul_lemma(T * N' % R, T * N', N, R);
+                    cong_mul_lemma_1(T * N' % R, T * N', N, R);
                 }
                 cong(T * N' % R * N, T * N' * N, R);
                 {

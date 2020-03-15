@@ -23,7 +23,7 @@ module RSAE3 {
         calc ==> {
             cong(((a + x * y) * m') % BASE, (a + x * y) * m', BASE);
             {
-                cong_mul_lemma(((a + x * y) * m') % BASE, (a + x * y) * m', m, BASE);
+                cong_mul_lemma_1(((a + x * y) * m') % BASE, (a + x * y) * m', m, BASE);
             }
             cong(temp_1, m * (a + x * y) * m', BASE);
             {
@@ -33,7 +33,7 @@ module RSAE3 {
             {
                 assert cong(m * m' * (a + x * y), -(a + x * y), BASE) by {
                     assert cong(m' * m, -1, BASE);
-                    cong_mul_lemma(m' * m, -1, (a + x * y), BASE);
+                    cong_mul_lemma_1(m' * m, -1, (a + x * y), BASE);
                 }
                 cong_trans_lemma(temp_1, m * m' * (a + x * y), -(a + x * y), BASE);
             }
