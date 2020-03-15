@@ -361,24 +361,29 @@ module RSAE3 {
             (y_val * seq_interp(x_2) * p_inv) % m_val;
         }
 
-        // calc == {
-        //     seq_interp(A'') % m_val;
-        //     {
-        //         assert seq_interp(A'') == seq_interp(A') / BASE;
-        //     }
-        //     (seq_interp(A') / BASE) % m_val;
-        //     {
-        //         assume false;
-        //     }
-        //     (y_val * seq_interp(x_1) * p_inv / BASE) % m_val;
-        //     {
-        //         assume false;
-        //     }
-        //     (y_val * seq_interp(x_1) * power(BASE_INV, i+1)) % m_val;
-        // }
+        calc == {
+            seq_interp(A'') % m_val;
+            {
+                assert seq_interp(A'') == seq_interp(A') / BASE;
+            }
+            (seq_interp(A') / BASE) % m_val;
+            {
+                assume seq_interp(A') % BASE == 0;
+                mod_div_inv_leamma(seq_interp(A'), BASE, BASE_INV, m_val);
+                reveal cong();
+            }
+            (seq_interp(A') * BASE_INV) % m_val;
+            {
+                assume false;
+            }
+            (y_val * seq_interp(x_1) * p_inv * BASE_INV) % m_val;
+            {
+                assume false;
+            }
+            (y_val * seq_interp(x_1) * power(BASE_INV, i+1)) % m_val;
+        }
 
     //    assert seq_interp(A'') % m_val == (y_val * seq_interp(x_1) / power(BASE, i+1)) % m_val;
-
     //     assert cong(seq_interp(A''), y_val * seq_interp(x_1) / power(BASE, i+1), seq_interp(m)) by {
     //         assert seq_interp(A'') % m_val == (y_val * seq_interp(x_1) / power(BASE, i+1)) % m_val;
     //         reveal cong();
@@ -435,6 +440,7 @@ module RSAE3 {
 
             var A'' := A'[1..n+2];
             assume seq_interp(A'') == seq_interp(A') / BASE;
+            assume seq_interp(A') % BASE == 0;
 
             // assert cong(seq_interp(A''), seq_interp(x[..i + 1]) * y_val / power(BASE, i+1), m_val) by {
             //     mont_mul_congruent_lemma(m, x, y, P_1, P_2, S, A, A', A'', i, u_i, m', n);
