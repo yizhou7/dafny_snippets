@@ -14,7 +14,7 @@ module RSAE3 {
         ensures cong(m * (((a + x * y) * m') % BASE), -(a + x * y), BASE);
     {
         assert A_1: cong(((a + x * y) * m') % BASE, (a + x * y) * m', BASE) by {
-            mod_mod_lemma((a + x * y) * m', BASE);
+            cong_mod_lemma((a + x * y) * m', BASE);
         }
 
         ghost var temp_1 := m * (((a + x * y) * m') % BASE);
@@ -305,10 +305,6 @@ module RSAE3 {
             (seq_interp(A) + y_val * x[i] as int) % m_val;
             {
                 // assert cong(seq_interp(A), seq_interp(x_2) * y_val / p, seq_interp(m));
-                assume false;
-            }
-            ((seq_interp(x_2) * y_val / p) % m_val + y_val * x[i] as int) % m_val;
-            {
                 assume false;
             }
             (seq_interp(x_2) * y_val / p + y_val * x[i] as int) % m_val;

@@ -713,7 +713,7 @@ module MONTGOMERY {
         }
     }
 
-    lemma montgomery_mul_mod_lemma(a: nat, b: nat, c: nat, a': nat, b': nat,  c': nat, R: nat, R_inv: nat, N: nat)
+    lemma montgomery_mod_mul_lemma(a: nat, b: nat, c: nat, a': nat, b': nat,  c': nat, R: nat, R_inv: nat, N: nat)
         requires 0 < N < R && gcd_def(N, R, 1);
         requires R_inv == mod_inverse(R, N);
         requires cong_def(c', (a' * b') * R_inv, N);
@@ -788,7 +788,7 @@ module MONTGOMERY {
                 montgomery_reduction_properties_lemma(N, R, c', c);
             }
 
-            montgomery_mul_mod_lemma(a, b, c, a', b', c', R, R_inv, N);
+            montgomery_mod_mul_lemma(a, b, c, a', b', c', R, R_inv, N);
         }
 
         assert c % N == (a * b) % N by {

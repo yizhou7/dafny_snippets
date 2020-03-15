@@ -41,7 +41,7 @@ module NaiveMont {
         ensures (M * N + T) % R == 0;
     {
         assert cong(T * N' % R, T * N', R) by {
-            mod_mod_lemma(T * N', R);
+            cong_mod_lemma(T * N', R);
         }
 
         assert cong(T * N' * N , -T, R) by {
@@ -56,7 +56,7 @@ module NaiveMont {
  
         assert cong(M * N, T * N' * N, R) by {
             assert cong(T * N' % R, T * N', R) by {
-                mod_mod_lemma(T * N', R);
+                cong_mod_lemma(T * N', R);
             }
             calc ==> {
                 cong(T * N' % R, T * N', R);

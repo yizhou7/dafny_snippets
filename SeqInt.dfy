@@ -429,7 +429,7 @@ module SeqInt {
         ensures cong(m' as int * m[0] as int, -1, BASE);
     {
         assert cong(seq_interp(m), seq_interp(m) % BASE, BASE) by {
-            mod_mod_lemma(seq_interp(m), BASE);
+            cong_mod_lemma(seq_interp(m), BASE);
             reveal cong();
         }
 
@@ -485,7 +485,7 @@ module SeqInt {
             assert seq_interp(T) % BASE == 0 by {
                 reveal A1, A2;
                 assert (T[n-1] as int * power(BASE, n-1)) % BASE == 0 by {
-                    mul_mod_lemma(T[n-1] as int, power(BASE, n-1), BASE);
+                    mod_mul_lemma(T[n-1] as int, power(BASE, n-1), BASE);
                 }
                 assert (T[n-1] as int * power(BASE, n-1) + seq_interp(T')) % BASE == 0;
             }
