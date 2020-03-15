@@ -270,10 +270,12 @@ module RSAE3 {
 
         ensures (seq_interp(x_1) * p_inv + x[i] as int) % m_val == (seq_interp(x_2) * p_inv) % m_val;
     {
+        assume cong(1, p * p_inv, m_val);
+        assume cong(p * p_inv, 1, m_val);
+
         calc == {
             (seq_interp(x_1) * p_inv + x[i] as int) % m_val;
             {
-                assume cong(1, p * p_inv, m_val);
                 ghost var a := seq_interp(x_1) * p_inv + x[i] as int;
                 assert a % m_val == a * p * p_inv % m_val by {
                     cong_mul_lemma_1(1, p * p_inv, a, m_val);
@@ -282,10 +284,34 @@ module RSAE3 {
             }
             (seq_interp(x_1) * p_inv + x[i] as int) * p * p_inv % m_val;
             {
-                assume false;
+                assert (seq_interp(x_1) * p_inv + x[i] as int) * p == (seq_interp(x_1) * p_inv * p  + x[i] as int * p);
             }
             (seq_interp(x_1) * p_inv * p + x[i] as int * p) * p_inv % m_val;
             {
+                ghost var a := seq_interp(x_1);
+                ghost var b := x[i] as int * p;
+            
+                calc ==> {
+                    cong(p * p_inv, 1, m_val);
+                    {
+                        cong_mul_lemma_1(p * p_inv, 1, seq_interp(x_1), m_val);
+                    }
+                    cong(a * p * p_inv, a, m_val);
+                    { 
+                        cong_add_lemma_1(a * p * p_inv, a, b, m_val);
+                    }
+                    cong(a * p * p_inv + b, a + b, m_val);
+                    {
+                        cong_mul_lemma_1(a * p * p_inv + b, a + b, p_inv, m_val);
+                    }
+                    cong((a * p * p_inv + b) * p_inv, (a + b) * p_inv, m_val);
+                    {
+                        reveal cong();                
+                    }
+                    ((a * p * p_inv + b) * p_inv) % m_val == (a + b) * p_inv % m_val;
+                }
+
+                assert ((a * p * p_inv + b) * p_inv) % m_val == (a + b) * p_inv % m_val;
                 assume false;
             }
             (seq_interp(x_1) + x[i] as int * p) * p_inv % m_val;
