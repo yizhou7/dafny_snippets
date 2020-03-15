@@ -252,6 +252,52 @@ module RSAE3 {
         assert seq_interp(A'[1..n+2]) < 2 * seq_interp(m) - 1;
     }
 
+    lemma mont_mul_congruent_lemma_1(
+        x: seq<uint32>,
+        i: nat,
+        x_1: seq<uint32>,
+        x_2: seq<uint32>,
+        p: int,
+        p_inv: int,
+        BASE_INV: int,
+        m_val: int)
+
+        requires i + 1 <= |x|;
+        requires x_1 == x[..i] && x_2 == x[..i+1];
+        requires p == power(BASE, i);
+        requires p_inv == power(BASE_INV, i);
+        requires m_val != 0;
+
+        ensures (seq_interp(x_1) * p_inv + x[i] as int) % m_val == (seq_interp(x_2) * p_inv) % m_val;
+    {
+        calc == {
+            (seq_interp(x_1) * p_inv + x[i] as int) % m_val;
+            {
+                assume cong(1, p * p_inv, m_val);
+                ghost var a := seq_interp(x_1) * p_inv + x[i] as int;
+                assert a % m_val == a * p * p_inv % m_val by {
+                    cong_mul_lemma_1(1, p * p_inv, a, m_val);
+                    reveal cong();
+                }
+            }
+            (seq_interp(x_1) * p_inv + x[i] as int) * p * p_inv % m_val;
+            {
+                assume false;
+            }
+            (seq_interp(x_1) * p_inv * p + x[i] as int * p) * p_inv % m_val;
+            {
+                assume false;
+            }
+            (seq_interp(x_1) + x[i] as int * p) * p_inv % m_val;
+            {
+                assume false;
+            }
+            (seq_interp(x_2) * p_inv) % m_val;
+        }
+    
+        assume false;
+    }
+
     lemma mont_mul_congruent_lemma(
         m: seq<uint32>,
         x: seq<uint32>,
@@ -275,6 +321,7 @@ module RSAE3 {
 
         requires A'' == A'[1..n+2];
         requires seq_interp(A'') == seq_interp(A') / BASE;
+        requires seq_interp(A') % BASE == 0;
 
         requires seq_interp(m) != 0;
         requires seq_interp(A) + seq_interp(S) == seq_interp(A');
@@ -333,14 +380,16 @@ module RSAE3 {
             }
             (y_val * seq_interp(x_1) * p_inv + y_val * x[i] as int) % m_val;
             {
-                assume false;
+                assert y_val * seq_interp(x_1) * p_inv + y_val * x[i] as int == y_val * (seq_interp(x_1) * p_inv + x[i] as int);
             }
             (y_val * (seq_interp(x_1) * p_inv + x[i] as int)) % m_val;
             {
                 calc == {
                     (seq_interp(x_1) * p_inv + x[i] as int) % m_val;
                     {
-                        assume false;
+                        assume cong(1, p * p_inv, m_val);
+                        cong_mul_lemma_1(1, p * p_inv, seq_interp(x_1) * p_inv + x[i] as int, m_val);
+                        reveal cong();
                     }
                     (seq_interp(x_1) * p_inv + x[i] as int) * p * p_inv % m_val;
                     {
@@ -361,35 +410,31 @@ module RSAE3 {
             (y_val * seq_interp(x_2) * p_inv) % m_val;
         }
 
-        calc == {
-            seq_interp(A'') % m_val;
-            {
-                assert seq_interp(A'') == seq_interp(A') / BASE;
-            }
-            (seq_interp(A') / BASE) % m_val;
-            {
-                assume seq_interp(A') % BASE == 0;
-                mod_div_inv_leamma(seq_interp(A'), BASE, BASE_INV, m_val);
-                reveal cong();
-            }
-            (seq_interp(A') * BASE_INV) % m_val;
-            {
-                assume false;
-            }
-            (y_val * seq_interp(x_1) * p_inv * BASE_INV) % m_val;
-            {
-                assume false;
-            }
-            (y_val * seq_interp(x_1) * power(BASE_INV, i+1)) % m_val;
-        }
-
-    //    assert seq_interp(A'') % m_val == (y_val * seq_interp(x_1) / power(BASE, i+1)) % m_val;
-    //     assert cong(seq_interp(A''), y_val * seq_interp(x_1) / power(BASE, i+1), seq_interp(m)) by {
-    //         assert seq_interp(A'') % m_val == (y_val * seq_interp(x_1) / power(BASE, i+1)) % m_val;
-    //         reveal cong();
-    //     }
-        // ensures cong(seq_interp(A''), seq_interp(x[..i + 1]) * seq_interp(y) * power(BASE_INV, i+1), seq_interp(m));
-
+        // calc == {
+        //     seq_interp(A'') % m_val;
+        //     {
+        //         assert seq_interp(A'') == seq_interp(A') / BASE;
+        //     }
+        //     (seq_interp(A') / BASE) % m_val;
+        //     {
+        //         mod_div_inv_leamma(seq_interp(A'), BASE, BASE_INV, m_val);
+        //         reveal cong();
+        //     }
+        //     (seq_interp(A') * BASE_INV) % m_val;
+        //     {
+        //         assume false;
+        //     }
+        //     (y_val * seq_interp(x_2) * p_inv * BASE_INV) % m_val;
+        //     {
+        //         assume false;
+        //     }
+        //     (y_val * seq_interp(x_2) * power(BASE_INV, i+1)) % m_val;
+        // }
+        
+        // assert cong(seq_interp(A''), y_val * seq_interp(x_2) * power(BASE_INV, i+1), seq_interp(m)) by {
+        //     assert seq_interp(A'') % m_val == (y_val * seq_interp(x_2)* power(BASE_INV, i+1)) % m_val;
+        //     reveal cong();
+        // }
 
         assume false;
     }
