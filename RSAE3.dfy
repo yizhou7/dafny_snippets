@@ -388,24 +388,28 @@ module RSAE3 {
         var temp := new uint32[n + 1];
         var A :seq<uint32> := temp[..];
         assume seq_interp(A) == 0;
+
+        ghost var m_val := seq_interp(m);
+        ghost var y_val := seq_interp(y);
+
         var i := 0;
 
-        assert seq_interp(A) == (seq_interp(x[..i]) * seq_interp(y) / power(BASE, i)) % seq_interp(m);
+        assume cong(seq_interp(A), seq_interp(x[..i]) * y_val / power(BASE, i), m_val);
 
         while i < n
             decreases n - i;
             invariant |A| == n + 1;
-            invariant seq_interp(A) < 2 * seq_interp(m) - 1;
-            // invariant seq_interp(A) == (seq_interp(x[..i]) * seq_interp(y) * power(BASE_INV, i)) % seq_interp(m);
+            invariant seq_interp(A) < 2 * m_val - 1;
+            invariant i <= |x|;
+            invariant cong(seq_interp(A), seq_interp(x[..i]) * y_val / power(BASE, i), m_val);
         {
-            assume seq_interp(A) == (seq_interp(x[..i]) * seq_interp(y) / power(BASE, i)) % seq_interp(m);
-
             var u_i_ := ((A[0] as int + x[i] as int * y[0] as int) * m' as int) % BASE; 
             var u_i := u_i_ as uint32;
 
             var P_1 := magic_mul(y, x[i], n);
             var P_2 := magic_mul(m, u_i, n);
             var S := seq_add_c(P_1, P_2, n + 1);
+    
             A := seq_zero_extend(A, n + 1, n + 2);
             var A' := seq_add_c(A, S, n + 2);
 
@@ -413,21 +417,21 @@ module RSAE3 {
                 mont_mul_divisible_lemma(m, x, y, P_1, P_2, S, A, A', i, u_i, m', n);
             }
 
-            assert seq_interp(A'[1..n+2]) < 2 * seq_interp(m) - 1 by {
+            assert seq_interp(A'[1..n+2]) < 2 * m_val - 1 by {
                 mont_mul_bounded_lemma(m, x, y, P_1, P_2, S, A, A', i, u_i, m', n);
             }
 
             var A'' := A'[1..n+2];
             assume seq_interp(A'') == seq_interp(A') / BASE;
 
-            assume cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) / power(BASE, i), seq_interp(m));
-
-            assert cong(seq_interp(A''), seq_interp(x[..i + 1]) * seq_interp(y) / power(BASE, i+1), seq_interp(m)) by {
+            assert cong(seq_interp(A''), seq_interp(x[..i + 1]) * y_val / power(BASE, i+1), m_val) by {
                 mont_mul_congruent_lemma(m, x, y, P_1, P_2, S, A, A', A'', i, u_i, m', n);
             }
 
             i := i + 1;
             A := A'';
+
+            assert cong(seq_interp(A), seq_interp(x[..i]) * y_val / power(BASE, i), m_val);
         }
     }
 
