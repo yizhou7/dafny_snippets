@@ -563,6 +563,9 @@ module RSAE3 {
         var A :seq<uint32> := temp[..];
         assume seq_interp(A) == 0;
 
+        var BASE_INV :nat;
+        assume cong(BASE * BASE_INV, 1, seq_interp(m));
+
         ghost var m_val := seq_interp(m);
         ghost var y_val := seq_interp(y);
 
@@ -575,7 +578,7 @@ module RSAE3 {
             invariant |A| == n + 1;
             invariant seq_interp(A) < 2 * m_val - 1;
             invariant i <= |x|;
-            // invariant cong(seq_interp(A), seq_interp(x[..i]) * y_val / power(BASE, i), m_val);
+            invariant cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) * power(BASE_INV, i), seq_interp(m));
         {
             var u_i_ := ((A[0] as int + x[i] as int * y[0] as int) * m' as int) % BASE; 
             var u_i := u_i_ as uint32;
@@ -599,14 +602,12 @@ module RSAE3 {
             assume seq_interp(A'') == seq_interp(A') / BASE;
             assume seq_interp(A') % BASE == 0;
 
-            // assert cong(seq_interp(A''), seq_interp(x[..i + 1]) * y_val / power(BASE, i+1), m_val) by {
-            //     mont_mul_congruent_lemma(m, x, y, P_1, P_2, S, A, A', A'', i, u_i, m', n);
-            // }
+            assert cong(seq_interp(A''), seq_interp(x[..i + 1]) * y_val * power(BASE_INV, i+1), m_val) by {
+                mont_mul_congruent_lemma(m, x, y, P_1, P_2, S, A, A', A'', i, u_i, m', n, BASE_INV);
+            }
 
             i := i + 1;
             A := A'';
-
-            // assert cong(seq_interp(A), seq_interp(x[..i]) * y_val / power(BASE, i), m_val);
         }
     }
 
