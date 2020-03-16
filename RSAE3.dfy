@@ -545,12 +545,10 @@ module RSAE3 {
             (y_val * seq_interp(x_2) * power(BASE_INV, i+1)) % m_val;
         }
         
-        // assert cong(seq_interp(A''), y_val * seq_interp(x_2) * power(BASE_INV, i+1), seq_interp(m)) by {
-        //     assert seq_interp(A'') % m_val == (y_val * seq_interp(x_2)* power(BASE_INV, i+1)) % m_val;
-        //     reveal cong();
-        // }
-
-        assume false;
+        assert cong(seq_interp(A''), y_val * seq_interp(x_2) * power(BASE_INV, i+1), seq_interp(m)) by {
+            assert seq_interp(A'') % m_val == (y_val * seq_interp(x_2)* power(BASE_INV, i+1)) % m_val;
+            reveal cong();
+        }
     }
 
     method mont_mul(m: seq<uint32>, x: seq<uint32>, y: seq<uint32>, m': uint32, n: nat, ghost R: int)
