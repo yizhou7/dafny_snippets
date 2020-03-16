@@ -271,12 +271,12 @@ module RSAE3 {
         requires m_val != 0;
         requires cong(p * p_inv, 1, m_val);
 
-
-        ensures (seq_interp(x_1) * p_inv * p + x[i] as int * p) * p_inv % m_val == (seq_interp(x_1) + x[i] as int * p) * p_inv % m_val;
+        ensures ((seq_interp(x_1) * p_inv * p + x[i] as int * p) * p_inv) % m_val == (seq_interp(x_2) * p_inv) % m_val;
+        // ensures (seq_interp(x_1) * p_inv * p + x[i] as int * p) * p_inv % m_val == (seq_interp(x_2) * p_inv) % m_val;
     {
         ghost var a := seq_interp(x_1);
         ghost var b := x[i] as int * p;
-        
+
         calc ==> {
             cong(p * p_inv, 1, m_val);
             {
@@ -299,6 +299,14 @@ module RSAE3 {
 
         assert ((a * p * p_inv + b) * p_inv) % m_val == (a + b) * p_inv % m_val;
         assert (seq_interp(x_1) * p_inv * p + x[i] as int * p) * p_inv % m_val == (seq_interp(x_1) + x[i] as int * p) * p_inv % m_val;
+
+    // (seq_interp(x_1) + x[i] as int * p) * p_inv % m_val;
+            // calc == {
+            //     seq_interp(x_2);
+            //     interp(x_2, i + 1);
+            // }
+
+        assume false;
     }
 
     lemma mont_mul_congruent_aux_lemma_1(
@@ -331,27 +339,18 @@ module RSAE3 {
                     reveal cong();
                 }
             }
-            (seq_interp(x_1) * p_inv + x[i] as int) * p * p_inv % m_val;
+            ((seq_interp(x_1) * p_inv + x[i] as int) * p * p_inv) % m_val;
             {
                 assert (seq_interp(x_1) * p_inv + x[i] as int) * p == (seq_interp(x_1) * p_inv * p  + x[i] as int * p);
             }
-            (seq_interp(x_1) * p_inv * p + x[i] as int * p) * p_inv % m_val;
+            ((seq_interp(x_1) * p_inv * p + x[i] as int * p) * p_inv) % m_val;
             {
-                assume false;
-            }
-            (seq_interp(x_1) + x[i] as int * p) * p_inv % m_val;
-            {
-                calc == {
-                    seq_interp(x_2);
-                    interp(x_2, i + 1);
-                }
-
-                assume false;
+                mont_mul_congruent_aux_lemma_2(x, i, x_1, x_2, p, p_inv, BASE_INV, m_val);
             }
             (seq_interp(x_2) * p_inv) % m_val;
         }
-    
-        assume false;
+        
+        assert (seq_interp(x_1) * p_inv + x[i] as int) % m_val == (seq_interp(x_2) * p_inv) % m_val;
     }
 
     lemma mont_mul_congruent_lemma(
