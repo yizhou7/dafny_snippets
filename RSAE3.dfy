@@ -325,16 +325,37 @@ module RSAE3 {
         BASE_INV: int,
         m_val: int)
 
+        requires m_val != 0;
         requires i + 1 <= |x|;
         requires x_1 == x[..i] && x_2 == x[..i+1];
+        requires cong(BASE * BASE_INV, 1, m_val);
         requires p == power(BASE, i);
         requires p_inv == power(BASE_INV, i);
-        requires m_val != 0;
 
         ensures (seq_interp(x_1) * p_inv + x[i] as int) % m_val == (seq_interp(x_2) * p_inv) % m_val;
     {
-        assume cong(1, p * p_inv, m_val);
-        assume cong(p * p_inv, 1, m_val);
+        calc ==> {
+            cong(BASE * BASE_INV, 1, m_val);
+            {
+                cong_power_lemma(BASE * BASE_INV, 1, i, m_val);
+            }
+            cong(power(BASE * BASE_INV, i), power(1, i), m_val);
+            {
+                power_base_one_lemma(i);
+            }
+            cong(power(BASE * BASE_INV, i), 1, m_val);
+            {
+                power_same_exp_lemma(BASE, BASE_INV, i);
+            }
+            cong(power(BASE, i) * power(BASE_INV, i), 1, m_val);
+            cong(p * p_inv, 1, m_val);
+        }
+
+        assert cong(p * p_inv, 1, m_val);
+
+        assert cong(1, p * p_inv, m_val) by {
+            reveal cong();
+        }
 
         calc == {
             (seq_interp(x_1) * p_inv + x[i] as int) % m_val;
