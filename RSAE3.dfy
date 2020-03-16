@@ -160,8 +160,6 @@ module RSAE3 {
         assert cong(x * y + m * (((a + x * y) * m') % BASE) + a, 0, BASE);
     }
 
-
-
     lemma mont_mul_bounded_lemma(
         m: seq<uint32>,
         x: seq<uint32>,
@@ -311,14 +309,10 @@ module RSAE3 {
             x_2[i] as int * p + seq_interp(x_1);
         }
 
-        // assert assertion_1 == 
-        // (seq_interp(x_1) * p_inv * p + x[i] as int * p) * p_inv) % m_val == (seq_interp(x_2) * p_inv) % m_val;
-
-
-
-        // assert (seq_interp(x_1) * p_inv * p + x[i] as int * p) * p_inv % m_val == (seq_interp(x_1) + x[i] as int * p) * p_inv % m_val;
-
-        assume false;
+        assert ((seq_interp(x_1) * p_inv * p + x[i] as int * p) * p_inv) % m_val == (seq_interp(x_2) * p_inv) % m_val by {
+            reveal assertion_1;
+            assert seq_interp(x_2) == x_2[i] as int * p + seq_interp(x_1);
+        }
     }
 
     lemma mont_mul_congruent_aux_lemma_1(
