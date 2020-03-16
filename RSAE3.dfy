@@ -528,7 +528,19 @@ module RSAE3 {
             }
             (y_val * seq_interp(x_2) * p_inv * BASE_INV) % m_val;
             {
-                assume false;
+                calc == {
+                    p_inv * BASE_INV;
+                    power(BASE_INV, i) * BASE_INV;
+                    {
+                        power_add_one_lemma(BASE_INV, i);
+                    }
+                    power(BASE_INV, i+1);
+                }
+                ghost var a := y_val * seq_interp(x_2);
+
+                assert a * p_inv * BASE_INV == a * power(BASE_INV, i+1) by {
+                    assert p_inv * BASE_INV == power(BASE_INV, i+1);
+                }
             }
             (y_val * seq_interp(x_2) * power(BASE_INV, i+1)) % m_val;
         }
