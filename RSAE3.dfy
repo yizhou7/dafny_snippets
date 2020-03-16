@@ -38,7 +38,9 @@ module RSAE3 {
         requires seq_interp(A) + seq_interp(S) == seq_interp(A');
 
         requires cong(S[0] as int, P_1[0] as int + P_2[0] as int, BASE);
+
         ensures cong(A'[0] as int, 0, BASE);
+        ensures seq_interp(A') % BASE == 0;
     {
         assert cong(m' as int * m[0] as int, -1, BASE) by {
                 lsw_inverse_lemma(m, m');
@@ -81,6 +83,10 @@ module RSAE3 {
             cong(A'[0] as int, 0, BASE);
         }
         assert cong(A'[0] as int, 0, BASE);
+
+        assert seq_interp(A') % BASE == 0 by {
+            seq_div_base_lemma(A', n + 3);
+        }
     }
 
     lemma mont_mul_div_aux_lemma_2(y: int, x: int, m: int, a: int, m': int)
@@ -389,7 +395,6 @@ module RSAE3 {
             a % m_val == b % m_val;
             {
                 reveal cong();
-                assume false;
             }
             cong(a, b, m_val);
             {
@@ -571,7 +576,7 @@ module RSAE3 {
 
         var i := 0;
 
-        assume cong(seq_interp(A), seq_interp(x[..i]) * y_val / power(BASE, i), m_val);
+        assume cong(seq_interp(A), seq_interp(x[..i]) * y_val * power(BASE_INV, i), m_val);
 
         while i < n
             decreases n - i;
@@ -579,6 +584,7 @@ module RSAE3 {
             invariant seq_interp(A) < 2 * m_val - 1;
             invariant i <= |x|;
             invariant cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) * power(BASE_INV, i), seq_interp(m));
+            invariant seq_interp(A) < 2 * m_val - 1;
         {
             var u_i_ := ((A[0] as int + x[i] as int * y[0] as int) * m' as int) % BASE; 
             var u_i := u_i_ as uint32;
@@ -590,7 +596,7 @@ module RSAE3 {
             A := seq_zero_extend(A, n + 1, n + 2);
             var A' := seq_add_c(A, S, n + 2);
 
-            assert cong(A'[0] as int, 0, BASE) by {
+            assert seq_interp(A') % BASE == 0 && cong(A'[0] as int, 0, BASE) by {
                 mont_mul_divisible_lemma(m, x, y, P_1, P_2, S, A, A', i, u_i, m', n);
             }
 
@@ -600,7 +606,6 @@ module RSAE3 {
 
             var A'' := A'[1..n+2];
             assume seq_interp(A'') == seq_interp(A') / BASE;
-            assume seq_interp(A') % BASE == 0;
 
             assert cong(seq_interp(A''), seq_interp(x[..i + 1]) * y_val * power(BASE_INV, i+1), m_val) by {
                 mont_mul_congruent_lemma(m, x, y, P_1, P_2, S, A, A', A'', i, u_i, m', n, BASE_INV);
@@ -609,6 +614,11 @@ module RSAE3 {
             i := i + 1;
             A := A'';
         }
+
+        assert x[..n] == x;
+
+        assert seq_interp(A) < 2 * m_val - 1;
+        assert cong(seq_interp(A), seq_interp(x) * seq_interp(y) * power(BASE_INV, n), seq_interp(m));
     }
 
     method magic_mul(A: seq<uint32>, b: uint32, n: nat)
