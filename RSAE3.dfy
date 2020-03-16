@@ -9,20 +9,19 @@ module RSAE3 {
     import opened Congruences
     import opened SeqInt
 
-    method mont_mul(m: seq<uint32>, x: seq<uint32>, y: seq<uint32>, m': uint32, n: nat, ghost R: int)
+    method mont_mul(m: seq<uint32>, x: seq<uint32>, y: seq<uint32>, m': uint32, n: nat, ghost R: int, ghost BASE_INV: nat)
         requires n > 2;
         requires |m| == n && |x| == n && |y| == n;
         requires R == power(BASE, n);
         requires cong(m' as int * seq_interp(m), -1, BASE);
         requires 0 <= seq_interp(x) < seq_interp(m); 
         requires 0 <= seq_interp(y) < seq_interp(m); 
+        requires cong(BASE * BASE_INV, 1, seq_interp(m));
     {
+
         var temp := new uint32[n + 1];
         var A :seq<uint32> := temp[..];
         assume seq_interp(A) == 0;
-
-        var BASE_INV :nat;
-        assume cong(BASE * BASE_INV, 1, seq_interp(m));
 
         ghost var m_val := seq_interp(m);
         ghost var y_val := seq_interp(y);
@@ -42,8 +41,9 @@ module RSAE3 {
                 }
                 cong(seq_interp(A), seq_interp(x[..i]) * y_val * power(BASE_INV, i), m_val);
             }
+            assume false;
         }
-
+        
         while i < n
             decreases n - i;
             invariant |A| == n + 1;
@@ -51,6 +51,7 @@ module RSAE3 {
             invariant i <= |x|;
             invariant cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) * power(BASE_INV, i), seq_interp(m));
             invariant seq_interp(A) < 2 * m_val - 1;
+            invariant cong(BASE * BASE_INV, 1, seq_interp(m));
         {
             var u_i_ := ((A[0] as int + x[i] as int * y[0] as int) * m' as int) % BASE; 
             var u_i := u_i_ as uint32;
