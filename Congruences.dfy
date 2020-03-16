@@ -1,4 +1,8 @@
+include "Powers.dfy"
+
 module Congruences {
+    import opened Powers
+
     predicate {:opaque} cong(a: int, b: int, n: int)
         requires n != 0;
     {
@@ -114,4 +118,9 @@ module Congruences {
         requires n != 0;
         requires m % n == 0;
         ensures cong(a, a + m, n);
+
+    lemma cong_power_lemma(a: int, b: int, e: nat, n: int)
+        requires n != 0;
+        requires cong(a, b, n);
+        ensures  cong(power(a, e), power(b, e), n);
 }
