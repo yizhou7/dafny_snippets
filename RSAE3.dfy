@@ -29,7 +29,20 @@ module RSAE3 {
 
         var i := 0;
 
-        assume cong(seq_interp(A), seq_interp(x[..i]) * y_val * power(BASE_INV, i), m_val);
+        assert cong(seq_interp(A), seq_interp(x[..i]) * y_val * power(BASE_INV, i), m_val) by {
+            calc ==> {
+                cong(0, 0, m_val);
+                {
+                    assert seq_interp(A) == 0;
+                }
+                cong(seq_interp(A), 0, m_val);
+                {
+                    assert seq_interp(x[..i]) == 0;
+                    assert seq_interp(x[..i]) * y_val * power(BASE_INV, i) == 0;
+                }
+                cong(seq_interp(A), seq_interp(x[..i]) * y_val * power(BASE_INV, i), m_val);
+            }
+        }
 
         while i < n
             decreases n - i;
