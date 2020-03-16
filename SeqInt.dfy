@@ -364,6 +364,27 @@ module SeqInt {
         }
     }
 
+    method seq_gt(A: seq<uint32>, B: seq<uint32>, n: uint32) returns (x: bool)
+        requires |A| == |B| == n as int;
+        ensures x == (seq_interp(A) > seq_interp(B));
+    {
+        x := false;
+        var i : uint32:= 0;
+
+        while i < n
+            decreases n as int - i as int;
+            invariant i <= n;
+            invariant 0 <= n - i <= n;
+        {
+            if A[n - 1 - i] > B[n - 1 - i] {
+                x := true;
+                break;
+            }
+            i := i + 1;
+        }
+        assume false;
+    }
+
     lemma {:induction A} lsw_mod_lemma(A: seq<uint32>)
         ensures |A| != 0 ==> (seq_interp(A) % BASE == A[0] as int);
     {
