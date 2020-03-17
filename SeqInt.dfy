@@ -364,24 +364,24 @@ module SeqInt {
         }
     }
 
-    method seq_gt(A: seq<uint32>, B: seq<uint32>) returns (x: bool)
+    method seq_geq(A: seq<uint32>, B: seq<uint32>) returns (x: bool)
         requires |A| == |B| as int;
-        ensures x == (seq_interp(A) > seq_interp(B));
+        ensures x == (seq_interp(A) >= seq_interp(B));
     {
-        x := false;
-        var i, n := 0, |A|;
+        // x := false;
+        // var i, n := 0, |A|;
 
-        while i < n
-            decreases n as int - i as int;
-            invariant i <= n;
-            invariant 0 <= n - i <= n;
-        {
-            if A[n - 1 - i] > B[n - 1 - i] {
-                x := true;
-                break;
-            }
-            i := i + 1;
-        }
+        // while i < n
+        //     decreases n as int - i as int;
+        //     invariant i <= n;
+        //     invariant 0 <= n - i <= n;
+        // {
+        //     if A[n - 1 - i] >= B[n - 1 - i] {
+        //         x := true;
+        //         break;
+        //     }
+        //     i := i + 1;
+        // }
         assume false;
     }
 

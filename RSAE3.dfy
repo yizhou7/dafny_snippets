@@ -86,6 +86,43 @@ module RSAE3 {
 
         assert seq_interp(A) < 2 * m_val - 1;
         assert cong(seq_interp(A), seq_interp(x) * seq_interp(y) * power(BASE_INV, n), seq_interp(m));
+
+        var m_ext := seq_zero_extend(m, n, n + 1);
+        var geq := seq_geq(A, m_ext);
+
+        if geq {
+            var b, D := seq_sub(A, m_ext);
+            assume b == 0;
+
+            assert cong(seq_interp(A), seq_interp(A) - m_val, m_val) by {
+                cong_add_lemma_3(seq_interp(A), - (m_val as int), m_val);
+            }
+
+            calc ==> {
+                cong(seq_interp(A), seq_interp(A) - m_val, m_val);
+                {
+                   reveal cong(); 
+                }
+                cong(seq_interp(A) - m_val, seq_interp(A), m_val);
+                {
+                    assert cong(seq_interp(A), seq_interp(x) * seq_interp(y) * power(BASE_INV, n), seq_interp(m));
+                    cong_trans_lemma(seq_interp(A) - m_val, seq_interp(A), seq_interp(x) * seq_interp(y) * power(BASE_INV, n), seq_interp(m));
+                }
+                cong(seq_interp(A) - m_val, seq_interp(x) * seq_interp(y) * power(BASE_INV, n), seq_interp(m));
+                {
+                    assert seq_interp(D) == seq_interp(A) - m_val;
+                }
+                cong(seq_interp(D), seq_interp(x) * seq_interp(y) * power(BASE_INV, n), seq_interp(m));
+            }
+
+            A := D;
+        }
+
+        assert seq_interp(A) == (seq_interp(x) * seq_interp(y) * power(BASE_INV, n)) % seq_interp(m) by {
+            assert cong(seq_interp(A), seq_interp(x) * seq_interp(y) * power(BASE_INV, n), seq_interp(m));
+            assert seq_interp(A) < m_val;
+            cong_residual_lemma(seq_interp(A), seq_interp(x) * seq_interp(y) * power(BASE_INV, n), seq_interp(m));
+        }
     }
 
     lemma mont_mul_divisible_lemma(m: seq<uint32>,
