@@ -65,7 +65,7 @@ module Congruences {
 
     lemma cong_residual_lemma(a: int, b: nat, n: nat)
         requires n != 0;
-        ensures (cong(a, b, n) && b < n) == (b == a % n);
+        ensures (cong(a, b, n) && b < n) <==> (b == a % n);
     {
         reveal cong();        
     }
