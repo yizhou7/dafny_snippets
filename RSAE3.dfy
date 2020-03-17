@@ -72,11 +72,9 @@ module RSAE3 {
 
             var A'' := A'[1..n+2];
 
-            assert seq_interp(A'') < 2 * m_val - 1 by {
+            assert (seq_interp(A'') == seq_interp(A') / BASE) && seq_interp(A'') < 2 * m_val - 1 by {
                 mont_mul_bounded_lemma(m, x, y, P_1, P_2, S, A, A', A'', i, u_i, m', n);
             }
-
-            assume seq_interp(A'') == seq_interp(A') / BASE;
 
             assert cong(seq_interp(A''), seq_interp(x[..i + 1]) * y_val * power(BASE_INV, i+1), m_val) by {
                 mont_mul_congruent_lemma(m, x, y, P_1, P_2, S, A, A', A'', i, u_i, m', n, BASE_INV);
@@ -322,6 +320,7 @@ module RSAE3 {
         requires cong(A'[0] as int, 0, BASE);
 
         ensures seq_interp(A'') < 2 * seq_interp(m) - 1;
+        ensures seq_interp(A'') == seq_interp(A') / BASE;
     {
         ghost var m_val := seq_interp(m);
         ghost var m_bound := m_val - 1;
@@ -381,6 +380,7 @@ module RSAE3 {
         }
 
         assert seq_interp(A'[1..n+2]) < 2 * seq_interp(m) - 1;
+        assert seq_interp(A'') == seq_interp(A') / BASE;
     }
 
     lemma mont_mul_congruent_aux_lemma_1(
