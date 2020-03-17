@@ -368,21 +368,25 @@ module SeqInt {
         requires |A| == |B| as int;
         ensures x == (seq_interp(A) >= seq_interp(B));
     {
-        // x := false;
-        // var i, n := 0, |A|;
-
-        // while i < n
-        //     decreases n as int - i as int;
-        //     invariant i <= n;
-        //     invariant 0 <= n - i <= n;
-        // {
-        //     if A[n - 1 - i] >= B[n - 1 - i] {
-        //         x := true;
-        //         break;
-        //     }
-        //     i := i + 1;
-        // }
+        x := false;
+        var i := |A|;
         assume false;
+
+        while i != 0
+            decreases |A| as int - i as int;
+            invariant i <= |A|;
+        {
+            i := i - 1;
+
+            if A[i] > B[i] {
+                return true;
+            }
+            if A[i] < B[i] {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     lemma {:induction A} lsw_mod_lemma(A: seq<uint32>)

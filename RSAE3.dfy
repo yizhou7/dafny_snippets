@@ -10,6 +10,8 @@ module RSAE3 {
     import opened SeqInt
 
     method mont_mul(m: seq<uint32>, x: seq<uint32>, y: seq<uint32>, m': uint32, n: nat, ghost R: int, ghost BASE_INV: nat)
+        returns (A: seq<uint32>)
+
         requires n > 2;
         requires |m| == n && |x| == n && |y| == n;
         requires R == power(BASE, n);
@@ -17,10 +19,11 @@ module RSAE3 {
         requires 0 <= seq_interp(x) < seq_interp(m); 
         requires 0 <= seq_interp(y) < seq_interp(m); 
         requires cong(BASE * BASE_INV, 1, seq_interp(m));
-    {
 
+        ensures seq_interp(A) == (seq_interp(x) * seq_interp(y) * power(BASE_INV, n)) % seq_interp(m);
+{
         var temp := new uint32[n + 1];
-        var A :seq<uint32> := temp[..];
+        A  := temp[..];
         assume seq_interp(A) == 0;
 
         ghost var m_val := seq_interp(m);
