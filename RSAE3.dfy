@@ -119,9 +119,12 @@ module RSAE3 {
         }
 
         assert seq_interp(A) == (seq_interp(x) * seq_interp(y) * power(BASE_INV, n)) % seq_interp(m) by {
-            assert cong(seq_interp(A), seq_interp(x) * seq_interp(y) * power(BASE_INV, n), seq_interp(m));
+            assert cong(seq_interp(x) * seq_interp(y) * power(BASE_INV, n), seq_interp(A), seq_interp(m)) by {
+                assert cong(seq_interp(A), seq_interp(x) * seq_interp(y) * power(BASE_INV, n), seq_interp(m));
+                reveal cong();
+            }
             assert seq_interp(A) < m_val;
-            cong_residual_lemma(seq_interp(A), seq_interp(x) * seq_interp(y) * power(BASE_INV, n), seq_interp(m));
+            cong_residual_lemma(seq_interp(x) * seq_interp(y) * power(BASE_INV, n), seq_interp(A), seq_interp(m));
         }
     }
 
