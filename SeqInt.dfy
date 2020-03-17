@@ -374,32 +374,38 @@ module SeqInt {
         while i != 0
             decreases i;
             invariant 0 <= i <= |A|;
-            invariant forall j :: i <= j < |A| ==> A[j] == B[j];
+            invariant forall j :: i <= j < |A| ==> (A[j] == B[j]);
         {
             var i' := i - 1;
 
+            cmp_sufficient_lemma(A, B, i');
+
             if A[i'] < B[i'] {
+                assert seq_interp(A) < seq_interp(B);
                 return false;
             }
             if A[i'] > B[i'] {
+                assert seq_interp(A) > seq_interp(B);
                 return true;
             }
 
-            var j :| i' <= j < |A|;
-
-            assert A[j] == B[j] by {
-                if i <= j < |A| {
-                    assert forall j :: i < j < |A| ==> A[j] == B[j];
-                } else {
-                    assert j == i';
-                    assert A[i'] == B[i'];
-                }
-            }
-    
             i := i';
         }
 
         return true;
+    }
+
+    lemma cmp_sufficient_lemma(A: seq<uint32>, B: seq<uint32>, i: nat)
+        requires 0 <= i < |A| == |B|;
+        requires forall j :: i < j < |A| ==> (A[j] == B[j]);
+        ensures A[i] > B[i] ==> (seq_interp(A) > seq_interp(B));
+        ensures A[i] < B[i] ==> (seq_interp(A) < seq_interp(B));
+    {
+        if A[i] > B[i] {
+            assume false;
+        } else if A[i] < B[i] {
+            assume false;
+        }
     }
 
     lemma {:induction A} lsw_mod_lemma(A: seq<uint32>)
