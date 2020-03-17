@@ -30,6 +30,10 @@ module RSAE3 {
 
         assert cong(seq_interp(A), seq_interp(x[..i]) * y_val * power(BASE_INV, i), m_val) by {
             calc ==> {
+                m_val != 0;
+                {
+                    reveal cong();
+                }
                 cong(0, 0, m_val);
                 {
                     assert seq_interp(A) == 0;
@@ -41,7 +45,6 @@ module RSAE3 {
                 }
                 cong(seq_interp(A), seq_interp(x[..i]) * y_val * power(BASE_INV, i), m_val);
             }
-            assume false;
         }
         
         while i < n
@@ -114,7 +117,6 @@ module RSAE3 {
                 }
                 cong(seq_interp(D), seq_interp(x) * seq_interp(y) * power(BASE_INV, n), seq_interp(m));
             }
-
             A := D;
         }
 
