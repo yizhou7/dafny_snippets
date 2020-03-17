@@ -366,24 +366,37 @@ module SeqInt {
 
     method seq_geq(A: seq<uint32>, B: seq<uint32>) returns (x: bool)
         requires |A| == |B| as int;
-        ensures x == (seq_interp(A) >= seq_interp(B));
+        // ensures x == (seq_interp(A) >= seq_interp(B));
     {
         x := false;
         var i := |A|;
-        assume false;
 
         while i != 0
-            decreases |A| as int - i as int;
-            invariant i <= |A|;
+            decreases i;
+            invariant 0 <= i <= |A|;
+            invariant forall j :: i <= j < |A| ==> A[j] == B[j];
         {
-            i := i - 1;
+            var i' := i - 1;
 
-            if A[i] > B[i] {
-                return true;
-            }
-            if A[i] < B[i] {
+            if A[i'] < B[i'] {
                 return false;
             }
+            if A[i'] > B[i'] {
+                return true;
+            }
+
+            var j :| i' <= j < |A|;
+
+            assert A[j] == B[j] by {
+                if i <= j < |A| {
+                    assert forall j :: i < j < |A| ==> A[j] == B[j];
+                } else {
+                    assert j == i';
+                    assert A[i'] == B[i'];
+                }
+            }
+    
+            i := i';
         }
 
         return true;
