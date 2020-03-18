@@ -366,7 +366,7 @@ module SeqInt {
 
     method seq_geq(A: seq<uint32>, B: seq<uint32>) returns (x: bool)
         requires |A| == |B| as int;
-        // ensures x == (seq_interp(A) >= seq_interp(B));
+        ensures x == (seq_interp(A) >= seq_interp(B));
     {
         x := false;
         var i := |A|;
@@ -392,6 +392,7 @@ module SeqInt {
             i := i';
         }
 
+        assert A == B;
         return true;
     }
 
@@ -405,6 +406,57 @@ module SeqInt {
             assume false;
         } else if A[i] < B[i] {
             assume false;
+        }
+    }
+
+    lemma {:induction A, i} gt_sufficient_lemma(A: seq<uint32>, B: seq<uint32>, i: nat)
+        requires 0 <= i < |A| == |B|;
+        requires forall j :: i < j < |A| ==> (A[j] == B[j]);
+        ensures A[i] > B[i] ==> (seq_interp(A) > seq_interp(B));
+    {
+        var len := |A|;
+        if len != 0 {
+            if i == 0 {
+                gt_sufficient_aux_lemma(A, B);
+            } else {
+                assume false;
+            }
+        }
+    }
+
+    lemma {:induction A} gt_sufficient_aux_lemma(A: seq<uint32>, B: seq<uint32>)
+        requires |A| == |B| != 0;
+        requires forall j :: 0 < j < |A| ==> (A[j] == B[j]);
+        ensures A[0] > B[0] ==> (seq_interp(A) > seq_interp(B));
+    {
+        if |A| != 1 {
+            var n := |A|;
+
+            var A' := A[..n-1];
+            var B' := B[..n-1];
+
+            calc ==> {
+                A[0] > B[0];
+                A'[0] > B'[0];
+                {
+                    gt_sufficient_aux_lemma(A', B');
+                }
+                seq_interp(A') > seq_interp(B');
+                interp(A', n - 1) > interp(B', n - 1);
+                {
+                    prefix_sum_lemma(A, A', n - 1);
+                    prefix_sum_lemma(B, B', n - 1);
+                }
+                interp(A, n - 1) > interp(B, n - 1);
+                {
+                    assert word_interp(A, n - 1) == word_interp(B, n - 1);
+                }
+                interp(A, n - 1) +  word_interp(A, n - 1) > interp(B, n - 1) + word_interp(B, n - 1);
+                seq_interp(A) > seq_interp(B);
+            }
+            assert A[0] > B[0] ==> seq_interp(A) > seq_interp(B);
+        } else {
+            assert |A| == 1;
         }
     }
 
