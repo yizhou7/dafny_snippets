@@ -65,10 +65,10 @@ module SeqInt {
     }
 
     lemma {:induction A} seq_interp_upper_bound_lemma(A: seq<uint32>, n: nat)
-        requires |A| == n != 0;
+        requires |A| == n;
         ensures seq_interp(A) < R(n);
     {
-        if |A| == 1 {
+        if |A| == 0 {
             reveal power();
         } else {
             ghost var A' := A[..(|A| - 1)];
@@ -82,7 +82,9 @@ module SeqInt {
                 }
                 seq_interp(A) == word_interp(A, |A| - 1) + seq_interp(A');
                 {
-                    assert seq_interp(A') < power(BASE, |A'|);
+                    assert seq_interp(A') < power(BASE, |A'|) by {
+                        seq_interp_upper_bound_lemma(A', |A'|);
+                    }
                 }
                 seq_interp(A) < word_interp(A, |A| - 1) + power(BASE, |A'|);
                 {
@@ -445,7 +447,7 @@ module SeqInt {
         }
     }
 
-    // lemma cmp_msw_lemma()
+
 
 
     lemma {:induction A} lsw_mod_lemma(A: seq<uint32>)
