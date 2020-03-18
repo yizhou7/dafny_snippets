@@ -97,7 +97,6 @@ module RSAE3 {
 
         if geq {
             var b, D := seq_sub(A, m_ext);
-            assume b == 0;
 
             assert cong(seq_interp(A), seq_interp(A) - m_val, m_val) by {
                 cong_add_lemma_3(seq_interp(A), - (m_val as int), m_val);
