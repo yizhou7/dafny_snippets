@@ -688,10 +688,42 @@ module RSAE3 {
         requires n != 0;
         requires |A| == n;
         ensures |P| == n + 1;
-        ensures seq_interp(P) == seq_interp(A) * b as int;
-        ensures cong(P[0] as int, A[0] as int * b as int, BASE);
+        // ensures seq_interp(P) == seq_interp(A) * b as int;
+        // ensures cong(P[0] as int, A[0] as int * b as int, BASE);
     {
+        var temp := new uint32[n + 1];
+        P  := temp[..];
+        var i := 0;
+        var c :uint32 := 0;
+
+        while i < n 
+            decreases n - i;
+        {
+            // assert 0 <= A[i] <= 4294967295;
+            // assert A[i] as int * b as int + c as int <= 0xffffffff00000000;
+
+            // var product :uint64 := A[i] as uint64 * b as uint64 + c as uint64;
+            i := i + 1;
+        }
+
         assume false;
+    }
+
+    lemma single_digit_mul_lemma(a: uint32, b: uint32, c: uint32)
+    {
+        assert 0 <= a <= 0xffffffff;
+        assert 0 <= b <= 0xffffffff;
+        assert 0 <= c <= 0xffffffff;
+
+        single_digit_mul_aux_lemma(a as int, b as int, 0xffffffff);
+        assert 0 <= a as int * b as int <= 0xfffffffe00000001;
+    }
+
+    lemma single_digit_mul_aux_lemma(a:nat, b:nat, u:nat)
+        requires a <= u;
+        requires b <= u;
+        ensures a * b <= u * u;
+    {
     }
 
     // method modpow3(A: nat, N:nat, R: nat, RR: nat)
