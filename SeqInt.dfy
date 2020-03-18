@@ -447,8 +447,45 @@ module SeqInt {
         }
     }
 
+    lemma cmp_msw_lemma(A: seq<uint32>, B: seq<uint32>)
+        requires |A| == |B| != 0;
+        ensures A[|A| - 1] > B[|B| - 1] ==> (seq_interp(A) > seq_interp(B));
+    {
+        var n := |A|;
+        var A' := A[..n-1];
+        var B' := B[..n-1];
+        
+        if A[n - 1] <= B[n - 1] {
+            return;
+        }
 
+        calc >= {
+            seq_interp(A) - seq_interp(B);
+            {
+                prefix_sum_lemma(A, A', n - 1);
+                prefix_sum_lemma(B, B', n - 1);
+            }
+            interp(A', n - 1) +  word_interp(A, n - 1) - interp(B', n - 1) - word_interp(B, n - 1);
+            seq_interp(A') - seq_interp(B') + word_interp(A, n - 1) - word_interp(B, n - 1);
+            seq_interp(A') - seq_interp(B') + (A[n - 1] as int - B[n - 1] as int)  * postional_weight(n - 1);
+            {
+                assert (A[n - 1] as int - B[n - 1] as int) >= 1;
+            }
+            seq_interp(A') - seq_interp(B') + postional_weight(n - 1);
+            {
+                assert seq_interp(A') >= 0;
+            }
+            postional_weight(n - 1) - seq_interp(B');
+            power(BASE, n - 1) - seq_interp(B');
+        }
 
+        assert seq_interp(B') < power(BASE, n - 1) by {
+            seq_interp_upper_bound_lemma(B', n - 1);
+        }
+
+        assert power(BASE, n - 1) - seq_interp(B') > 0;
+        assert seq_interp(A) > seq_interp(B);
+    }
 
     lemma {:induction A} lsw_mod_lemma(A: seq<uint32>)
         ensures |A| != 0 ==> (seq_interp(A) % BASE == A[0] as int);
