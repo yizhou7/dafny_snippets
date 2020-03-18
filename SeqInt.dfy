@@ -261,8 +261,38 @@ module SeqInt {
         requires forall i :: n <= i < m ==> A'[i] == 0;
         ensures seq_interp(A') == seq_interp(A); 
     {
-        if m != n {
-            assume false;
+        if m == n + 1{
+            calc == {
+                seq_interp(A');
+                interp(A', n + 1);
+                word_interp(A', n) + interp(A', n);
+                A'[n] as nat * postional_weight(n) + interp(A', n);
+                interp(A', n);
+                {
+                    prefix_sum_lemma(A, A', n);
+                }
+                interp(A, n);
+                seq_interp(A);
+            }
+        } else {
+            var A'' := A'[..m - 1];
+    
+            calc == {
+                seq_interp(A');
+                interp(A', m);
+                word_interp(A', m - 1) + interp(A', m - 1);
+                A'[m - 1] as nat * postional_weight(m - 1) + interp(A', m - 1);
+                interp(A', m - 1);
+                {
+                    prefix_sum_lemma(A'', A', m - 1);
+                }
+                interp(A'', m - 1);
+                seq_interp(A'');
+                {
+                    zero_extend_lemma(A, n, A'', m - 1);
+                }
+                seq_interp(A);
+            }
         }
     }
 
