@@ -326,6 +326,7 @@ module SeqInt {
 
     method seq_sub(A: seq<uint32>, B: seq<uint32>) returns (b: uint2, S:seq<uint32>)
         requires |A| == |B|;
+        ensures |S| == |A|;
         ensures seq_interp(A) - seq_interp(B) == seq_interp(S) - b as int * postional_weight(|A|);
     {
         var temp := new uint32[|A|];
@@ -393,6 +394,27 @@ module SeqInt {
                 assert interp(A, i) - interp(B, i) == interp(S, i);
             }
             assert interp(A, i) - interp(B, i) == interp(S, i) - b as int * postional_weight(i);
+        }
+    }
+
+    lemma seq_sub_borrow_bit_lemma(A: seq<uint32>, B: seq<uint32>, S:seq<uint32>, b: uint2)
+        requires |A| == |B| == |S|;
+        requires seq_interp(A) - seq_interp(B) == seq_interp(S) - b as int * postional_weight(|A|);
+        ensures seq_interp(A) >= seq_interp(B) ==> b == 0;
+    {
+        var n := |A|;
+
+        if b != 0 {
+            assert b == 1;
+            assert seq_interp(S) < R(n) by {
+                seq_interp_upper_bound_lemma(S, n);
+            }
+
+            assert seq_interp(S) - b as int * postional_weight(|A|) < 0;
+
+            if seq_interp(A) >= seq_interp(B) {
+                assert false;
+            }
         }
     }
 
