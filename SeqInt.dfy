@@ -417,17 +417,18 @@ module SeqInt {
         var len := |A|;
         if len != 0 {
             if i == 0 {
-                gt_sufficient_aux_lemma(A, B);
+                cmp_sufficient_aux_lemma(A, B);
             } else {
                 assume false;
             }
         }
     }
 
-    lemma {:induction A} gt_sufficient_aux_lemma(A: seq<uint32>, B: seq<uint32>)
+    lemma {:induction A} cmp_sufficient_aux_lemma(A: seq<uint32>, B: seq<uint32>)
         requires |A| == |B| != 0;
         requires forall j :: 0 < j < |A| ==> (A[j] == B[j]);
         ensures A[0] > B[0] ==> (seq_interp(A) > seq_interp(B));
+        ensures A[0] < B[0] ==> (seq_interp(A) < seq_interp(B));
     {
         if |A| != 1 {
             var n := |A|;
@@ -439,7 +440,7 @@ module SeqInt {
                 A[0] > B[0];
                 A'[0] > B'[0];
                 {
-                    gt_sufficient_aux_lemma(A', B');
+                    cmp_sufficient_aux_lemma(A', B');
                 }
                 seq_interp(A') > seq_interp(B');
                 interp(A', n - 1) > interp(B', n - 1);
@@ -455,6 +456,27 @@ module SeqInt {
                 seq_interp(A) > seq_interp(B);
             }
             assert A[0] > B[0] ==> seq_interp(A) > seq_interp(B);
+
+            calc ==> {
+                A[0] < B[0];
+                A'[0] < B'[0];
+                {
+                   cmp_sufficient_aux_lemma(A', B');
+                }
+                seq_interp(A') < seq_interp(B');
+                interp(A', n - 1) < interp(B', n - 1);
+                {
+                    prefix_sum_lemma(A, A', n - 1);
+                    prefix_sum_lemma(B, B', n - 1);
+                }
+                interp(A, n - 1) < interp(B, n - 1);
+                {
+                    assert word_interp(A, n - 1) == word_interp(B, n - 1);
+                }
+                interp(A, n - 1) +  word_interp(A, n - 1) < interp(B, n - 1) + word_interp(B, n - 1);
+                seq_interp(A) < seq_interp(B);
+            }
+            assert A[0] < B[0] ==> seq_interp(A) < seq_interp(B);
         } else {
             assert |A| == 1;
         }
