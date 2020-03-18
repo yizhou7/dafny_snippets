@@ -414,73 +414,39 @@ module SeqInt {
         requires forall j :: i < j < |A| ==> (A[j] == B[j]);
         ensures A[i] > B[i] ==> (seq_interp(A) > seq_interp(B));
     {
-        var len := |A|;
-        if len != 0 {
-            if i == 0 {
-                cmp_sufficient_aux_lemma(A, B);
-            } else {
+        var n := |A|;
+        if n != 0 {
+            if i == n - 1 {
                 assume false;
+            } else {
+                var n := |A|;
+                var A' := A[..n-1];
+                var B' := B[..n-1];
+
+                calc ==> {
+                    A[i] > B[i];
+                    {
+                        gt_sufficient_lemma(A', B', i);
+                    }
+                    seq_interp(A') > seq_interp(B');
+                    {
+                        prefix_sum_lemma(A, A', n - 1);
+                        prefix_sum_lemma(B, B', n - 1);
+                    }
+                    interp(A, n - 1) > interp(B, n - 1);
+                    {
+                        assert word_interp(A, n - 1) == word_interp(B, n - 1);
+                    }
+                    interp(A, n - 1) +  word_interp(A, n - 1) > interp(B, n - 1) + word_interp(B, n - 1);
+                    seq_interp(A) > seq_interp(B);
+                }
+                assert A[i] > B[i] ==> (seq_interp(A) > seq_interp(B));
             }
         }
     }
 
-    lemma {:induction A} cmp_sufficient_aux_lemma(A: seq<uint32>, B: seq<uint32>)
-        requires |A| == |B| != 0;
-        requires forall j :: 0 < j < |A| ==> (A[j] == B[j]);
-        ensures A[0] > B[0] ==> (seq_interp(A) > seq_interp(B));
-        ensures A[0] < B[0] ==> (seq_interp(A) < seq_interp(B));
-    {
-        if |A| != 1 {
-            var n := |A|;
+    // lemma cmp_msw_lemma()
 
-            var A' := A[..n-1];
-            var B' := B[..n-1];
-
-            calc ==> {
-                A[0] > B[0];
-                A'[0] > B'[0];
-                {
-                    cmp_sufficient_aux_lemma(A', B');
-                }
-                seq_interp(A') > seq_interp(B');
-                interp(A', n - 1) > interp(B', n - 1);
-                {
-                    prefix_sum_lemma(A, A', n - 1);
-                    prefix_sum_lemma(B, B', n - 1);
-                }
-                interp(A, n - 1) > interp(B, n - 1);
-                {
-                    assert word_interp(A, n - 1) == word_interp(B, n - 1);
-                }
-                interp(A, n - 1) +  word_interp(A, n - 1) > interp(B, n - 1) + word_interp(B, n - 1);
-                seq_interp(A) > seq_interp(B);
-            }
-            assert A[0] > B[0] ==> seq_interp(A) > seq_interp(B);
-
-            calc ==> {
-                A[0] < B[0];
-                A'[0] < B'[0];
-                {
-                   cmp_sufficient_aux_lemma(A', B');
-                }
-                seq_interp(A') < seq_interp(B');
-                interp(A', n - 1) < interp(B', n - 1);
-                {
-                    prefix_sum_lemma(A, A', n - 1);
-                    prefix_sum_lemma(B, B', n - 1);
-                }
-                interp(A, n - 1) < interp(B, n - 1);
-                {
-                    assert word_interp(A, n - 1) == word_interp(B, n - 1);
-                }
-                interp(A, n - 1) +  word_interp(A, n - 1) < interp(B, n - 1) + word_interp(B, n - 1);
-                seq_interp(A) < seq_interp(B);
-            }
-            assert A[0] < B[0] ==> seq_interp(A) < seq_interp(B);
-        } else {
-            assert |A| == 1;
-        }
-    }
 
     lemma {:induction A} lsw_mod_lemma(A: seq<uint32>)
         ensures |A| != 0 ==> (seq_interp(A) % BASE == A[0] as int);
