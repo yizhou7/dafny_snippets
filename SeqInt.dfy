@@ -307,10 +307,12 @@ module SeqInt {
         var temp := new uint32[m];
         var i := 0;
 
-        while i < m 
+        while i != m 
             decreases m - i;
-            invariant forall j:: 0 <= j < i < n ==> temp[j] == A[j];
-            invariant forall j:: n <=  j < i < m ==> temp[j] == 0;
+            invariant 0 <= i <= m;
+            invariant 0 <= i < n ==> forall j:: 0 <= j < i ==> temp[j] == A[j];
+            invariant n <= i <= m ==> (forall j:: 0 <= j < n ==> temp[j] == A[j]) && 
+                (forall j:: n <= j < i ==> temp[j] == 0);
         {
             if i < n {
                 temp[i] := A[i];
@@ -319,9 +321,12 @@ module SeqInt {
             }
             i := i + 1;
         }
-
-        assume false;
         A' := temp[..];
+    
+        assert (forall j:: 0 <= j < n ==> A'[j] == A[j]) && 
+            (forall j:: n <= j < m ==> A'[j] == 0);
+        
+        zero_extend_lemma(A, n, A', m);
     }
 
     method seq_sub(A: seq<uint32>, B: seq<uint32>) returns (b: uint2, S:seq<uint32>)
