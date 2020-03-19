@@ -687,24 +687,35 @@ module RSAE3 {
         returns (P: seq<uint32>)
         requires n != 0;
         requires |A| == n;
-        ensures |P| == n + 1;
+        // ensures |P| == n + 1;
         // ensures seq_interp(P) == seq_interp(A) * b as int;
         // ensures cong(P[0] as int, A[0] as int * b as int, BASE);
     {
         var temp := new uint32[n + 1];
-        P  := temp[..];
         var i := 0;
         var c :uint32 := 0;
 
         while i < n 
             decreases n - i;
+            invariant i < temp.Length;
         {
-            // assert 0 <= A[i] <= 4294967295;
-            // assert A[i] as int * b as int + c as int <= 0xffffffff00000000;
+            // assume seq_interp(P[..i]) + c *  ==  seq_interp(A[..i]) * b as int;
 
-            // var product :uint64 := A[i] as uint64 * b as uint64 + c as uint64;
+            single_digit_mul_lemma(A[i], b, c);
+            var product :uint64 := A[i] as uint64 * b as uint64 + c as uint64;
+            var lower := lh_64(product);
+            var upper := uh_64(product);
+
+            assert lower as int + upper as int  * BASE == product as int by {
+                upper_lower_halves_64_lemma(product);
+            }
+
+            temp[i] := lower;
+            c := upper;
             i := i + 1;
         }
+
+        P  := temp[..];
 
         assume false;
     }
