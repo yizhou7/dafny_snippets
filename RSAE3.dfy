@@ -709,14 +709,21 @@ module RSAE3 {
         assume false;
     }
 
-    lemma single_digit_mul_lemma(a: uint32, b: uint32, c: uint32)
+    lemma single_digit_mul_lemma(a: uint32, b: uint32)
+        ensures a as nat * b as nat <= 0xfffffffe00000001;
     {
-        assert 0 <= a <= 0xffffffff;
-        assert 0 <= b <= 0xffffffff;
-        assert 0 <= c <= 0xffffffff;
-
-        single_digit_mul_aux_lemma(a as int, b as int, 0xffffffff);
-        assert 0 <= a as int * b as int <= 0xfffffffe00000001;
+        var u : nat := 0xffffffff;
+        calc ==> {
+            a as nat <= u && b as nat <= u;
+            {
+                single_digit_mul_aux_lemma(a as nat, b as nat, u);
+            }
+            a as nat * b as nat <= u * u;
+            {
+                assert u * u == 0xfffffffe00000001;
+            }
+            a as int * b as int <= 0xfffffffe00000001;
+        }
     }
 
     lemma single_digit_mul_aux_lemma(a:nat, b:nat, u:nat)
@@ -724,6 +731,7 @@ module RSAE3 {
         requires b <= u;
         ensures a * b <= u * u;
     {
+        assert true;
     }
 
     // method modpow3(A: nat, N:nat, R: nat, RR: nat)
