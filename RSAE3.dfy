@@ -735,6 +735,16 @@ module RSAE3 {
                 word_interp(P[..i], i - 1) + interp(P[..i - 1], i - 1) + upper as int * power(BASE, i) ;
                 lower as int * power(BASE, i - 1) + interp(P[..i - 1], i - 1) + upper as int * power(BASE, i);
                 {
+                    calc == {
+                        lower as int * power(BASE, i - 1) + upper as int * power(BASE, i);
+                        {
+                            power_add_one_lemma(BASE, i - 1);
+                            assert power(BASE, i) == power(BASE, i - 1) * BASE;
+                        }
+                        lower as int * power(BASE, i - 1) + upper as int * power(BASE, i - 1) * BASE;
+                        power(BASE, i - 1) * (lower as int  + upper as int * BASE);
+                    }
+
                     assume lower as int  * power(BASE, i - 1) + upper as int * power(BASE, i) == power(BASE, i - 1) * (lower as int + upper as int  * BASE);
                 }
                 power(BASE, i - 1) * (lower as int + upper as int  * BASE) + interp(P[..i - 1], i - 1);
