@@ -745,7 +745,7 @@ module RSAE3 {
                         power(BASE, i - 1) * (lower as int  + upper as int * BASE);
                     }
 
-                    assume lower as int  * power(BASE, i - 1) + upper as int * power(BASE, i) == power(BASE, i - 1) * (lower as int + upper as int  * BASE);
+                    assert lower as int  * power(BASE, i - 1) + upper as int * power(BASE, i) == power(BASE, i - 1) * (lower as int + upper as int  * BASE);
                 }
                 power(BASE, i - 1) * (lower as int + upper as int  * BASE) + interp(P[..i - 1], i - 1);
                 power(BASE, i - 1) * product as int + interp(P[..i - 1], i - 1);
