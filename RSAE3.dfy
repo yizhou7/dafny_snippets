@@ -687,26 +687,27 @@ module RSAE3 {
         returns (P: seq<uint32>)
         requires n != 0;
         requires |A| == n;
-        // ensures |P| == n + 1;
-        // ensures seq_interp(P) == seq_interp(A) * b as int;
-        // ensures cong(P[0] as int, A[0] as int * b as int, BASE);
+        ensures |P| == n + 1;
+        ensures seq_interp(P) == seq_interp(A) * b as int;
+        ensures cong(P[0] as int, A[0] as int * b as int, BASE);
     {
         var temp := new uint32[n + 1];
+        temp[0] := 0;
         P := temp[..];
+
+        assert P[0] == 0;
 
         var i := 0;
         var c :uint32 := 0;
-
-        assert seq_interp(P[..i]) + c as int * power(BASE, i) == seq_interp(A[..i]) * b as int;
 
         while i < n 
             decreases n - i;
             invariant |A| == n;
             invariant |P| == n + 1;
-            invariant i < temp.Length;
+            invariant i < |P|;
             invariant seq_interp(P[..i]) + c as int * power(BASE, i) == seq_interp(A[..i]) * b as int;
+            invariant i >= 1 ==> P[0] as int == (A[0] as int * b as int) % BASE;
         {
-
             single_digit_mul_lemma(A[i], b, c);
             var product :uint64 := A[i] as uint64 * b as uint64 + c as uint64;
 
@@ -718,9 +719,12 @@ module RSAE3 {
             }
 
             P := P[i := lower];
-            i := i + 1;
 
-            assert seq_interp(P[..i - 1]) + c as int * power(BASE, i - 1) == seq_interp(A[..i -1]) * b as int;
+            if i == 0 {
+                assert P[0] as int == (A[0] as int * b as int) % BASE;
+            }
+
+            i := i + 1;
 
             calc == {
                 seq_interp(P[..i]) + upper as int * power(BASE, i);
@@ -753,9 +757,29 @@ module RSAE3 {
 
             c := upper;
         }
+    
+        P := P[n := c];
+        
+        calc ==> {
+            seq_interp(P[..i]) + c as int * power(BASE, i) == seq_interp(A[..i]) * b as int;
+            {
+                prefix_sum_lemma(A, A[..i], i);
+            }
+            seq_interp(P[..i]) + c as int * power(BASE, i) == seq_interp(A) * b as int;
+            {
+                assert seq_interp(P[..i]) == interp(P[..i], i);
+                prefix_sum_lemma(P, P[..i], i);
+            }
+            interp(P, i) + c as int * power(BASE, i) == seq_interp(A) * b as int;
+            interp(P, i) + word_interp(P, i) == seq_interp(A) * b as int;
+            interp(P, i + 1) == seq_interp(A) * b as int;
+            seq_interp(P) == seq_interp(A) * b as int;
+        }
 
-
-        assume false;
+        assert cong(P[0] as int, A[0] as int * b as int, BASE) by {
+            assert P[0] as int == (A[0] as int * b as int) % BASE;
+            reveal cong();
+        }
     }
 
     lemma single_digit_mul_lemma(a: uint32, b: uint32, c: uint32)
