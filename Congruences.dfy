@@ -67,15 +67,6 @@ module Congruences {
         }
     }
 
-    lemma test(a: int, b: int, n: nat)
-        requires n != 0;
-        requires exists k : int :: a - b == n * k
-        ensures a % n == b % n;
-    {
-
-    }
-
-
     lemma mod_mul_lemma(a: int, b: int, n: int)
         requires n != 0;
         requires b % n == 0;
