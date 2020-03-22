@@ -21,20 +21,20 @@ module Congruences {
             assert k1 * n + a % n == a;
             assert k2 * n + b % n == b;
     
-            calc ==> {
-
+            calc == {
+                (a - b) % n;
+                (k1 * n + a % n - k2 * n - b % n) % n;
+                (k1 * n - k2 * n) % n;
+                ((k1 - k2) * n) % n;
+                {
+                    mod_mul_lemma(k1 - k2, n, n);
+                }
+                0;
             }
-            //     a % n == b % n;
-                
-
-            // }
-            // (a - b) % n == 0
-
+            assert cong(a, b, n) ==> (a - b) % n == 0;
         }
 
-
-        assume false;
-        assume (a % n == b % n) <== ((a - b) % n == 0);
+        assume cong(a, b, n) <== ((a - b) % n == 0);
     }
 
     lemma mod_mul_lemma(a: int, b: int, n: int)
