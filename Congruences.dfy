@@ -189,7 +189,6 @@ module Congruences {
         }
         assert (a * c - b * c) % n == 0;
         cong_equiv_lemma(a * c, b * c, n);
-        assert cong(a * c, b * c, n);
     }
 
     lemma cong_add_lemma_1(a: int, b: int, c: int, n: int)
@@ -201,6 +200,34 @@ module Congruences {
         requires n != 0;
         requires cong(a, b, n) && cong(c, d, n);
         ensures cong(a + c, b + d, n);
+    {
+        ghost var k1, k2 := a / n, b / n;
+        ghost var r1, r2 := a % n, b % n;
+
+        assert r1 == r2 by {
+            reveal cong();
+        }
+
+        ghost var k3, k4 := c / n, d / n;
+        ghost var r3, r4 := c % n, d % n;
+
+        assert r3 == r4 by {
+            reveal cong();
+        }
+
+        calc == {
+            a + c - b - d;
+            k1 * n + k3 * n - k2 * n - k4 * n;
+            (k1 + k3 - k2 - k4) * n;
+        }
+
+        assert (k1 + k3 - k2 - k4) * n % n == 0 by {
+            mod_mul_lemma(k1 + k3 - k2 - k4, n, n);
+        }
+        
+        assert (a + c - b - d) % n == 0;
+        cong_equiv_lemma(a + c,  b + d, n);
+    }
     
     lemma cong_add_lemma_3(a: int, m: int, n: int)
         requires n != 0;
