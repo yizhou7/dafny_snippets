@@ -11,7 +11,7 @@ module Congruences {
 
     lemma cong_equiv_lemma(a: int, b: int, n: int)
         requires n != 0;
-        ensures cong(a, b, n) == ((a - b) % n == 0);
+        ensures cong(a, b, n) <==> ((a - b) % n == 0);
     {
         var k1, k2 := a / n, b / n;
         assert k1 * n + a % n == a;
@@ -67,14 +67,6 @@ module Congruences {
         }
     }
 
-    lemma mod_mul_lemma(a: int, b: int, n: int)
-        requires n != 0;
-        requires b % n == 0;
-        ensures a * b % n == 0;
-    {
-        assume false;
-    }
-
     lemma mod_div_inv_leamma(a: int, b: int, b_inv: int, n: int)
         requires n != 0 && b != 0
         requires cong(b * b_inv, 1, n);
@@ -126,38 +118,78 @@ module Congruences {
         reveal cong();
     }
 
+    lemma mod_mul_lemma(a: int, b: int, n: int)
+        requires n != 0;
+        requires b % n == 0;
+        ensures a * b % n == 0;
+
+    lemma test(a: int, b: int, n: int)
+        requires n != 0;
+        requires b % n == 0;
+        ensures a * b % n == 0;        
+    {
+        var k2 := b / n;
+        assert k2 * n == b;
+
+        var k := (a * b) / n;
+        var r := (a * b) % n;
+
+        calc ==> {
+            k2 * n == b;
+            k2 * n / n == b / n;
+            // a * k2 * n == a * b;
+
+            // k * n + r == a * b;
+            // a * b / n * n + r == a * b;
+            // a * k2 * n / n * n + r == a * b;
+      
+            // a * k2 * n + r == a * b;
+            // (a * k2 * n / n) * n + r == a * b;
+        } 
+
+        assume false;
+    }
+
+
     lemma cong_mul_lemma_1(a: int, b: int, c: int, n: int)
         requires n != 0;
         requires cong(a, b, n);
         ensures cong(a * c, b * c, n);
     {
-        ghost var k1 := a / n;
-        ghost var k2 := b / n;
+        ghost var k1, k2 := a / n, b / n;
         assert k1 * n + a % n == a;
         assert k2 * n + b % n == b;
 
+        assert (a - b) % n == 0 by {
+            cong_equiv_lemma(a, b, n);
+        }
+
         calc == {
-            (a * c - b * c) % n;
-            ((k1 * n + a % n - k2 * n - b % n) * c) % n;
+            a * c - b * c;
+            (k1 * n + a % n) * c - (k2 * n + b % n) * c;
             {
-                reveal cong();
-                assert a % n == b % n;
-            }
-            ((k1 * n - k2 * n) * c) % n;
-            ((k1 - k2 ) * c * n) % n;
-            {
-                assert c * n % n == 0 by {
-                    mod_mul_lemma(c, n, n);
+                assert a % n * c == b % n * c by {
+                    reveal cong();
                 }
             }
-            // 0;
+            k1 * n * c - k2 * n * c;
+            (k1 - k2) * n * c;
+            (k1 - k2) * c * n;
         }
-        // assert (a * c) % n == (b * c) % n by {
-        //     assert (a * c - b * c) % n == 0;
-        //     cong_equiv(a * c, b * c, n);
-        // }
-        // assert (a * c) % n == (b * c) % n;
-        assume false;
+
+        ghost var temp := (k1 - k2) * c; 
+
+        calc == {
+            (a * c - b * c) % n;
+            (temp * n) % n;
+            {
+                mod_mul_lemma(temp, n, n);
+            }
+            0;
+        }
+        assert (a * c - b * c) % n == 0;
+        cong_equiv_lemma(a * c, b * c, n);
+        assert cong(a * c, b * c, n);
     }
 
     lemma cong_add_lemma_1(a: int, b: int, c: int, n: int)
