@@ -3,10 +3,9 @@ module Powers
     function method {:opaque} power(b:int, e:nat) : int
         decreases e;
         ensures b > 0 ==> power(b, e) > 0;
-        ensures b == 0 ==> power(b, e) == 0;
+        ensures b == 0 && e != 0 ==> power(b, e) == 0;
     {
-        if b == 0 then 0
-        else if (e == 0) then 1
+        if (e == 0) then 1
         else b * power(b, e - 1)
     }
 
