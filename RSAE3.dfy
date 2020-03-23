@@ -22,8 +22,8 @@ module RSAE3 {
 
         ensures seq_interp(A) == (seq_interp(x) * seq_interp(y) * power(BASE_INV, n)) % seq_interp(m);
 {
-        var temp := new uint32[n + 1];
-        A  := temp[..];
+        var temp_A := new uint32[n + 1];
+        A  := temp_A[..];
         assume seq_interp(A) == 0;
 
         ghost var m_val := seq_interp(m);
@@ -121,13 +121,16 @@ module RSAE3 {
             A := D;
         }
 
-        assert seq_interp(A) == (seq_interp(x) * seq_interp(y) * power(BASE_INV, n)) % seq_interp(m) by {
-            assert cong(seq_interp(x) * seq_interp(y) * power(BASE_INV, n), seq_interp(A), seq_interp(m)) by {
-                assert cong(seq_interp(A), seq_interp(x) * seq_interp(y) * power(BASE_INV, n), seq_interp(m));
+        ghost var temp := seq_interp(x) * seq_interp(y) * power(BASE_INV, n);
+
+        assert seq_interp(A) == temp % seq_interp(m) by {
+
+            assert cong(temp, seq_interp(A), seq_interp(m)) by {
+                assert cong(seq_interp(A), temp, seq_interp(m));
                 reveal cong();
             }
             assert seq_interp(A) < m_val;
-            cong_residual_lemma(seq_interp(x) * seq_interp(y) * power(BASE_INV, n), seq_interp(A), seq_interp(m));
+            cong_residual_lemma(temp, seq_interp(A), seq_interp(m));
         }
     }
 
