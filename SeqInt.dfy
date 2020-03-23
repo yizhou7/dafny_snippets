@@ -744,6 +744,8 @@ module SeqInt {
         ensures T[n+1] == 0;
     {
         if T[n+1] != 0 {
+            assert T[n+1] as int >= 1;
+
             calc >= {
                 seq_interp(T);
                 interp(T, n + 2);
