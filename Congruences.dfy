@@ -195,6 +195,10 @@ module Congruences {
         requires n != 0;
         requires cong(a, b, n);
         ensures cong(a + c, b + c, n);
+    {
+        reveal cong();
+        cong_add_lemma_2(a, b, c, c, n);
+    }
 
     lemma cong_add_lemma_2(a: int, b: int, c: int, d: int, n: int)
         requires n != 0;
