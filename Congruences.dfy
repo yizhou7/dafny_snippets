@@ -1,8 +1,4 @@
-include "Powers.dfy"
-
 module Congruences {
-    import opened Powers
-
     predicate {:opaque} cong(a: int, b: int, n: int)
         requires n != 0;
     {
@@ -249,33 +245,5 @@ module Congruences {
     {
         reveal cong();
         cong_add_lemma_2(a, a, 0, m, n);
-    }
-
-    lemma {:induction e} cong_power_lemma(a: int, b: int, e: nat, n: int)
-        requires n != 0;
-        requires cong(a, b, n);
-        ensures cong(power(a, e), power(b, e), n);
-    {
-        if e == 0 {
-            reveal power();
-            reveal cong();
-        } else {
-            calc ==> {
-                cong(a, b, n);
-                {
-                    cong_power_lemma(a, b, e - 1, n);
-                }
-                cong(power(a, e - 1), power(b, e - 1), n);
-                {
-                    cong_mul_lemma_2(power(a, e - 1), power(b, e - 1), a, b, n);
-                }
-                cong(power(a, e - 1) * a, power(b, e - 1) * b, n);
-                {
-                    power_add_one_lemma(a, e - 1);
-                    power_add_one_lemma(b, e - 1);
-                }
-                cong(power(a, e), power(b, e), n);
-            }
-        }
     }
 }
