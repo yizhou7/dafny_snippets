@@ -202,7 +202,33 @@ module Congruences {
             reveal cong();
         }
 
-        assume false;
+        calc == {
+            a * c - b * d;
+            (k1 * n + r1) * (k3 * n + r3) - (k2 * n + r1) * (k4 * n + r3);
+            (k1 * n + r1) * k3 * n + (k1 * n + r1) * r3 - (k2 * n + r1) * k4 * n - (k2 * n + r1) * r3;
+            ((k1 * n + r1) * k3 - (k2 * n + r1) * k4) * n + (k1 * n + r1) * r3 - (k2 * n + r1) * r3;
+            ((k1 * n + r1) * k3 - (k2 * n + r1) * k4) * n + k1 * n * r3 + r1 * r3 - k2 * n * r3 - r1 * r3;
+            ((k1 * n + r1) * k3 - (k2 * n + r1) * k4) * n + k1 * n * r3 - k2 * n * r3;
+            ((k1 * n + r1) * k3 - (k2 * n + r1) * k4) * n + (k1 * r3 - k2 * r3) * n;
+            ((k1 * n + r1) * k3 - (k2 * n + r1) * k4 + k1 * r3 - k2 * r3) * n;
+        }
+        var temp := (k1 * n + r1) * k3 - (k2 * n + r1) * k4 + k1 * r3 - k2 * r3;
+
+        calc ==> {
+            n % n == 0;
+            {
+                mod_mul_lemma(temp, n, n);
+            }
+            (temp * n) % n == 0;
+            {
+                assert a * c - b * d == temp * n;
+            }
+            (a * c - b * d) % n == 0;
+            {
+                cong_equiv_lemma(a * c, b * d, n);
+            }
+            cong(a * c, b * d, n);
+        }        
     }
 
     lemma cong_add_lemma_1(a: int, b: int, c: int, n: int)
