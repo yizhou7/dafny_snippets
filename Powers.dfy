@@ -28,10 +28,27 @@ module Powers
         assume false;
     }
 
-    lemma power_same_exp_lemma(a: int, b: int, e: nat)
+    lemma {:induction e} power_same_exp_lemma(a: int, b: int, e: nat)
         ensures power(a, e) * power(b, e) == power(a * b, e);
     {
-        assume false;
+        if e == 0 {
+            reveal power();
+        } else {
+            calc ==> {
+                true;
+                {
+                    power_same_exp_lemma(a, b, e - 1);
+                }
+                power(a, e - 1) * power(b, e - 1) == power(a * b, e - 1);
+                power(a, e - 1) * power(b, e - 1) * a * b == power(a * b, e - 1) * a * b;
+                {
+                    power_add_one_lemma(a, e - 1);
+                    power_add_one_lemma(b, e - 1);
+                    power_add_one_lemma(a * b, e - 1);
+                }
+                power(a, e ) * power(b, e ) == power(a * b, e);
+            }
+        }
     }
 
     lemma power_mod_lemma(a: int, b: nat) 
