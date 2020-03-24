@@ -122,31 +122,7 @@ module Congruences {
         requires n != 0;
         requires b % n == 0;
         ensures a * b % n == 0;
-
-    lemma test(a: int, b: int, n: int)
-        requires n != 0;
-        requires b % n == 0;
-        ensures a * b % n == 0;        
     {
-        var k2 := b / n;
-        assert k2 * n == b;
-
-        var k := (a * b) / n;
-        var r := (a * b) % n;
-
-        calc ==> {
-            k2 * n == b;
-            k2 * n / n == b / n;
-            // a * k2 * n == a * b;
-
-            // k * n + r == a * b;
-            // a * b / n * n + r == a * b;
-            // a * k2 * n / n * n + r == a * b;
-      
-            // a * k2 * n + r == a * b;
-            // (a * k2 * n / n) * n + r == a * b;
-        } 
-
         assume false;
     }
 
