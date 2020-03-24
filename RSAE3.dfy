@@ -22,9 +22,8 @@ module RSAE3 {
 
         ensures seq_interp(A) == (seq_interp(x) * seq_interp(y) * power(BASE_INV, n)) % seq_interp(m);
 {
-        var temp_A := new uint32[n + 1];
-        A  := temp_A[..];
-        assume seq_interp(A) == 0;
+        A  := zero_seq_int(n + 1);
+        assert seq_interp(A) == 0;
 
         ghost var m_val := seq_interp(m);
         ghost var y_val := seq_interp(y);

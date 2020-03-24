@@ -299,6 +299,7 @@ module SeqInt {
     method zero_seq_int(len: nat) returns (A: seq<uint32>)
         requires len != 0;
         ensures seq_interp(A) == 0;
+        ensures |A| == len;
     {
         var temp := new uint32[len];
         var i := 0;
