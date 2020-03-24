@@ -25,26 +25,12 @@ module Powers
         reveal power();
     }
 
-    lemma {:induction e} power_divisible_lemma(b: int, e: nat)
-        requires e != 0 && b != 0;
-        ensures power(b, e) % b == 0;
-    {
-        reveal power();
-        if e != 1 {
-            assert power(b, e - 1) % b == 0;
-            mod_mul_lemma(power(b, e - 1), b, b);
-            assert power(b, e - 1) * b % b == 0;
-            power_add_one_lemma(b, e - 1);
-            assert power(b, e) % b == 0;
-        }
-    }
-
     lemma {:induction e} power_sub_one_lemma(b:int, e:nat)
         requires e != 0 && b != 0;
         ensures power(b, e) / b == power(b, e - 1);
     {
         assert power(b, e) % b == 0 by {
-            power_divisible_lemma(b, e);
+            power_mod_lemma(b, e);
         }
         power_add_one_lemma(b, e - 1);
     }
@@ -72,8 +58,19 @@ module Powers
         }
     }
 
-    lemma power_mod_lemma(a: int, b: nat) 
-        ensures (b != 0 && a != 0) ==> (power(a, b) % a == 0);
+    lemma {:induction e} power_mod_lemma(b: int, e: nat) 
+        requires e != 0 && b != 0;
+        ensures power(b, e) % b == 0;
+    {
+        reveal power();
+        if e != 1 {
+            assert power(b, e - 1) % b == 0;
+            mod_mul_lemma(power(b, e - 1), b, b);
+            assert power(b, e - 1) * b % b == 0;
+            power_add_one_lemma(b, e - 1);
+            assert power(b, e) % b == 0;
+        }
+    }
 
     lemma {:induction e} cong_power_lemma(a: int, b: int, e: nat, n: int)
         requires n != 0;
