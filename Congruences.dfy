@@ -195,6 +195,12 @@ module Congruences {
         requires cong(a, b, n) && cong(c, d, n);
         ensures cong(a * c, b * d, n);
     {
+        ghost var k1, k2, k3, k4 := a / n, b / n, c / n, d / n;
+        ghost var r1, r2, r3, r4 := a % n, b % n, c % n, d % n;
+
+        assert r1 == r2 && r3 == r4 by {
+            reveal cong();
+        }
 
         assume false;
     }
@@ -213,17 +219,10 @@ module Congruences {
         requires cong(a, b, n) && cong(c, d, n);
         ensures cong(a + c, b + d, n);
     {
-        ghost var k1, k2 := a / n, b / n;
-        ghost var r1, r2 := a % n, b % n;
+        ghost var k1, k2, k3, k4 := a / n, b / n, c / n, d / n;
+        ghost var r1, r2, r3, r4 := a % n, b % n, c % n, d % n;
 
-        assert r1 == r2 by {
-            reveal cong();
-        }
-
-        ghost var k3, k4 := c / n, d / n;
-        ghost var r3, r4 := c % n, d % n;
-
-        assert r3 == r4 by {
+        assert r1 == r2 && r3 == r4 by {
             reveal cong();
         }
 
