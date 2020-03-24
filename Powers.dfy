@@ -43,7 +43,9 @@ module Powers
         requires e != 0 && b != 0;
         ensures power(b, e) / b == power(b, e - 1);
     {
-        assume power(b, e) % b == 0;
+        assert power(b, e) % b == 0 by {
+            power_divisible_lemma(b, e);
+        }
         power_add_one_lemma(b, e - 1);
     }
 
