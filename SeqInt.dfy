@@ -296,6 +296,25 @@ module SeqInt {
         }
     }
 
+    method zero_seq_int(len: nat) returns (A: seq<uint32>)
+        requires len != 0;
+        ensures seq_interp(A) == 0;
+    {
+        var temp := new uint32[len];
+        var i := 0;
+        while i < len
+            decreases len - i;
+            invariant 0 <= i <= len;
+            invariant forall j:: 0 <= j < i ==> temp[j] == 0;
+        {
+            temp[i] := 0;
+            i := i + 1;
+        }
+        A := temp[..];
+        assert seq_interp(A[..0]) == 0;
+        zero_extend_lemma(A[..0], 0, A, len);
+    }
+
     method seq_zero_extend(A: seq<uint32>, n: nat, m: nat) returns (A': seq<uint32>)
         requires |A| == n;
         requires m > n;
