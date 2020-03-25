@@ -79,10 +79,10 @@ module NativeTypes {
         if x > y then y else x
     }
 
+    method {:extern "NativeTypes", "split64"} split64(x: uint64) returns (lower: uint32, upper: uint32)
+        ensures upper as int * (UINT32_MAX as int + 1) + lower as int == x as int;
+
     function method lh_64(x: uint64) : (r: uint32)
 
     function method uh_64(x: uint64) : (r: uint32)
-
-    lemma upper_lower_halves_64_lemma(x: uint64) 
-      ensures uh_64(x)  as int * (UINT32_MAX as int + 1) + lh_64(x) as int == x as int;
 }

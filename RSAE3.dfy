@@ -713,12 +713,10 @@ module RSAE3 {
             single_digit_mul_lemma(A[i], b, c);
             var product :uint64 := A[i] as uint64 * b as uint64 + c as uint64;
 
-            var lower := lh_64(product);
-            var upper := uh_64(product);
+            var lower, upper := split64(product);
 
-            assert lower as int + upper as int  * BASE == product as int by {
-                upper_lower_halves_64_lemma(product);
-            }
+            assert lower as int + upper as int  * BASE == product as int;
+                // upper_lower_halves_64_lemma(
 
             P := P[i := lower];
 
