@@ -662,17 +662,16 @@ module RSAE3 {
             }
             (y_val * seq_interp(x_2) * p_inv * BASE_INV) % m_val;
             {
-                calc == {
-                    p_inv * BASE_INV;
-                    power(BASE_INV, i) * BASE_INV;
-                    {
-                        power_add_one_lemma(BASE_INV, i);
-                    }
-                    power(BASE_INV, i+1);
-                }
                 ghost var a := y_val * seq_interp(x_2);
-
                 assert a * p_inv * BASE_INV == a * power(BASE_INV, i+1) by {
+                    calc == {
+                        p_inv * BASE_INV;
+                        power(BASE_INV, i) * BASE_INV;
+                        {
+                            power_add_one_lemma(BASE_INV, i);
+                        }
+                        power(BASE_INV, i+1);
+                    }
                     assert p_inv * BASE_INV == power(BASE_INV, i+1);
                 }
             }
@@ -716,7 +715,6 @@ module RSAE3 {
             var lower, upper := split64(product);
 
             assert lower as int + upper as int  * BASE == product as int;
-                // upper_lower_halves_64_lemma(
 
             P := P[i := lower];
 
