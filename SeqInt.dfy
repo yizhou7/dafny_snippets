@@ -146,12 +146,12 @@ module SeqInt {
             assert interp(A, i_old) + interp(B, i_old) == interp(S, i_old) + c_old as int * postional_weight(i_old);
 
             var sum: uint64 := A[i] as uint64 + B[i] as uint64 + c as uint64;
-            var masked := and64(sum, UINT32_MAX as uint64) as uint32;
-            assume sum as int > UINT32_MAX as int ==> (masked as int + BASE == sum as int);
+            var lower, upper := split64(sum);
+            assume sum as int > UINT32_MAX as int ==> (lower as int + BASE * c as int == sum as int);
 
             S_old := S;
             ghost var prefix_sum := interp(S_old, i);
-            S := S[i := masked];
+            S := S[i := lower];
 
             if i == 0 {
                 assume cong(S[0] as int, A[0] as int + B[0] as int, BASE);
@@ -167,7 +167,7 @@ module SeqInt {
             i := i + 1;
 
             assert interp(A, i_old) + interp(B, i_old) == interp(S, i_old) + c_old as int * postional_weight(i_old);
-            assert interp(S, i) == masked as int * postional_weight(i_old) + interp(S, i_old);
+            assert interp(S, i) == lower as int * postional_weight(i_old) + interp(S, i_old);
             assert interp(B, i) == B[i - 1] as int * postional_weight(i - 1) + interp(B, i - 1);
             assert interp(A, i) == A[i - 1] as int * postional_weight(i - 1) + interp(A, i - 1);
 
@@ -191,11 +191,11 @@ module SeqInt {
                 c := 1;
                 calc == {
                     postional_weight(i - 1) * (sum as int) + interp(S, i_old);
-                    postional_weight(i - 1) * masked as int + postional_weight(i - 1) * BASE + interp(S, i_old);
+                    postional_weight(i - 1) * lower as int + postional_weight(i - 1) * BASE + interp(S, i_old);
                     {
                         postional_shift_lemma(i);
                     }
-                    postional_weight(i - 1) * masked as int + postional_weight(i) + interp(S, i_old);
+                    postional_weight(i - 1) * lower as int + postional_weight(i) + interp(S, i_old);
                 }
             } else {
                 c := 0;
