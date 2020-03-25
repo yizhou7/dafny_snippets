@@ -1053,7 +1053,4 @@ module MONTGOMERY {
             montgomery_exp_lemma(M, M', E, N, R, R_inv, C, C');
         }
     }
-
-
-
 }
