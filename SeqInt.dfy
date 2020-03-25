@@ -147,14 +147,14 @@ module SeqInt {
 
             var sum: uint64 := A[i] as uint64 + B[i] as uint64 + c as uint64;
             var masked := and64(sum, UINT32_MAX as uint64) as uint32;
-            assume masked as int + BASE == sum as int;
+            assume sum as int > UINT32_MAX as int ==> (masked as int + BASE == sum as int);
 
             S_old := S;
             ghost var prefix_sum := interp(S_old, i);
             S := S[i := masked];
 
             if i == 0 {
-                assert cong(S[0] as int, A[0] as int + B[0] as int, BASE);
+                assume cong(S[0] as int, A[0] as int + B[0] as int, BASE);
             } else {
                 assert S[0] == S_old[0];
             }
