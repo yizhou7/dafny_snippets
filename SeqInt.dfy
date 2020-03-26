@@ -147,14 +147,33 @@ module SeqInt {
 
             var sum: uint64 := A[i] as uint64 + B[i] as uint64 + c as uint64;
             var lower, upper := split64(sum);
-            assume sum as int > UINT32_MAX as int ==> (lower as int + BASE * c as int == sum as int);
 
             S_old := S;
             ghost var prefix_sum := interp(S_old, i);
             S := S[i := lower];
 
             if i == 0 {
-                assume cong(S[0] as int, A[0] as int + B[0] as int, BASE);
+                assert c == 0;
+
+                calc ==> {
+                    sum as int == A[0] as int + B[0] as int;
+                    {
+                        reveal cong();
+                    }
+                    cong(sum as int, A[0] as int + B[0] as int, BASE);
+                    {
+                        assert sum as int == A[0] as int + B[0] as int;
+                    }
+                    cong(lower as int + upper as int * BASE, A[0] as int + B[0] as int, BASE);
+                    {
+                        mod_mul_lemma(-(upper as int), BASE, BASE);
+                        reveal cong();
+                        assert cong(-(upper as int) * BASE, 0, BASE);
+                        cong_add_lemma_2(lower as int + upper as int * BASE, A[0] as int + B[0] as int, -(upper as int) * BASE, 0, BASE);
+                    }
+                    cong(lower as int, A[0] as int + B[0] as int, BASE);
+                }
+                assert cong(S[0] as int, A[0] as int + B[0] as int, BASE);
             } else {
                 assert S[0] == S_old[0];
             }
