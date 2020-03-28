@@ -56,10 +56,10 @@ RSAPublicKey key {
 
 /* montgomery c[] += a * b[] / R % mod */
 static void montMulAdd(const RSAPublicKey *key,
-                       uint32_t* c,
+                       uint32_t* A,
                        const uint32_t x_i,
                        const uint32_t* y) {
-    uint64_t p_1 = (uint64_t)x_i * b[0] + c[0];
+    uint64_t p_1 = (uint64_t)x_i * b[0] + A[0];
     uint32_t u_i = (uint32_t)p_1 * key->n0inv;
     uint64_t p_2 = (uint64_t)u_i * key->n[0] + (uint32_t)p_1;
 
@@ -67,12 +67,12 @@ static void montMulAdd(const RSAPublicKey *key,
     for (i = 1; i < key->len; ++i) {
         p_1 = (p_1 >> 32) + (uint64_t)x_i * y[i] + c[i];
         p_2 = (p_2 >> 32) + (uint64_t)u_i * key->n[i] + (uint32_t)p_1;
-        c[i - 1] = (uint32_t)p_2;
+        A[i - 1] = (uint32_t)p_2;
     }
     p_1 = (p_1 >> 32) + (p_2 >> 32);
-    c[i - 1] = (uint32_t)p_1;
+    A[i - 1] = (uint32_t)p_1;
     if (p_1 >> 32) {
-        subM(key, c);
+        subM(key, A);
     }
 }
 /* montgomery c[] = a[] * b[] / R % mod */
