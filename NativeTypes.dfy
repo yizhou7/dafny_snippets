@@ -82,7 +82,7 @@ module NativeTypes {
     method {:extern "NativeTypes", "split64"} split64(x: uint64) returns (lower: uint32, upper: uint32)
         ensures upper as int * (UINT32_MAX as int + 1) + lower as int == x as int;
 
-    function method lh_64(x: uint64) : (r: uint32)
+    function method lh64(x: uint64) : (r: uint32)
 
-    function method uh_64(x: uint64) : (r: uint32)
+    function method uh64(x: uint64) : (r: uint32)
 }
