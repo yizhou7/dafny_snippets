@@ -52,7 +52,6 @@ module RSAE3 {
         while i < n
             decreases n - i;
             invariant |A| == n + 1;
-            invariant seq_interp(A) < 2 * m_val - 1;
             invariant i <= |x|;
             invariant cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) * power(BASE_INV, i), seq_interp(m));
             invariant seq_interp(A) < 2 * m_val - 1;
