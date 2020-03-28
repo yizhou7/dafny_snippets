@@ -32,23 +32,26 @@ module RSAE3v2 {
         
         while i < n
             decreases n - i;
-            invariant |A| == n + 1;
+            // invariant |A| == n + 1;
         {
-            var u_i_ := ((A[0] as int + x[i] as int * y[0] as int) * m' as int) % BASE; 
-            var u_i := u_i_ as uint32;
-
-            var P_1 := magic_mul(y, x[i], n);
-            var P_2 := magic_mul(m, u_i, n);
-            var S := seq_add_c(P_1, P_2, n + 1);
-    
-            A := seq_zero_extend(A, n + 1, n + 2);
-            var A' := seq_add_c(A, S, n + 2);
-
-            var A'' := A'[1..n+2];
-
+            A := compact_mont_mul_add(m, A, x[i], y, m', n);
             i := i + 1;
-            A := A'';
         }
+    }
+
+    method compact_mont_mul_add(m: seq<uint32>, A: seq<uint32>, x_i: uint32, y: seq<uint32>, m': uint32, n: nat)
+        returns (A'': seq<uint32>)
+    {
+        var u_i_ := ((A[0] as int + x_i as int * y[0] as int) * m' as int) % BASE; 
+        var u_i := u_i_ as uint32;
+
+        var P_1 := magic_mul(y, x_i, n);
+        var P_2 := magic_mul(m, u_i, n);
+        var S := seq_add_c(P_1, P_2, n + 1);
+
+        var A := seq_zero_extend(A, n + 1, n + 2);
+        var A' := seq_add_c(A, S, n + 2);
+        A'' := A'[1..n+2];
     }
 
     method magic_mul(A: seq<uint32>, b: uint32, n: nat)
@@ -85,5 +88,4 @@ module RSAE3v2 {
     
         P := P[n := c];
     }
-
 }
