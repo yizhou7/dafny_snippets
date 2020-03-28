@@ -21,7 +21,7 @@ module RSAE3 {
         requires cong(BASE * BASE_INV, 1, seq_interp(m));
 
         ensures seq_interp(A) == (seq_interp(x) * seq_interp(y) * power(BASE_INV, n)) % seq_interp(m);
-{
+    {
         A  := zero_seq_int(n + 1);
         assert seq_interp(A) == 0;
 
