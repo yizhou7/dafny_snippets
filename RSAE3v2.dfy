@@ -46,8 +46,13 @@ module RSAE3v2 {
             i := i + 1;
         }
 
-        // A' := A'[1..];
-        // subtraction needed as well
+        p_1 := uh64(p_1) as uint64 + uh64(p_2) as uint64;
+        A' := A'[i - 1 := lh64(p_1)];
+
+        if uh64(p_1) != 0 {
+            var _, A'' := seq_sub(A', m);
+            A' := A'';
+        }
     }
 
     method compact_mont_mul(m: seq<uint32>, x: seq<uint32>, y: seq<uint32>, m': uint32, n: nat, ghost R: int, ghost BASE_INV: nat)
