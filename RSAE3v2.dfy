@@ -9,41 +9,6 @@ module RSAE3v2 {
     import opened Congruences
     import opened SeqInt
 
-    method compact_mont_mul(m: seq<uint32>, x: seq<uint32>, y: seq<uint32>, m': uint32, n: nat, ghost R: int, ghost BASE_INV: nat)
-        returns (A: seq<uint32>)
-
-        requires n > 2;
-        requires |m| == n && |x| == n && |y| == n;
-        requires R == power(BASE, n);
-        requires cong(m' as int * seq_interp(m), -1, BASE);
-        requires 0 <= seq_interp(x) < seq_interp(m); 
-        requires 0 <= seq_interp(y) < seq_interp(m); 
-        requires cong(BASE * BASE_INV, 1, seq_interp(m));
-        // ensures seq_interp(A) == (seq_interp(x) * seq_interp(y) * power(BASE_INV, n)) % seq_interp(m);
-    {
-        assume false;
-
-        A  := zero_seq_int(n);
-        assert seq_interp(A) == 0;
-
-        ghost var m_val := seq_interp(m);
-        ghost var y_val := seq_interp(y);
-
-        var i := 0;
-        
-        while i < n
-            decreases n - i;
-            invariant i <= |x|;
-            invariant cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) * power(BASE_INV, i), seq_interp(m));
-            invariant seq_interp(A) < 2 * m_val - 1;
-            invariant cong(BASE * BASE_INV, 1, seq_interp(m));
-            invariant |A| == n;
-        {
-            A := compact_mont_mul_add(m, A, x[i], y, m', n);
-            i := i + 1;
-        }
-    }
-
 /*
     uint64_t p_1 = (uint64_t)x_i * y[0] + A[0];
     uint32_t u_i = (uint32_t)p_1 * key->n0inv;
@@ -83,5 +48,40 @@ module RSAE3v2 {
 
         // A' := A'[1..];
         // subtraction needed as well
+    }
+
+    method compact_mont_mul(m: seq<uint32>, x: seq<uint32>, y: seq<uint32>, m': uint32, n: nat, ghost R: int, ghost BASE_INV: nat)
+        returns (A: seq<uint32>)
+
+        requires n > 2;
+        requires |m| == n && |x| == n && |y| == n;
+        requires R == power(BASE, n);
+        requires cong(m' as int * seq_interp(m), -1, BASE);
+        requires 0 <= seq_interp(x) < seq_interp(m); 
+        requires 0 <= seq_interp(y) < seq_interp(m); 
+        requires cong(BASE * BASE_INV, 1, seq_interp(m));
+        // ensures seq_interp(A) == (seq_interp(x) * seq_interp(y) * power(BASE_INV, n)) % seq_interp(m);
+    {
+        assume false;
+
+        A  := zero_seq_int(n);
+        assert seq_interp(A) == 0;
+
+        ghost var m_val := seq_interp(m);
+        ghost var y_val := seq_interp(y);
+
+        var i := 0;
+        
+        while i < n
+            decreases n - i;
+            invariant i <= |x|;
+            invariant cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) * power(BASE_INV, i), seq_interp(m));
+            invariant seq_interp(A) < 2 * m_val - 1;
+            invariant cong(BASE * BASE_INV, 1, seq_interp(m));
+            invariant |A| == n;
+        {
+            A := compact_mont_mul_add(m, A, x[i], y, m', n);
+            i := i + 1;
+        }
     }
 }
