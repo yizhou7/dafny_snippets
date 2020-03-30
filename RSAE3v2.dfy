@@ -62,60 +62,26 @@ module RSAE3v2 {
     }
 */
     method compact_mont_mul_add(m: seq<uint32>, A: seq<uint32>, x_i: uint32, y: seq<uint32>, m': uint32, n: nat)
-        returns (A'': seq<uint32>)
+        returns (A': seq<uint32>)
     {
         assume false;
 
-        var u_i_ := ((A[0] as int + x_i as int * y[0] as int) * m' as int) % BASE; 
-        var u_i := u_i_ as uint32;
+        A' := zero_seq_int(n);
+        var p_1 :uint64 := x_i as uint64 * y[0] as uint64 + A[0] as uint64;
+        var u_i :uint32 := ((p_1 as int * m' as int) % BASE) as uint32;
+        var p_2 :uint64 := u_i as uint64 * m[0] as uint64 + lh64(p_1) as uint64;
 
-        var i := 0;
-
-        var product_1 :uint64;
-        var product_2 :uint64;
-
-        var A' := zero_seq_int(n + 1);
+        var i := 1;
 
         while i < n
         {
-            product_1 := uh64(product_1) as uint64 + y[i] as uint64 * x_i as uint64 + A[i] as uint64;
-            product_2 := uh64(product_2) as uint64 + u_i as uint64 * m[i] as uint64 + lh64(product_1) as uint64;
-
+            p_1 := uh64(p_1) as uint64 + x_i as uint64 * y[i] as uint64 + A[i] as uint64;
+            p_2 := uh64(p_2) as uint64 + u_i as uint64 * m[i] as uint64 + lh64(p_1) as uint64;
+            A' := A'[i - 1 := lh64(p_2)];
             i := i + 1;
         }
 
-        A' := A'[1..];
-    }
-
-    method magic_mul(A: seq<uint32>, b: uint32, n: nat)
-        returns (P: seq<uint32>)
-        requires n != 0;
-        requires |A| == n;
-        ensures |P| == n + 1;
-    {
-        var temp := new uint32[n + 1];
-        temp[0] := 0;
-        P := temp[..];
-
-        assert P[0] == 0;
-
-        var i := 0;
-        var c :uint32 := 0;
-
-        while i < n 
-            decreases n - i;
-            invariant |A| == n;
-            invariant |P| == n + 1;
-            invariant i < |P|;
-        {
-            var product :uint64 := A[i] as uint64 * b as uint64 + c as uint64;
-            var lower, upper := split64(product);
-
-            P := P[i := lower];
-            i := i + 1;
-            c := upper;
-        }
-    
-        P := P[n := c];
+        // A' := A'[1..];
+        // subtraction needed as well
     }
 }
