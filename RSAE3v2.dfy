@@ -2,12 +2,14 @@ include "NativeTypes.dfy"
 include "Powers.dfy"
 include "Congruences.dfy"
 include "SeqInt.dfy"
+include "RSAE3.dfy"
 
 module RSAE3v2 {
     import opened NativeTypes
     import opened Powers
     import opened Congruences
     import opened SeqInt
+    import opened RSAE3
 
 /*
     uint64_t p_1 = (uint64_t)x_i * y[0] + A[0];
@@ -28,23 +30,29 @@ module RSAE3v2 {
 */
     method compact_mont_mul_add(m: seq<uint32>, A: seq<uint32>, x_i: uint32, y: seq<uint32>, m': uint32, n: nat)
         returns (A': seq<uint32>)
+        requires |m| == |A| == |y| == n != 0;
     {
-        assume false;
 
         A' := zero_seq_int(n);
+
+        single_digit_mul_lemma(x_i, y[0], A[0]);
         var p_1 :uint64 := x_i as uint64 * y[0] as uint64 + A[0] as uint64;
         var u_i :uint32 := ((p_1 as int * m' as int) % BASE) as uint32;
+
+        single_digit_mul_lemma(u_i, m[0], lh64(p_1));
         var p_2 :uint64 := u_i as uint64 * m[0] as uint64 + lh64(p_1) as uint64;
+        assume false;
 
         var i := 1;
 
         while i < n
+            // invariant |A'| == 
         {
             p_1 := uh64(p_1) as uint64 + x_i as uint64 * y[i] as uint64 + A[i] as uint64;
             p_2 := uh64(p_2) as uint64 + u_i as uint64 * m[i] as uint64 + lh64(p_1) as uint64;
             A' := A'[i - 1 := lh64(p_2)];
             i := i + 1;
-        }
+        } 
 
         p_1 := uh64(p_1) as uint64 + uh64(p_2) as uint64;
         A' := A'[i - 1 := lh64(p_1)];
