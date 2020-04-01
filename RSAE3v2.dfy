@@ -82,9 +82,22 @@ module RSAE3v2 {
         subM(key, A);
     }
 */
-    method compact_mont_mul_add(m: seq<uint32>, A: seq<uint32>, x_i: uint32, y: seq<uint32>, m': uint32, n: nat)
+    method compact_mont_mul_add(m: seq<uint32>,
+        A: seq<uint32>, 
+        x_i: uint32,
+        y: seq<uint32>,
+        m': uint32,
+        n: nat,
+        ghost i: nat,
+        ghost BASE_INV: nat,
+        ghost x: seq<uint32>)
+
         returns (A': seq<uint32>)
-        requires |m| == |A| == |y| == n != 0;
+
+        requires seq_interp(m) != 0;
+        requires |m| == |A| == |y| == |x| == n != 0;
+        requires i < n;
+        requires cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) * power(BASE_INV, i), seq_interp(m));
     {
         single_digit_mul_lemma(x_i, y[0], A[0]);
         var p_1 :uint64 := x_i as uint64 * y[0] as uint64 + A[0] as uint64;
@@ -112,13 +125,11 @@ module RSAE3v2 {
             p_2 := uh64(p_2) as uint64 + u_i as uint64 * m[j] as uint64 + lh64(p_1) as uint64;
             A' := A'[j - 1 := lh64(p_2)];
             j := j + 1;
-            assume false;
         }
 
         assume false;
         p_1 := uh64(p_1) as uint64 + uh64(p_2) as uint64;
         A' := A'[j - 1 := lh64(p_1)];
-
 
         if uh64(p_1) != 0 {
             var _, A'' := seq_sub(A', m);
@@ -159,7 +170,7 @@ module RSAE3v2 {
             invariant seq_interp(A) <= m_val;
             invariant cong(BASE * BASE_INV, 1, seq_interp(m));
         {
-            A := compact_mont_mul_add(m, A, x[i], y, m', n);
+            A := compact_mont_mul_add(m, A, x[i], y, m', n, i, BASE_INV, x);
             i := i + 1;
         }
     }
