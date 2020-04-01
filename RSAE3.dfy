@@ -790,7 +790,7 @@ module RSAE3 {
     }
 
     lemma single_digit_mul_lemma(a: uint32, b: uint32, c: uint32)
-        ensures a as nat * b as nat + c as nat <= 0xffffffff00000000;
+        ensures a as nat * b as nat + c as nat < UINT64_MAX as int;
     {
         assert a as nat * b as nat <= 0xfffffffe00000001 by {
             single_digit_mul_aux_lemma_1(a, b);
