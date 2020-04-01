@@ -13,7 +13,6 @@ module RSAE3v2 {
 
     lemma compact_mont_mul_divisible_lemma(p_1: nat, p_2: nat, x_i: nat, y_0: nat, a_0: nat, u_i: nat, m': nat, m_0: nat)
         requires cong(m' * m_0, -1, BASE);
-        // requires p_1 <= UINT64_MAX as nat;
         requires p_1 == x_i * y_0 + a_0;
         requires u_i == (p_1 * m') % BASE;
         requires p_2 == u_i * m_0 + p_1 % BASE;
@@ -33,13 +32,15 @@ module RSAE3v2 {
             }
             cong(p_1 + m_0 * u_i , 0, BASE);
             {
-                
+                cong_mod_lemma(p_1, BASE);
+                assert cong(p_1 % BASE, p_1, BASE);
+                cong_add_lemma_1(p_1 % BASE, p_1,  m_0 * u_i, BASE); 
+                assert cong(p_1 % BASE + m_0 * u_i, p_1 + m_0 * u_i, BASE);
+                cong_trans_lemma(p_1 % BASE + m_0 * u_i, p_1 + m_0 * u_i, 0, BASE);
             }
-            // cong(y_0 * x_i + m_0 * (((a_0 + x_i * y_0) * m') % BASE) , 0, BASE);
+            cong(p_1 % BASE + m_0 * u_i , 0, BASE);
+            cong(p_2, 0, BASE);
         }
-
-        // p_2 == (p_1 * m') % BASE * m_0 + p_1 % BASE;
-        
     }
 /*
     uint64_t p_1 = (uint64_t)x_i * y[0] + A[0];
@@ -62,7 +63,6 @@ module RSAE3v2 {
         returns (A': seq<uint32>)
         requires |m| == |A| == |y| == n != 0;
     {
-
         A' := zero_seq_int(n);
 
         single_digit_mul_lemma(x_i, y[0], A[0]);

@@ -85,4 +85,7 @@ module NativeTypes {
     function method lh64(x: uint64) : (r: uint32)
 
     function method uh64(x: uint64) : (r: uint32)
+
+    lemma split64_lemma(x: uint64)
+        ensures uh64(x) as int * (UINT32_MAX as int + 1) + lh64(x) as int == x as int;
 }
