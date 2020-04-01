@@ -13,10 +13,16 @@ module RSAE3v2 {
 
     lemma compact_mont_mul_divisible_lemma(p_1: nat, p_2: nat, x_i: nat, y_0: nat, a_0: nat, u_i: nat, m': nat, m_0: nat)
         requires cong(m' * m_0, -1, BASE);
+        requires p_1 <= UINT64_MAX as nat;
         requires p_1 == x_i * y_0 + a_0;
-        requires u_i == (p_1 * m') % BASE;
-        requires p_2 == u_i * m_0 + p_1 % BASE;
+        requires u_i == (lh64(p_1 as uint64) as nat * m') % BASE;
+        requires p_2 == u_i * m_0 + lh64(p_1 as uint64) as nat;
+        ensures cong(p_2, 0, BASE);
     {
+        assert lh64(p_1 as uint64) as nat == p_1 % BASE by {
+            split64_lemma(p_1 as uint64);
+        }
+
         calc ==> {
             cong(m' * m_0, -1, BASE);
             {
@@ -28,6 +34,12 @@ module RSAE3v2 {
             }
             cong(p_1 + m_0 * ((p_1 * m') % BASE) , 0, BASE);
             {
+                cong_mod_lemma(p_1, BASE);
+                assert cong(p_1 % BASE, p_1, BASE);
+                cong_mul_lemma_1(p_1 % BASE, p_1, m', BASE);
+                assert cong((p_1 % BASE) * m', p_1 * m', BASE);
+                reveal cong();
+                assert (p_1 % BASE * m') % BASE == (p_1 * m') % BASE;
                 assert u_i == (p_1 * m') % BASE;
             }
             cong(p_1 + m_0 * u_i , 0, BASE);
@@ -42,6 +54,7 @@ module RSAE3v2 {
             cong(p_2, 0, BASE);
         }
     }
+
 /*
     uint64_t p_1 = (uint64_t)x_i * y[0] + A[0];
     uint32_t u_i = (uint32_t)p_1 * key->n0inv;
@@ -63,14 +76,18 @@ module RSAE3v2 {
         returns (A': seq<uint32>)
         requires |m| == |A| == |y| == n != 0;
     {
-        A' := zero_seq_int(n);
 
         single_digit_mul_lemma(x_i, y[0], A[0]);
         var p_1 :uint64 := x_i as uint64 * y[0] as uint64 + A[0] as uint64;
-        var u_i :uint32 := ((lh64(p_1) as uint64 * m' as uint64) % BASE as uint64) as uint32;
+        var u_i :uint32 := ((lh64(p_1) as nat * m' as nat) % BASE) as uint32;
 
         single_digit_mul_lemma(u_i, m[0], lh64(p_1));
         var p_2 :uint64 := u_i as uint64 * m[0] as uint64 + lh64(p_1) as uint64;
+
+        assume cong(m' as nat* m[0] as nat, -1, BASE);
+        compact_mont_mul_divisible_lemma(p_1 as nat, p_2 as nat, x_i as nat, y[0] as nat, A[0] as nat, u_i as nat, m' as nat, m[0] as nat);
+
+        A' := zero_seq_int(n);
 
         assume false;
 
