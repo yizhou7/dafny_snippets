@@ -98,6 +98,7 @@ module RSAE3v2 {
         requires |m| == |A| == |y| == |x| == n != 0;
         requires i < n;
         requires cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) * power(BASE_INV, i), seq_interp(m));
+        // ensures cong(seq_interp(A), seq_interp(x[..i + 1]) * seq_interp(y) * power(BASE_INV, i), seq_interp(m));
     {
         single_digit_mul_lemma(x_i, y[0], A[0]);
         var p_1 :uint64 := x_i as uint64 * y[0] as uint64 + A[0] as uint64;
@@ -106,9 +107,8 @@ module RSAE3v2 {
         single_digit_mul_lemma(u_i, m[0], lh64(p_1));
         var p_2 :uint64 := u_i as uint64 * m[0] as uint64 + lh64(p_1) as uint64;
 
-        assume cong(m' as nat* m[0] as nat, -1, BASE);
-
         assert cong(p_2 as int, 0, BASE) by {
+            assume cong(m' as nat* m[0] as nat, -1, BASE);
             compact_mont_mul_divisible_lemma(p_1 as nat, p_2 as nat, x_i as nat, y[0] as nat, A[0] as nat, u_i as nat, m' as nat, m[0] as nat);
         }
 
@@ -117,26 +117,46 @@ module RSAE3v2 {
 
         var j := 1;
 
+        calc == {
+            x_i as nat * seq_interp(A[..j]) + u_i as nat * seq_interp(y[..j]);
+            {
+                assert power(BASE, 0) == 1 by {
+                    reveal power();
+                }
+            }
+            x_i as nat * A[0] as int + u_i as nat * seq_interp(y[..j]);
+        }
+
+        assume false;
+
+        // assert seq_interp(S) + uh64(p_2) as int * BASE == 
+        // x_i as nat * seq_interp(A[..j]) + u_i as nat * seq_interp(y[..j]);
+
+
         while j < n
             decreases n - j;
             invariant |A'| == n;
+            // invariant seq_interp(S) + == x_i as nat * seq_interp(A[..j]) + u_i as nat * seq_interp(y[..j]);
         {
+            assume false;
+
             p_1 := uh64(p_1) as uint64 + x_i as uint64 * y[j] as uint64 + A[j] as uint64;
             p_2 := uh64(p_2) as uint64 + u_i as uint64 * m[j] as uint64 + lh64(p_1) as uint64;
-            A' := A'[j - 1 := lh64(p_2)];
+            // A' := A'[j - 1 := lh64(p_2)];
+
+            S := S + [lh64(p_2)];
             j := j + 1;
         }
 
         assume false;
         p_1 := uh64(p_1) as uint64 + uh64(p_2) as uint64;
         A' := A'[j - 1 := lh64(p_1)];
+    
 
         if uh64(p_1) != 0 {
             var _, A'' := seq_sub(A', m);
             A' := A'';
         }
-
-        assume seq_interp(A') == seq_interp(A) + x_i as nat * seq_interp(y) + u_i as nat * seq_interp(m);
     }
 
     method compact_mont_mul(m: seq<uint32>, x: seq<uint32>, y: seq<uint32>, m': uint32, n: nat, ghost R: int, ghost BASE_INV: nat)
