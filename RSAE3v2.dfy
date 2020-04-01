@@ -55,6 +55,15 @@ module RSAE3v2 {
         }
     }
 
+    lemma single_digit_mul_add_lemma(a: uint32, b: uint32, c: uint32, d: uint32)
+        ensures a as nat * b as nat + c as nat + d as nat <= UINT64_MAX as int;
+    {
+        assert a as nat * b as nat <= 0xfffffffe00000001 by {
+            single_digit_mul_aux_lemma_1(a, b);
+        }
+        assert a as nat * b as nat + c as nat <= 0xffffffff00000000;
+        assert a as nat * b as nat + c as nat + d as nat <= UINT64_MAX as int;
+    }
 /*
     uint64_t p_1 = (uint64_t)x_i * y[0] + A[0];
     uint32_t u_i = (uint32_t)p_1 * key->n0inv;
@@ -85,7 +94,10 @@ module RSAE3v2 {
         var p_2 :uint64 := u_i as uint64 * m[0] as uint64 + lh64(p_1) as uint64;
 
         assume cong(m' as nat* m[0] as nat, -1, BASE);
-        compact_mont_mul_divisible_lemma(p_1 as nat, p_2 as nat, x_i as nat, y[0] as nat, A[0] as nat, u_i as nat, m' as nat, m[0] as nat);
+
+        assert cong(p_2 as int, 0, BASE) by {
+            compact_mont_mul_divisible_lemma(p_1 as nat, p_2 as nat, x_i as nat, y[0] as nat, A[0] as nat, u_i as nat, m' as nat, m[0] as nat);
+        }
 
         A' := zero_seq_int(n);
 
@@ -97,6 +109,7 @@ module RSAE3v2 {
             decreases n - i;
             invariant |A'| == n;
         {
+            single_digit_mul_lemma(x_i, y[0], A[0]);
             p_1 := uh64(p_1) as uint64 + x_i as uint64 * y[i] as uint64 + A[i] as uint64;
             p_2 := uh64(p_2) as uint64 + u_i as uint64 * m[i] as uint64 + lh64(p_1) as uint64;
             A' := A'[i - 1 := lh64(p_2)];
