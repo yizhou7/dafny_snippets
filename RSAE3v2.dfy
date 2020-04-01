@@ -55,15 +55,16 @@ module RSAE3v2 {
         }
     }
 
-    lemma single_digit_mul_add_lemma(c: uint32, a: uint32, b: uint32, d: uint32)
-        ensures a as nat * b as nat + c as nat + d as nat <= UINT64_MAX as int;
-    {
-        assert a as nat * b as nat <= 0xfffffffe00000001 by {
-            single_digit_mul_aux_lemma_1(a, b);
-        }
-        assert a as nat * b as nat + c as nat <= 0xffffffff00000000;
-        assert a as nat * b as nat + c as nat + d as nat <= UINT64_MAX as int;
-    }
+    // lemma single_digit_mul_add_lemma(c: uint32, a: uint32, b: uint32, d: uint32)
+    //     ensures a as nat * b as nat + c as nat + d as nat <= UINT64_MAX as int;
+    // {
+    //     assert a as nat * b as nat <= 0xfffffffe00000001 by {
+    //         single_digit_mul_aux_lemma_1(a, b);
+    //     }
+    //     assert a as nat * b as nat + c as nat <= 0xffffffff00000000;
+    //     assert a as nat * b as nat + c as nat + d as nat <= UINT64_MAX as int;
+    // }
+
 /*
     uint64_t p_1 = (uint64_t)x_i * y[0] + A[0];
     uint32_t u_i = (uint32_t)p_1 * key->n0inv;
@@ -85,7 +86,6 @@ module RSAE3v2 {
         returns (A': seq<uint32>)
         requires |m| == |A| == |y| == n != 0;
     {
-
         single_digit_mul_lemma(x_i, y[0], A[0]);
         var p_1 :uint64 := x_i as uint64 * y[0] as uint64 + A[0] as uint64;
         var u_i :uint32 := ((lh64(p_1) as nat * m' as nat) % BASE) as uint32;
@@ -99,31 +99,33 @@ module RSAE3v2 {
             compact_mont_mul_divisible_lemma(p_1 as nat, p_2 as nat, x_i as nat, y[0] as nat, A[0] as nat, u_i as nat, m' as nat, m[0] as nat);
         }
 
+        ghost var S := [0];
         A' := zero_seq_int(n);
 
-        var i := 1;
+        var j := 1;
 
-        while i < n
-            decreases n - i;
+        while j < n
+            decreases n - j;
             invariant |A'| == n;
         {
-            // single_digit_mul_add_lemma(uh64(p_1), x_i, y[i], A[i]);
-            p_1 := uh64(p_1) as uint64 + x_i as uint64 * y[i] as uint64 + A[i] as uint64;
-
-            // single_digit_mul_add_lemma(uh64(p_1), x_i, y[i], A[i]);
-            p_2 := uh64(p_2) as uint64 + u_i as uint64 * m[i] as uint64 + lh64(p_1) as uint64;
-            A' := A'[i - 1 := lh64(p_2)];
-            i := i + 1;
-        } 
+            p_1 := uh64(p_1) as uint64 + x_i as uint64 * y[j] as uint64 + A[j] as uint64;
+            p_2 := uh64(p_2) as uint64 + u_i as uint64 * m[j] as uint64 + lh64(p_1) as uint64;
+            A' := A'[j - 1 := lh64(p_2)];
+            j := j + 1;
+            assume false;
+        }
 
         assume false;
         p_1 := uh64(p_1) as uint64 + uh64(p_2) as uint64;
-        A' := A'[i - 1 := lh64(p_1)];
+        A' := A'[j - 1 := lh64(p_1)];
+
 
         if uh64(p_1) != 0 {
             var _, A'' := seq_sub(A', m);
             A' := A'';
         }
+
+        assume seq_interp(A') == seq_interp(A) + x_i as nat * seq_interp(y) + u_i as nat * seq_interp(m);
     }
 
     method compact_mont_mul(m: seq<uint32>, x: seq<uint32>, y: seq<uint32>, m': uint32, n: nat, ghost R: int, ghost BASE_INV: nat)
@@ -151,10 +153,11 @@ module RSAE3v2 {
         while i < n
             decreases n - i;
             invariant i <= |x|;
-            invariant cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) * power(BASE_INV, i), seq_interp(m));
-            invariant seq_interp(A) < 2 * m_val - 1;
-            invariant cong(BASE * BASE_INV, 1, seq_interp(m));
             invariant |A| == n;
+
+            invariant cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) * power(BASE_INV, i), seq_interp(m));
+            invariant seq_interp(A) <= m_val;
+            invariant cong(BASE * BASE_INV, 1, seq_interp(m));
         {
             A := compact_mont_mul_add(m, A, x[i], y, m', n);
             i := i + 1;
