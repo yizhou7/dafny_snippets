@@ -67,13 +67,13 @@ module RSAE3v2 {
 
 /*
     uint64_t p_1 = (uint64_t)x_i * y[0] + A[0];
-    uint32_t u_i = (uint32_t)p_1 * key->n0inv;
-    uint64_t p_2 = (uint64_t)u_i * key->n[0] + (uint32_t)p_1;
+    uint32_t u_i = (uint32_t)p_1 * m';
+    uint64_t p_2 = (uint64_t)u_i * m[0] + (uint32_t)p_1;
 
     int i;
-    for (i = 1; i < key->len; ++i) {
+    for (i = 1; i < len; ++i) {
         p_1 = (p_1 >> 32) + (uint64_t)x_i * y[i] + A[i];
-        p_2 = (p_2 >> 32) + (uint64_t)u_i * key->n[i] + (uint32_t)p_1;
+        p_2 = (p_2 >> 32) + (uint64_t)u_i * m[i] + (uint32_t)p_1;
         A[i - 1] = (uint32_t)p_2;
     }
     p_1 = (p_1 >> 32) + (p_2 >> 32);
@@ -95,7 +95,7 @@ module RSAE3v2 {
         returns (A': seq<uint32>)
 
         requires seq_interp(m) != 0;
-        requires |m| == |A| == |y| == |x| == n != 0;
+        requires |m| == |A| == |y| == |x| == n > 1;
         requires i < n;
         requires cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) * power(BASE_INV, i), seq_interp(m));
         // ensures cong(seq_interp(A), seq_interp(x[..i + 1]) * seq_interp(y) * power(BASE_INV, i), seq_interp(m));
@@ -118,41 +118,62 @@ module RSAE3v2 {
         var j := 1;
 
         calc == {
-            x_i as nat * seq_interp(A[..j]) + u_i as nat * seq_interp(y[..j]);
+            x_i as nat * seq_interp(y[..j]) + u_i as nat * seq_interp(m[..j]) + seq_interp(A[..j]);
             {
                 assert power(BASE, 0) == 1 by {
                     reveal power();
                 }
             }
-            x_i as nat * A[0] as int + u_i as nat * seq_interp(y[..j]);
+            x_i as nat * y[0] as nat + u_i as nat * m[0] as nat + A[0] as nat;
+            u_i as nat * m[0] as nat + p_1 as int;
+            {
+                split64_lemma(p_1);
+            }
+            u_i as nat * m[0] as nat + lh64(p_1) as int + uh64(p_1) as int * BASE;
+            p_2 as int + uh64(p_1) as int * BASE;
+            {
+                split64_lemma(p_2);
+            }
+            lh64(p_2) as int + uh64(p_2) as int * BASE + uh64(p_1) as int * BASE;
+            {
+                assume lh64(p_2) == 0;
+            }
+            seq_interp(S) + uh64(p_2) as int * BASE + uh64(p_1) as int * BASE;
         }
 
-        assume false;
+        assert x_i as nat * seq_interp(y[..j]) + u_i as nat * seq_interp(m[..j]) + seq_interp(A[..j]) as nat == 
+            seq_interp(S) + uh64(p_2) as int * BASE + uh64(p_1) as int * BASE;
 
-        // assert seq_interp(S) + uh64(p_2) as int * BASE == 
-        // x_i as nat * seq_interp(A[..j]) + u_i as nat * seq_interp(y[..j]);
-
-
-        while j < n
+        while j != n
             decreases n - j;
-            invariant |A'| == n;
+            invariant 0 < j <= n;
             // invariant seq_interp(S) + == x_i as nat * seq_interp(A[..j]) + u_i as nat * seq_interp(y[..j]);
         {
-            assume false;
+            // assume false;
 
-            p_1 := uh64(p_1) as uint64 + x_i as uint64 * y[j] as uint64 + A[j] as uint64;
-            p_2 := uh64(p_2) as uint64 + u_i as uint64 * m[j] as uint64 + lh64(p_1) as uint64;
+            // p_1 := uh64(p_1) as uint64 + x_i as uint64 * y[j] as uint64 + A[j] as uint64;
+            // p_2 := uh64(p_2) as uint64 + u_i as uint64 * m[j] as uint64 + lh64(p_1) as uint64;
             // A' := A'[j - 1 := lh64(p_2)];
-
-            S := S + [lh64(p_2)];
+            // S := S + [lh64(p_2)];
             j := j + 1;
         }
 
+        assert j == n;
+
+        assume x_i as nat * seq_interp(y[..n]) + u_i as nat * seq_interp(m[..n]) + seq_interp(A[..n]) as nat == 
+            seq_interp(S) + uh64(p_2) as int * BASE + uh64(p_1) as int * BASE;
+
+        calc == {
+            seq_interp(S) + uh64(p_2) as int * BASE + uh64(p_1) as int * BASE;
+            x_i as nat * seq_interp(y[..n]) + u_i as nat * seq_interp(m[..n]) + seq_interp(A[..n]) as nat;
+        //     x_i as nat * seq_interp(y) + u_i as nat * seq_interp(m) + seq_interp(A);
+        }
+
         assume false;
+    
         p_1 := uh64(p_1) as uint64 + uh64(p_2) as uint64;
         A' := A'[j - 1 := lh64(p_1)];
     
-
         if uh64(p_1) != 0 {
             var _, A'' := seq_sub(A', m);
             A' := A'';
