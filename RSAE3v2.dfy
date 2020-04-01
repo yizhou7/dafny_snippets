@@ -2,15 +2,55 @@ include "NativeTypes.dfy"
 include "Powers.dfy"
 include "Congruences.dfy"
 include "SeqInt.dfy"
-include "RSAE3.dfy"
 
 module RSAE3v2 {
     import opened NativeTypes
     import opened Powers
     import opened Congruences
     import opened SeqInt
-    import opened RSAE3
 
+    lemma single_digit_mul_lemma(a: uint32, b: uint32, c: uint32)
+        ensures a as nat * b as nat + c as nat < UINT64_MAX as int;
+    {
+        assert a as nat * b as nat <= 0xfffffffe00000001 by {
+            single_digit_mul_aux_lemma_1(a, b);
+        }
+        assert a as nat * b as nat + c as nat <= 0xffffffff00000000;
+    }
+
+    lemma single_digit_mul_aux_lemma_1(a: uint32, b: uint32)
+        ensures a as nat * b as nat <= 0xfffffffe00000001;
+    {
+        var u : nat := 0xffffffff;
+        calc ==> {
+            a as nat <= u && b as nat <= u;
+            {
+                single_digit_mul_aux_lemma_2(a as nat, b as nat, u);
+            }
+            a as nat * b as nat <= u * u;
+            {
+                assert u * u == 0xfffffffe00000001;
+            }
+            a as int * b as int <= 0xfffffffe00000001;
+        }
+    }
+
+    lemma single_digit_mul_aux_lemma_2(a:nat, b:nat, u:nat)
+        requires a <= u;
+        requires b <= u;
+        ensures a * b <= u * u;
+    {
+        assert true;
+    }
+
+    lemma compact_mont_mul_divisible_lemma(p_1: nat, p_2: nat, x_i: nat, y_0: nat, a_0: nat, u_i: nat, m': nat, m_0: nat)
+        requires p_1 <= UINT64_MAX as nat;
+        requires p_1 == x_i * y_0 + a_0;
+        requires u_i == (p_1 * m') % BASE;
+        requires p_2 == u_i * m_0 + lh64(p_1 as uint64) as nat;
+    {
+
+    }
 /*
     uint64_t p_1 = (uint64_t)x_i * y[0] + A[0];
     uint32_t u_i = (uint32_t)p_1 * key->n0inv;
@@ -37,16 +77,18 @@ module RSAE3v2 {
 
         single_digit_mul_lemma(x_i, y[0], A[0]);
         var p_1 :uint64 := x_i as uint64 * y[0] as uint64 + A[0] as uint64;
-        var u_i :uint32 := ((p_1 as int * m' as int) % BASE) as uint32;
+        var u_i :uint32 := ((lh64(p_1) as uint64 * m' as uint64) % BASE as uint64) as uint32;
 
         single_digit_mul_lemma(u_i, m[0], lh64(p_1));
         var p_2 :uint64 := u_i as uint64 * m[0] as uint64 + lh64(p_1) as uint64;
+
         assume false;
 
         var i := 1;
 
         while i < n
-            // invariant |A'| == 
+            decreases n - i;
+            invariant |A'| == n;
         {
             p_1 := uh64(p_1) as uint64 + x_i as uint64 * y[i] as uint64 + A[i] as uint64;
             p_2 := uh64(p_2) as uint64 + u_i as uint64 * m[i] as uint64 + lh64(p_1) as uint64;
