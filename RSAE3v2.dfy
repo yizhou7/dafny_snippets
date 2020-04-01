@@ -2,54 +2,44 @@ include "NativeTypes.dfy"
 include "Powers.dfy"
 include "Congruences.dfy"
 include "SeqInt.dfy"
+include "RSAE3.dfy"
 
 module RSAE3v2 {
     import opened NativeTypes
     import opened Powers
     import opened Congruences
     import opened SeqInt
-
-    lemma single_digit_mul_lemma(a: uint32, b: uint32, c: uint32)
-        ensures a as nat * b as nat + c as nat < UINT64_MAX as int;
-    {
-        assert a as nat * b as nat <= 0xfffffffe00000001 by {
-            single_digit_mul_aux_lemma_1(a, b);
-        }
-        assert a as nat * b as nat + c as nat <= 0xffffffff00000000;
-    }
-
-    lemma single_digit_mul_aux_lemma_1(a: uint32, b: uint32)
-        ensures a as nat * b as nat <= 0xfffffffe00000001;
-    {
-        var u : nat := 0xffffffff;
-        calc ==> {
-            a as nat <= u && b as nat <= u;
-            {
-                single_digit_mul_aux_lemma_2(a as nat, b as nat, u);
-            }
-            a as nat * b as nat <= u * u;
-            {
-                assert u * u == 0xfffffffe00000001;
-            }
-            a as int * b as int <= 0xfffffffe00000001;
-        }
-    }
-
-    lemma single_digit_mul_aux_lemma_2(a:nat, b:nat, u:nat)
-        requires a <= u;
-        requires b <= u;
-        ensures a * b <= u * u;
-    {
-        assert true;
-    }
+    import opened RSAE3
 
     lemma compact_mont_mul_divisible_lemma(p_1: nat, p_2: nat, x_i: nat, y_0: nat, a_0: nat, u_i: nat, m': nat, m_0: nat)
-        requires p_1 <= UINT64_MAX as nat;
+        requires cong(m' * m_0, -1, BASE);
+        // requires p_1 <= UINT64_MAX as nat;
         requires p_1 == x_i * y_0 + a_0;
         requires u_i == (p_1 * m') % BASE;
-        requires p_2 == u_i * m_0 + lh64(p_1 as uint64) as nat;
+        requires p_2 == u_i * m_0 + p_1 % BASE;
     {
+        calc ==> {
+            cong(m' * m_0, -1, BASE);
+            {
+                mont_mul_div_aux_lemma_1(y_0, x_i, m_0, a_0, m');
+            }
+            cong(y_0 * x_i + a_0 + m_0 * (((a_0 + x_i * y_0) * m') % BASE) , 0, BASE);
+            {
+                assert p_1 == x_i * y_0 + a_0;
+            }
+            cong(p_1 + m_0 * ((p_1 * m') % BASE) , 0, BASE);
+            {
+                assert u_i == (p_1 * m') % BASE;
+            }
+            cong(p_1 + m_0 * u_i , 0, BASE);
+            {
+                
+            }
+            // cong(y_0 * x_i + m_0 * (((a_0 + x_i * y_0) * m') % BASE) , 0, BASE);
+        }
 
+        // p_2 == (p_1 * m') % BASE * m_0 + p_1 % BASE;
+        
     }
 /*
     uint64_t p_1 = (uint64_t)x_i * y[0] + A[0];
