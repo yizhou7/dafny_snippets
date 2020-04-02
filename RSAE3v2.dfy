@@ -55,7 +55,7 @@ module RSAE3v2 {
         }
     }
 
-    lemma cmma_invarint_aux_lemma_1(m: seq<uint32>,
+    lemma cmm_invarint_aux_lemma_1(m: seq<uint32>,
         A: seq<uint32>, 
         x_i: uint32,
         y: seq<uint32>,
@@ -100,7 +100,7 @@ module RSAE3v2 {
         }
     }
 
-    lemma cmma_invarint_aux_lemma_2(m: seq<uint32>,
+    lemma cmm_invarint_aux_lemma_2(m: seq<uint32>,
         A: seq<uint32>, 
         x_i: uint32,
         y: seq<uint32>,
@@ -253,14 +253,14 @@ module RSAE3v2 {
         assert x_i as nat * seq_interp(y[..j]) + u_i as nat * seq_interp(m[..j]) + seq_interp(A[..1]) as nat == 
             uh64(p_2) as int * power(BASE, j) + uh64(p_1) as int * power(BASE, j) by 
         {
-            cmma_invarint_aux_lemma_1(m, A, x_i, y, n, p_1, p_2, u_i);
+            cmm_invarint_aux_lemma_1(m, A, x_i, y, n, p_1, p_2, u_i);
         }
 
         while j != n
             decreases n - j;
             invariant 0 < j <= n;
             invariant |S| == j;
-            invariant  x_i as nat * seq_interp(y[..j]) + u_i as nat * seq_interp(m[..j]) + seq_interp(A[..j]) == 
+            invariant x_i as nat * seq_interp(y[..j]) + u_i as nat * seq_interp(m[..j]) + seq_interp(A[..j]) == 
                 seq_interp(S) + uh64(p_2) as int * power(BASE, j) + uh64(p_1) as int * power(BASE, j);
         {
             ghost var S', j', p_1', p_2' := S, j, p_1, p_2;
@@ -272,44 +272,46 @@ module RSAE3v2 {
             S := S + [lh64(p_2)];
             j := j + 1;
 
-            cmma_invarint_aux_lemma_2(m, A, x_i, y, n, p_1, p_1', p_2, p_2', u_i, j, S, S');
+            cmm_invarint_aux_lemma_2(m, A, x_i, y, n, p_1, p_1', p_2, p_2', u_i, j, S, S');
             assert u_i as nat * seq_interp(m[..j]) + x_i as nat * seq_interp(y[..j]) + seq_interp(A[..j]) == 
                 seq_interp(S) + uh64(p_2) as int * power(BASE, j) + uh64(p_1) as int * power(BASE, j);
         }
 
-        assert j == n;
-
-        // calc == {
-        //     seq_interp(S) + uh64(p_2) as int * power(BASE, n) + uh64(p_1) as int * power(BASE, n);
-        //     {
-        //         assume false;
-        //     }
-        //     x_i as nat * seq_interp(y[..n]) + u_i as nat * seq_interp(m[..n]) + seq_interp(A[..n]);
-        //     {
-        //         assert seq_interp(y[..n]) == seq_interp(y) by {
-        //             assert y == y[..n];
-        //         }
-        //     }
-        //     x_i as nat * seq_interp(y) + u_i as nat * seq_interp(m[..n]) + seq_interp(A[..n]);
-        //     {
-        //         assert seq_interp(m[..n]) == seq_interp(m) by {
-        //             assert m == m[..n];
-        //         }
-        //     }
-        //     x_i as nat * seq_interp(y) + u_i as nat * seq_interp(m) + seq_interp(A[..n]);
-        //     {
-        //         assert seq_interp(A[..n]) == seq_interp(A) by {
-        //             assert A == A[..n];
-        //         }
-        //     }
-        //     x_i as nat * seq_interp(y) + u_i as nat * seq_interp(m) + seq_interp(A);
-        // }
-
-        assume false;
+        ghost var S', p_1', p_2' := S, p_1, p_2;
 
         p_1 := uh64(p_1) as uint64 + uh64(p_2) as uint64;
         A' := A'[j-1 := lh64(p_1)];
         S := S + [lh64(p_1)];
+
+        calc == {
+            seq_interp(S) + uh64(p_1) as nat * power(BASE, n+1);
+            word_interp(S, n) + interp(S, n) + uh64(p_1) as nat * power(BASE, n+1);
+            {
+                prefix_sum_lemma(S, S', n);
+            }
+            S[n] as nat * power(BASE, n) + seq_interp(S') + uh64(p_1) as nat * power(BASE, n+1);
+            lh64(p_1) as nat * power(BASE, n) + seq_interp(S') + uh64(p_1) as nat * power(BASE, n+1);
+            {
+                assume false;
+            }
+            (lh64(p_1) as nat + uh64(p_1) as nat * BASE) * power(BASE, n) + seq_interp(S');
+            {
+                split64_lemma(p_1);
+            }
+            p_1 as nat * power(BASE, n) + seq_interp(S');
+            {
+                assert p_1 as nat == uh64(p_1') as nat + uh64(p_2') as nat;
+            }
+            (uh64(p_1') as nat + uh64(p_2') as nat) * power(BASE, n) + seq_interp(S');
+            uh64(p_1') as nat * power(BASE, n) + uh64(p_2') as nat * power(BASE, n) + seq_interp(S');
+            {
+                assert x_i as nat * seq_interp(y[..n]) + u_i as nat * seq_interp(m[..n]) + seq_interp(A[..n]) == 
+                    seq_interp(S') + uh64(p_2') as int * power(BASE, n) + uh64(p_1') as int * power(BASE, n);
+            }
+            x_i as nat * seq_interp(y[..n]) + u_i as nat * seq_interp(m[..n]) + seq_interp(A[..n]);
+        }
+
+        assume false;
 
         if uh64(p_1) != 0 {
             var _, A'' := seq_sub(A', m);
