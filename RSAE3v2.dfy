@@ -55,15 +55,46 @@ module RSAE3v2 {
         }
     }
 
-    // lemma single_digit_mul_add_lemma(c: uint32, a: uint32, b: uint32, d: uint32)
-    //     ensures a as nat * b as nat + c as nat + d as nat <= UINT64_MAX as int;
-    // {
-    //     assert a as nat * b as nat <= 0xfffffffe00000001 by {
-    //         single_digit_mul_aux_lemma_1(a, b);
-    //     }
-    //     assert a as nat * b as nat + c as nat <= 0xffffffff00000000;
-    //     assert a as nat * b as nat + c as nat + d as nat <= UINT64_MAX as int;
-    // }
+    lemma cmma_invarint_aux_lemma_1(m: seq<uint32>,
+        A: seq<uint32>, 
+        x_i: uint32,
+        y: seq<uint32>,
+        n: nat,
+        p_1: uint64,
+        p_2: uint64,
+        u_i: uint32)
+
+        requires |m| == |A| == |y| == n > 1;
+        requires p_1 as int == x_i as int * y[0] as int  + A[0] as int;
+        requires p_2 as int == u_i as int * m[0] as int + lh64(p_1) as int;
+
+        ensures x_i as nat * seq_interp(y[..1]) + u_i as nat * seq_interp(m[..1]) + seq_interp(A[..1]) as nat == 
+            uh64(p_2) as int * BASE + uh64(p_1) as int * BASE;
+    {
+        calc == {
+            x_i as nat * seq_interp(y[..1]) + u_i as nat * seq_interp(m[..1]) + seq_interp(A[..1]);
+            {
+                assert power(BASE, 0) == 1 by {
+                    reveal power();
+                }
+            }
+            x_i as nat * y[0] as nat + u_i as nat * m[0] as nat + A[0] as nat;
+            u_i as nat * m[0] as nat + p_1 as int;
+            {
+                split64_lemma(p_1);
+            }
+            u_i as nat * m[0] as nat + lh64(p_1) as int + uh64(p_1) as int * BASE;
+            p_2 as int + uh64(p_1) as int * BASE;
+            {
+                split64_lemma(p_2);
+            }
+            lh64(p_2) as int + uh64(p_2) as int * BASE + uh64(p_1) as int * BASE;
+            {
+                assume lh64(p_2) == 0;
+            }
+             uh64(p_2) as int * BASE + uh64(p_1) as int * BASE;
+        }
+    }
 
 /*
     uint64_t p_1 = (uint64_t)x_i * y[0] + A[0];
@@ -117,32 +148,11 @@ module RSAE3v2 {
 
         var j := 1;
 
-        // calc == {
-        //     x_i as nat * seq_interp(y[..j]) + u_i as nat * seq_interp(m[..j]) + seq_interp(A[..j]);
-        //     {
-        //         assert power(BASE, 0) == 1 by {
-        //             reveal power();
-        //         }
-        //     }
-        //     x_i as nat * y[0] as nat + u_i as nat * m[0] as nat + A[0] as nat;
-        //     u_i as nat * m[0] as nat + p_1 as int;
-        //     {
-        //         split64_lemma(p_1);
-        //     }
-        //     u_i as nat * m[0] as nat + lh64(p_1) as int + uh64(p_1) as int * BASE;
-        //     p_2 as int + uh64(p_1) as int * BASE;
-        //     {
-        //         split64_lemma(p_2);
-        //     }
-        //     lh64(p_2) as int + uh64(p_2) as int * BASE + uh64(p_1) as int * BASE;
-        //     {
-        //         assume lh64(p_2) == 0;
-        //     }
-        //     seq_interp(S) + uh64(p_2) as int * BASE + uh64(p_1) as int * BASE;
-        // }
-
-        // assert x_i as nat * seq_interp(y[..j]) + u_i as nat * seq_interp(m[..j]) + seq_interp(A[..j]) as nat == 
-        //     seq_interp(S) + uh64(p_2) as int * BASE + uh64(p_1) as int * BASE;
+        assert x_i as nat * seq_interp(y[..1]) + u_i as nat * seq_interp(m[..1]) + seq_interp(A[..1]) as nat == 
+            seq_interp(S) + uh64(p_2) as int * BASE + uh64(p_1) as int * BASE by 
+        {
+            cmma_invarint_aux_lemma_1(m, A, x_i, y, n, p_1, p_2, u_i);
+        }
 
         while j != n
             decreases n - j;
