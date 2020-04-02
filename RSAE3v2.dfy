@@ -117,36 +117,37 @@ module RSAE3v2 {
 
         var j := 1;
 
-        calc == {
-            x_i as nat * seq_interp(y[..j]) + u_i as nat * seq_interp(m[..j]) + seq_interp(A[..j]);
-            {
-                assert power(BASE, 0) == 1 by {
-                    reveal power();
-                }
-            }
-            x_i as nat * y[0] as nat + u_i as nat * m[0] as nat + A[0] as nat;
-            u_i as nat * m[0] as nat + p_1 as int;
-            {
-                split64_lemma(p_1);
-            }
-            u_i as nat * m[0] as nat + lh64(p_1) as int + uh64(p_1) as int * BASE;
-            p_2 as int + uh64(p_1) as int * BASE;
-            {
-                split64_lemma(p_2);
-            }
-            lh64(p_2) as int + uh64(p_2) as int * BASE + uh64(p_1) as int * BASE;
-            {
-                assume lh64(p_2) == 0;
-            }
-            seq_interp(S) + uh64(p_2) as int * BASE + uh64(p_1) as int * BASE;
-        }
+        // calc == {
+        //     x_i as nat * seq_interp(y[..j]) + u_i as nat * seq_interp(m[..j]) + seq_interp(A[..j]);
+        //     {
+        //         assert power(BASE, 0) == 1 by {
+        //             reveal power();
+        //         }
+        //     }
+        //     x_i as nat * y[0] as nat + u_i as nat * m[0] as nat + A[0] as nat;
+        //     u_i as nat * m[0] as nat + p_1 as int;
+        //     {
+        //         split64_lemma(p_1);
+        //     }
+        //     u_i as nat * m[0] as nat + lh64(p_1) as int + uh64(p_1) as int * BASE;
+        //     p_2 as int + uh64(p_1) as int * BASE;
+        //     {
+        //         split64_lemma(p_2);
+        //     }
+        //     lh64(p_2) as int + uh64(p_2) as int * BASE + uh64(p_1) as int * BASE;
+        //     {
+        //         assume lh64(p_2) == 0;
+        //     }
+        //     seq_interp(S) + uh64(p_2) as int * BASE + uh64(p_1) as int * BASE;
+        // }
 
-        assert x_i as nat * seq_interp(y[..j]) + u_i as nat * seq_interp(m[..j]) + seq_interp(A[..j]) as nat == 
-            seq_interp(S) + uh64(p_2) as int * BASE + uh64(p_1) as int * BASE;
+        // assert x_i as nat * seq_interp(y[..j]) + u_i as nat * seq_interp(m[..j]) + seq_interp(A[..j]) as nat == 
+        //     seq_interp(S) + uh64(p_2) as int * BASE + uh64(p_1) as int * BASE;
 
         while j != n
             decreases n - j;
             invariant 0 < j <= n;
+            // invariant |m| == |A| == |y| == |x|;
             // invariant seq_interp(S) + == x_i as nat * seq_interp(A[..j]) + u_i as nat * seq_interp(y[..j]);
         {
             // assume false;
@@ -159,14 +160,33 @@ module RSAE3v2 {
         }
 
         assert j == n;
-
-        assume x_i as nat * seq_interp(y[..n]) + u_i as nat * seq_interp(m[..n]) + seq_interp(A[..n]) as nat == 
-            seq_interp(S) + uh64(p_2) as int * BASE + uh64(p_1) as int * BASE;
+        // assume x_i as nat * seq_interp(y[..n]) + u_i as nat * seq_interp(m[..n]) + seq_interp(A[..n]) == 
+        //     seq_interp(S) + uh64(p_2) as int * BASE + uh64(p_1) as int * BASE;
 
         calc == {
             seq_interp(S) + uh64(p_2) as int * BASE + uh64(p_1) as int * BASE;
-            x_i as nat * seq_interp(y[..n]) + u_i as nat * seq_interp(m[..n]) + seq_interp(A[..n]) as nat;
-        //     x_i as nat * seq_interp(y) + u_i as nat * seq_interp(m) + seq_interp(A);
+            {
+                assume false;
+            }
+            x_i as nat * seq_interp(y[..n]) + u_i as nat * seq_interp(m[..n]) + seq_interp(A[..n]);
+            {
+                assert seq_interp(y[..n]) == seq_interp(y) by {
+                    assert y == y[..n];
+                }
+            }
+            x_i as nat * seq_interp(y) + u_i as nat * seq_interp(m[..n]) + seq_interp(A[..n]);
+            {
+                assert seq_interp(m[..n]) == seq_interp(m) by {
+                    assert m == m[..n];
+                }
+            }
+            x_i as nat * seq_interp(y) + u_i as nat * seq_interp(m) + seq_interp(A[..n]);
+            {
+                assert seq_interp(A[..n]) == seq_interp(A) by {
+                    assert A == A[..n];
+                }
+            }
+            x_i as nat * seq_interp(y) + u_i as nat * seq_interp(m) + seq_interp(A);
         }
 
         assume false;
