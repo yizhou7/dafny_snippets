@@ -260,23 +260,21 @@ module RSAE3v2 {
             decreases n - j;
             invariant 0 < j <= n;
             invariant |S| == j;
+            invariant  x_i as nat * seq_interp(y[..j]) + u_i as nat * seq_interp(m[..j]) + seq_interp(A[..j]) == 
+                seq_interp(S) + uh64(p_2) as int * power(BASE, j) + uh64(p_1) as int * power(BASE, j);
         {
             ghost var S', j', p_1', p_2' := S, j, p_1, p_2;
-
-            assume x_i as nat * seq_interp(y[..j]) + u_i as nat * seq_interp(m[..j]) + seq_interp(A[..j]) == 
-                seq_interp(S) + uh64(p_2) as int * power(BASE, j) + uh64(p_1) as int * power(BASE, j);
 
             p_1 := uh64(p_1) as uint64 + x_i as uint64 * y[j] as uint64 + A[j] as uint64;
             p_2 := uh64(p_2) as uint64 + u_i as uint64 * m[j] as uint64 + lh64(p_1) as uint64;
             // A' := A'[j-1 := lh64(p_2)];
 
-            // assert x_i as nat * seq_interp(y[..j']) + u_i as nat * seq_interp(m[..j']) + seq_interp(A[..j']) == 
-            //     seq_interp(S') + uh64(p_2') as int * BASE + uh64(p_1') as int * BASE;
-
             S := S + [lh64(p_2)];
             j := j + 1;
 
             cmma_invarint_aux_lemma_2(m, A, x_i, y, n, p_1, p_1', p_2, p_2', u_i, j, S, S');
+            assert u_i as nat * seq_interp(m[..j]) + x_i as nat * seq_interp(y[..j]) + seq_interp(A[..j]) == 
+                seq_interp(S) + uh64(p_2) as int * power(BASE, j) + uh64(p_1) as int * power(BASE, j);
         }
 
         assert j == n;
