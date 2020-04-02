@@ -139,7 +139,6 @@ module SeqInt {
         }
     }
 
-
     method seq_add_impl(A: seq<uint32>, B: seq<uint32>, n: nat) returns (c: uint2, S:seq<uint32>)
         requires |A| == |B| == n;
         ensures |S| == n;

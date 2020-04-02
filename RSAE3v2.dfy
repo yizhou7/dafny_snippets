@@ -123,47 +123,78 @@ module RSAE3v2 {
                 seq_interp(S') + uh64(p_2') as int * power(BASE, j-1) + uh64(p_1') as int * power(BASE, j-1);
         requires p_1 as nat == uh64(p_1') as nat + x_i as nat * y[j-1] as nat + A[j-1] as nat;
         requires p_2 as nat == uh64(p_2') as nat + u_i as nat * m[j-1] as nat + lh64(p_1) as nat;
-    {
 
+        ensures u_i as nat * seq_interp(m[..j]) + x_i as nat * seq_interp(y[..j]) + seq_interp(A[..j]) == 
+            seq_interp(S) + uh64(p_2) as int * power(BASE, j) + uh64(p_1) as int * power(BASE, j);
+    {
         calc == {
             seq_interp(S) + uh64(p_2) as int * power(BASE, j) + uh64(p_1) as int * power(BASE, j);
-            lh64(p_2) as nat * power(BASE, j - 1) + interp(S, j - 1) + uh64(p_2) as int * power(BASE, j) + uh64(p_1) as int * power(BASE, j);
+            lh64(p_2) as nat * power(BASE, j-1) + interp(S, j-1) + uh64(p_2) as int * power(BASE, j) + uh64(p_1) as int * power(BASE, j);
             {
-                prefix_sum_lemma(S, S', j - 1);
+                prefix_sum_lemma(S, S', j-1);
             }
-            lh64(p_2) as nat * power(BASE, j - 1) + seq_interp(S') + uh64(p_2) as int * power(BASE, j) + uh64(p_1) as int * power(BASE, j);
+            lh64(p_2) as nat * power(BASE, j-1) + seq_interp(S') + uh64(p_2) as int * power(BASE, j) + uh64(p_1) as int * power(BASE, j);
             {
                 assume false;
             }
-            (lh64(p_2) as int  + uh64(p_2) as int * BASE) * power(BASE, j - 1) + seq_interp(S') + uh64(p_1) as int * power(BASE, j);
+            (lh64(p_2) as int  + uh64(p_2) as int * BASE) * power(BASE, j-1) + seq_interp(S') + uh64(p_1) as int * power(BASE, j);
             {
                 split64_lemma(p_2);
             }
-            p_2 as int * power(BASE, j - 1) + seq_interp(S') + uh64(p_1) as int * power(BASE, j);
+            p_2 as int * power(BASE, j-1) + seq_interp(S') + uh64(p_1) as int * power(BASE, j);
             {
                 assert p_2 as nat == uh64(p_2') as nat + u_i as nat * m[j-1] as nat + lh64(p_1) as nat;
             }
-            (uh64(p_2') as nat + u_i as nat * m[j-1] as nat + lh64(p_1) as nat) * power(BASE, j - 1) + seq_interp(S') + uh64(p_1) as int * power(BASE, j);
-            (uh64(p_2') as nat + u_i as nat * m[j-1] as nat) * power(BASE, j - 1) + lh64(p_1) as nat * power(BASE, j - 1) + seq_interp(S') + uh64(p_1) as int * power(BASE, j);
+            (uh64(p_2') as nat + u_i as nat * m[j-1] as nat + lh64(p_1) as nat) * power(BASE, j-1) + seq_interp(S') + uh64(p_1) as int * power(BASE, j);
+            (uh64(p_2') as nat + u_i as nat * m[j-1] as nat) * power(BASE, j-1) + lh64(p_1) as nat * power(BASE, j-1) + seq_interp(S') + uh64(p_1) as int * power(BASE, j);
             {
                 assume false;
             }
-            (uh64(p_2') as nat + u_i as nat * m[j-1] as nat) * power(BASE, j - 1) + seq_interp(S')  + (lh64(p_1) as nat + uh64(p_1) as nat * BASE)* power(BASE, j - 1);
+            (uh64(p_2') as nat + u_i as nat * m[j-1] as nat) * power(BASE, j-1) + seq_interp(S')  + (lh64(p_1) as nat + uh64(p_1) as nat * BASE)* power(BASE, j-1);
             {
                 split64_lemma(p_1);
             }
-            (uh64(p_2') as nat + u_i as nat * m[j-1] as nat) * power(BASE, j - 1) + seq_interp(S')  + p_1 as nat * power(BASE, j - 1);
-            (u_i as nat * m[j-1] as nat) * power(BASE, j - 1) + uh64(p_2') as nat * power(BASE, j - 1) + seq_interp(S')  + p_1 as nat * power(BASE, j - 1);
+            (uh64(p_2') as nat + u_i as nat * m[j-1] as nat) * power(BASE, j-1) + seq_interp(S')  + p_1 as nat * power(BASE, j-1);
+            (u_i as nat * m[j-1] as nat) * power(BASE, j-1) + uh64(p_2') as nat * power(BASE, j-1) + seq_interp(S')  + p_1 as nat * power(BASE, j-1);
             {
                 assert p_1 as nat == uh64(p_1') as nat + x_i as nat * y[j-1] as nat + A[j-1] as nat;
             }
-            (u_i as nat * m[j-1] as nat) * power(BASE, j - 1) + uh64(p_2') as nat * power(BASE, j - 1) + seq_interp(S')  + (uh64(p_1') as nat + x_i as nat * y[j-1] as nat + A[j-1] as nat) as nat * power(BASE, j - 1);
-            (u_i as nat * m[j-1] as nat) * power(BASE, j - 1) + uh64(p_2') as nat * power(BASE, j - 1) + seq_interp(S')  + uh64(p_1') as nat * power(BASE, j - 1) + (x_i as nat * y[j-1] as nat + A[j-1] as nat) as nat * power(BASE, j - 1);
+            (u_i as nat * m[j-1] as nat) * power(BASE, j-1) + uh64(p_2') as nat * power(BASE, j-1) + seq_interp(S')  + (uh64(p_1') as nat + x_i as nat * y[j-1] as nat + A[j-1] as nat) as nat * power(BASE, j-1);
+            (u_i as nat * m[j-1] as nat) * power(BASE, j-1) + uh64(p_2') as nat * power(BASE, j-1) + seq_interp(S')  + uh64(p_1') as nat * power(BASE, j-1) + (x_i as nat * y[j-1] as nat + A[j-1] as nat) as nat * power(BASE, j-1);
             {
                 assert x_i as nat * seq_interp(y[..j-1]) + u_i as nat * seq_interp(m[..j-1]) + seq_interp(A[..j-1]) == 
                 seq_interp(S') + uh64(p_2') as int * power(BASE, j-1) + uh64(p_1') as int * power(BASE, j-1);
             }
-            (u_i as nat * m[j-1] as nat) * power(BASE, j - 1) + x_i as nat * seq_interp(y[..j-1]) + u_i as nat * seq_interp(m[..j-1]) + seq_interp(A[..j-1]) + (x_i as nat * y[j-1] as nat + A[j-1] as nat) as nat * power(BASE, j - 1);
+            (u_i as nat * m[j-1] as nat) * power(BASE, j-1) + x_i as nat * seq_interp(y[..j-1]) + u_i as nat * seq_interp(m[..j-1]) + seq_interp(A[..j-1]) + (x_i as nat * y[j-1] as nat + A[j-1] as nat) as nat * power(BASE, j-1);
+            u_i as nat * m[j-1] as nat * power(BASE, j-1) + x_i as nat * seq_interp(y[..j-1]) + u_i as nat * seq_interp(m[..j-1]) + seq_interp(A[..j-1]) + x_i as nat * y[j-1] as nat * power(BASE, j-1) + A[j-1] as nat as nat * power(BASE, j-1);
+            (u_i as nat * m[j-1] as nat * power(BASE, j-1) + u_i as nat * seq_interp(m[..j-1])) + (x_i as nat * seq_interp(y[..j-1]) + x_i as nat * y[j-1] as nat * power(BASE, j-1)) + (seq_interp(A[..j-1]) + A[j-1] as nat as nat * power(BASE, j-1));
+            {
+                calc == {
+                    u_i as nat * m[j-1] as nat * power(BASE, j-1) + u_i as nat * seq_interp(m[..j-1]);
+                    u_i as nat * (m[j-1] as nat * power(BASE, j-1) + seq_interp(m[..j-1]));
+                    {
+                        prefix_interp_lemma_2(m, j);
+                    }
+                    u_i as nat * seq_interp(m[..j]);
+                }
+            }
+            u_i as nat * seq_interp(m[..j]) + (x_i as nat * seq_interp(y[..j-1]) + x_i as nat * y[j-1] as nat * power(BASE, j-1)) + (seq_interp(A[..j-1])  + A[j-1] as nat as nat * power(BASE, j-1));
+            {
+                calc == { // refactor
+                    x_i as nat * seq_interp(y[..j-1]) + x_i as nat * y[j-1] as nat * power(BASE, j-1);
+                    x_i as nat * (seq_interp(y[..j-1]) + y[j-1] as nat * power(BASE, j-1) );
+                    {
+                        prefix_interp_lemma_2(y, j);
+                    }
+                    x_i as nat * seq_interp(y[..j]);
+                }
+            }
+            u_i as nat * seq_interp(m[..j]) + x_i as nat * seq_interp(y[..j]) + (seq_interp(A[..j-1]) + A[j-1] as nat as nat * power(BASE, j-1));
+           {
+                prefix_interp_lemma_2(A, j);
+                assert seq_interp(A[..j-1])  + A[j-1] as nat as nat * power(BASE, j-1) == seq_interp(A[..j]);
+            }
+            u_i as nat * seq_interp(m[..j]) + x_i as nat * seq_interp(y[..j]) + seq_interp(A[..j]);
         }
     }
 
@@ -237,7 +268,7 @@ module RSAE3v2 {
 
             p_1 := uh64(p_1) as uint64 + x_i as uint64 * y[j] as uint64 + A[j] as uint64;
             p_2 := uh64(p_2) as uint64 + u_i as uint64 * m[j] as uint64 + lh64(p_1) as uint64;
-            // A' := A'[j - 1 := lh64(p_2)];
+            // A' := A'[j-1 := lh64(p_2)];
 
             // assert x_i as nat * seq_interp(y[..j']) + u_i as nat * seq_interp(m[..j']) + seq_interp(A[..j']) == 
             //     seq_interp(S') + uh64(p_2') as int * BASE + uh64(p_1') as int * BASE;
@@ -279,7 +310,7 @@ module RSAE3v2 {
         assume false;
 
         p_1 := uh64(p_1) as uint64 + uh64(p_2) as uint64;
-        A' := A'[j - 1 := lh64(p_1)];
+        A' := A'[j-1 := lh64(p_1)];
         S := S + [lh64(p_1)];
 
         if uh64(p_1) != 0 {
