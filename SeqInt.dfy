@@ -123,6 +123,23 @@ module SeqInt {
         assert true;
     }
 
+    lemma prefix_interp_lemma_2(S: seq<uint32>, n: nat)
+        requires 0 < n <= |S|;
+        ensures seq_interp(S[..n]) == S[n-1] as nat * power(BASE, n-1) + seq_interp(S[..n-1])
+    {
+        calc == {
+            seq_interp(S[..n]);
+            interp(S[..n], n);
+            word_interp(S[..n], n - 1) + interp(S[..n], n - 1);
+            {
+                prefix_sum_lemma(S[..n], S[..n-1], n -1);
+            }
+            word_interp(S[..n], n - 1) + interp(S[..n-1], n - 1);
+            S[n-1] as nat * power(BASE, n-1) + seq_interp(S[..n-1]);
+        }
+    }
+
+
     method seq_add_impl(A: seq<uint32>, B: seq<uint32>, n: nat) returns (c: uint2, S:seq<uint32>)
         requires |A| == |B| == n;
         ensures |S| == n;
