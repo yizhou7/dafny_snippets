@@ -221,7 +221,7 @@ module RSAE3v2 {
         requires x_i as nat * seq_interp(y[..n]) + u_i as nat * seq_interp(m[..n]) + seq_interp(A[..n]) == 
             seq_interp(S') + uh64(p_2') as int * power(BASE, n) + uh64(p_1') as int * power(BASE, n);
         ensures seq_interp(S) + uh64(p_1) as nat * power(BASE, n+1) == 
-            x_i as nat * seq_interp(y[..n]) + u_i as nat * seq_interp(m[..n]) + seq_interp(A[..n]);
+            x_i as nat * seq_interp(y) + u_i as nat * seq_interp(m) + seq_interp(A);
     {
         calc == {
             seq_interp(S) + uh64(p_1) as nat * power(BASE, n+1);
@@ -249,6 +249,12 @@ module RSAE3v2 {
                     seq_interp(S') + uh64(p_2') as int * power(BASE, n) + uh64(p_1') as int * power(BASE, n);
             }
             x_i as nat * seq_interp(y[..n]) + u_i as nat * seq_interp(m[..n]) + seq_interp(A[..n]);
+            {
+                assert y == y[..n];
+                assert m == m[..n];
+                assert A == A[..n];
+            }
+            x_i as nat * seq_interp(y) + u_i as nat * seq_interp(m) + seq_interp(A);
         }
     }
     
