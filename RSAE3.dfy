@@ -122,7 +122,6 @@ module RSAE3 {
         ghost var temp := seq_interp(x) * seq_interp(y) * power(BASE_INV, n);
 
         assert seq_interp(A) == temp % seq_interp(m) by {
-
             assert cong(temp, seq_interp(A), seq_interp(m)) by {
                 assert cong(seq_interp(A), temp, seq_interp(m));
                 reveal cong();
