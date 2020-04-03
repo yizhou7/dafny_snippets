@@ -216,15 +216,17 @@ module RSAE3v2 {
 
         requires |m| == |A| == |y| == |S'| == n;
         requires p_1 as nat == uh64(p_1') as nat + uh64(p_2') as nat;
-        requires S == S' + [lh64(p_1)];
+        requires S == S' + [lh64(p_1), uh64(p_1)];
 
         requires x_i as nat * seq_interp(y[..n]) + u_i as nat * seq_interp(m[..n]) + seq_interp(A[..n]) == 
             seq_interp(S') + uh64(p_2') as int * power(BASE, n) + uh64(p_1') as int * power(BASE, n);
-        ensures seq_interp(S) + uh64(p_1) as nat * power(BASE, n+1) == 
+        ensures seq_interp(S) == 
             x_i as nat * seq_interp(y) + u_i as nat * seq_interp(m) + seq_interp(A);
     {
         calc == {
-            seq_interp(S) + uh64(p_1) as nat * power(BASE, n+1);
+            seq_interp(S);
+            interp(S, n + 2);
+            interp(S, n + 1) + uh64(p_1) as nat * power(BASE, n+1);
             word_interp(S, n) + interp(S, n) + uh64(p_1) as nat * power(BASE, n+1);
             {
                 prefix_sum_lemma(S, S', n);
@@ -321,6 +323,7 @@ module RSAE3v2 {
             decreases n - j;
             invariant 0 < j <= n;
             invariant |S| == j;
+            invariant S[0] == 0;
             invariant x_i as nat * seq_interp(y[..j]) + u_i as nat * seq_interp(m[..j]) + seq_interp(A[..j]) == 
                 seq_interp(S) + uh64(p_2) as int * power(BASE, j) + uh64(p_1) as int * power(BASE, j);
         {
@@ -342,12 +345,13 @@ module RSAE3v2 {
 
         p_1 := uh64(p_1) as uint64 + uh64(p_2) as uint64;
         A' := A'[j-1 := lh64(p_1)];
-        S := S + [lh64(p_1)];
+        S := S + [lh64(p_1), uh64(p_1)];
 
-        assert seq_interp(S) + uh64(p_1) as nat * power(BASE, n+1) == 
-            x_i as nat * seq_interp(y[..n]) + u_i as nat * seq_interp(m[..n]) + seq_interp(A[..n]) by {
+        assert seq_interp(S) == x_i as nat * seq_interp(y) + u_i as nat * seq_interp(m) + seq_interp(A) by {
             cmm_invarint_aux_lemma_3(m, A, x_i, y, n, p_1, p_1', p_2, p_2', u_i, S, S');
         }
+
+        assert S[0] == 0;
 
         assume false;
 
