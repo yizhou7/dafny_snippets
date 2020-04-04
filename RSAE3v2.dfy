@@ -379,14 +379,47 @@ module RSAE3v2 {
             }
             cong(A_val' * BASE, x_i * y_val + A_val, m_val);
             {
+                cong_mul_lemma_1(A_val' * BASE, x_i * y_val + A_val, BASE_INV, m_val);
+            }
+            cong(A_val' * BASE * BASE_INV, (x_i * y_val + A_val) * BASE_INV, m_val);
+            {
                 mod_mul_lemma(A_val', BASE,  BASE);
                 mod_div_inv_leamma(A_val' * BASE, BASE, BASE_INV, m_val);
-                // assert cong(a * b_inv, a / b, n);
-
+                assert cong(A_val' * BASE * BASE_INV, A_val', m_val);
+                reveal cong();
             }
+            cong(A_val', (x_i * y_val + A_val) * BASE_INV, m_val);
+            {
+                assert A_val + x_i * y_val == x_i * y_val + A_val;
+            }
+            cong(A_val', (A_val + x_i * y_val) * BASE_INV, m_val);
         }
 
+        var temp := seq_interp(x[..i]) * y_val * power(BASE_INV, i);
 
+        calc ==> {
+            cong(A_val, temp, m_val);
+            {
+                cong_add_lemma_1(A_val, temp, x_i * y_val, m_val);
+            }
+            cong(A_val + x_i * y_val, temp + x_i * y_val, m_val);
+            {
+                cong_mul_lemma_1(A_val + x_i * y_val, temp + x_i * y_val, BASE_INV, m_val);
+            }
+            cong((A_val + x_i * y_val) * BASE_INV, (temp + x_i * y_val) * BASE_INV, m_val);
+        }
+
+        assert cong(A_val', (temp + x_i * y_val) * BASE_INV, m_val) by {
+            assert cong(A_val', (A_val + x_i * y_val) * BASE_INV, m_val);
+            assert cong((A_val + x_i * y_val) * BASE_INV, (temp + x_i * y_val) * BASE_INV, m_val);
+            cong_trans_lemma(A_val', (A_val + x_i * y_val) * BASE_INV, (temp + x_i * y_val) * BASE_INV, m_val);
+        }
+
+        calc == {
+            (temp + x_i * y_val) * BASE_INV % m_val;
+            (seq_interp(x[..i]) * y_val * power(BASE_INV, i) + x_i * y_val)
+
+        }
     }
 
 /*
