@@ -388,8 +388,6 @@ module RSAE3 {
     lemma mont_mul_congruent_aux_lemma_1(
         x: seq<uint32>,
         i: nat,
-        x_1: seq<uint32>,
-        x_2: seq<uint32>,
         y_val: int,
         p: int,
         p_inv: int,
@@ -398,13 +396,15 @@ module RSAE3 {
 
         requires m_val != 0;
         requires i + 1 <= |x|;
-        requires x_1 == x[..i] && x_2 == x[..i+1];
         requires cong(BASE * BASE_INV, 1, m_val);
         requires p == power(BASE, i);
         requires p_inv == power(BASE_INV, i);
         
-        ensures (y_val * (seq_interp(x_1) * p_inv + x[i] as int)) % m_val == (y_val * (seq_interp(x_2) * p_inv)) % m_val;
+        ensures (y_val * (seq_interp(x[..i]) * p_inv + x[i] as int)) % m_val == (y_val * (seq_interp(x[..i+1]) * p_inv)) % m_val;
     {
+        ghost var x_1 := x[..i];
+        ghost var x_2 := x[..i+1];
+
         calc ==> {
             cong(BASE * BASE_INV, 1, m_val);
             {
@@ -624,7 +624,7 @@ module RSAE3 {
             }
             (y_val * (seq_interp(x_1) * p_inv + x[i] as int)) % m_val;
             {
-                mont_mul_congruent_aux_lemma_1(x, i, x_1, x_2, y_val, p, p_inv, BASE_INV, m_val);
+                mont_mul_congruent_aux_lemma_1(x, i, y_val, p, p_inv, BASE_INV, m_val);
             }
             (y_val * seq_interp(x_2) * p_inv) % m_val;
         }
