@@ -328,7 +328,7 @@ module RSAE3v2 {
         }
     }
 
-    lemma ghost_follows_lemma(A': seq<uint32>, S: seq<uint32>, p_1: uint64, n: nat)
+    lemma cmm_ghost_lemma(A': seq<uint32>, S: seq<uint32>, p_1: uint64, n: nat)
         requires |S| == n + 2;
         requires A' == S[1..n+1];
         requires S[n + 1] as int == uh64(p_1) as int;
@@ -348,6 +348,45 @@ module RSAE3v2 {
                 uh64(p_1) as nat * power(BASE, n) + seq_interp(A');
             }
         }
+    }
+
+    lemma cmm_congruent_lemma(
+        x: seq<uint32>,
+        n: nat,
+        i: nat,
+        x_i: nat,
+        u_i: nat,
+        A_val: nat,
+        A_val': nat,
+        y_val: nat, 
+        m_val: nat,
+        BASE_INV: nat)
+
+        requires m_val != 0;
+        requires i < |x| == n && x[i] as int == x_i;
+
+        requires cong(BASE * BASE_INV, 1, m_val);
+        requires cong(A_val, seq_interp(x[..i]) * y_val * power(BASE_INV, i), m_val);
+        requires cong(A_val' * BASE, x_i * y_val + u_i * m_val + A_val, m_val);
+    {
+        calc ==> {
+            cong(A_val' * BASE, x_i * y_val + u_i * m_val + A_val, m_val);
+            {
+                mod_mul_lemma(u_i, m_val, m_val);
+                cong_add_lemma_3(x_i * y_val + A_val, u_i * m_val, m_val);
+                assert cong(x_i * y_val + A_val, x_i * y_val + A_val + u_i * m_val, m_val);
+                reveal cong();
+            }
+            cong(A_val' * BASE, x_i * y_val + A_val, m_val);
+            {
+                mod_mul_lemma(A_val', BASE,  BASE);
+                mod_div_inv_leamma(A_val' * BASE, BASE, BASE_INV, m_val);
+                // assert cong(a * b_inv, a / b, n);
+
+            }
+        }
+
+
     }
 
 /*
@@ -388,6 +427,7 @@ module RSAE3v2 {
         requires 0 <= seq_interp(x) < seq_interp(m);
         requires 0 <= seq_interp(y) < seq_interp(m);
         requires seq_interp(A) < 2 * seq_interp(m) - 1;
+        requires cong(BASE * BASE_INV, 1, seq_interp(m));
     
         // ensures cong(seq_interp(A'), seq_interp(x[..i + 1]) * seq_interp(y) * power(BASE_INV, i), seq_interp(m));
     {
@@ -409,8 +449,7 @@ module RSAE3v2 {
         var j := 1;
 
         assert x_i as nat * seq_interp(y[..j]) + u_i as nat * seq_interp(m[..j]) + seq_interp(A[..1]) as nat == 
-            uh64(p_2) as int * power(BASE, j) + uh64(p_1) as int * power(BASE, j) by 
-        {
+            uh64(p_2) as int * power(BASE, j) + uh64(p_1) as int * power(BASE, j) by {
             cmm_invarint_aux_lemma_1(m, A, x_i, y, n, p_1, p_2, u_i);
         }
 
@@ -456,18 +495,17 @@ module RSAE3v2 {
             assert A' == A'[0..n] == S[1..n+1] by {
                 assert forall k :: 0 <= k < n ==> A'[k] == S[k + 1];
             }
-            ghost_follows_lemma(A', S, p_1, n);
+            cmm_ghost_lemma(A', S, p_1, n);
         }
 
         if uh64(p_1) != 0 {
             var _, A'' := seq_sub(A', m);
             A' := A'';
-        } else {
-            assert uh64(p_1) == 0;
-            assert seq_interp(A') == seq_interp(S) / BASE;
-            // assert cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) * power(BASE_INV, i), seq_interp(m));
-
         }
+
+        assert cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) * power(BASE_INV, i), seq_interp(m));
+        assume cong(seq_interp(A') * BASE, x_i as nat * seq_interp(y) + u_i as nat * seq_interp(m) + seq_interp(A), seq_interp(m));
+
     }
 
     method compact_mont_mul(m: seq<uint32>, x: seq<uint32>, y: seq<uint32>, m': uint32, n: nat, ghost R: int, ghost BASE_INV: nat)
