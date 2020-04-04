@@ -394,16 +394,18 @@ module RSAE3v2 {
         while j != n
             decreases n - j;
             invariant 0 < j <= n;
+            invariant |A'| == n;
             invariant |S| == j;
             invariant S[0] == 0;
             invariant x_i as nat * seq_interp(y[..j]) + u_i as nat * seq_interp(m[..j]) + seq_interp(A[..j]) == 
                 seq_interp(S) + uh64(p_2) as int * power(BASE, j) + uh64(p_1) as int * power(BASE, j);
+            invariant forall k :: 0 <= k < j - 1 ==> A'[k] == S[k + 1];
         {
             ghost var S', j', p_1', p_2' := S, j, p_1, p_2;
 
             p_1 := uh64(p_1) as uint64 + x_i as uint64 * y[j] as uint64 + A[j] as uint64;
             p_2 := uh64(p_2) as uint64 + u_i as uint64 * m[j] as uint64 + lh64(p_1) as uint64;
-            // A' := A'[j-1 := lh64(p_2)];
+            A' := A'[j-1 := lh64(p_2)];
 
             S := S + [lh64(p_2)];
             j := j + 1;
@@ -417,12 +419,15 @@ module RSAE3v2 {
         A' := A'[j-1 := lh64(p_1)];
         S := S + [lh64(p_1), uh64(p_1)];
 
+        assert forall k :: 0 <= k < n ==> A'[k] == S[k + 1];
+
         assert seq_interp(S) == x_i as nat * seq_interp(y) + u_i as nat * seq_interp(m) + seq_interp(A) by {
             cmm_invarint_aux_lemma_3(m, A, x_i, y, n, p_1, p_1', p_2, p_2', u_i, S, S');
         }
 
         assert seq_interp(S[1..]) < 2 * seq_interp(m) - 1 by {
             cmm_bounded_lemma(m, A, x_i, u_i, y, S, n + 2);
+            // assert A == S[1..n+1];
         }
 
         if uh64(p_1) != 0 {
