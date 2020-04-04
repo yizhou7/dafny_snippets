@@ -368,6 +368,8 @@ module RSAE3v2 {
         requires cong(BASE * BASE_INV, 1, m_val);
         requires cong(A_val, seq_interp(x[..i]) * y_val * power(BASE_INV, i), m_val);
         requires cong(A_val' * BASE, x_i * y_val + u_i * m_val + A_val, m_val);
+
+        ensures cong(A_val', y_val * seq_interp(x[..i+1]) * power(BASE_INV, i + 1), m_val);
     {
         assert assert_1 : cong(A_val', (A_val + x_i * y_val) * BASE_INV, m_val) by {
             calc ==> {
@@ -414,36 +416,40 @@ module RSAE3v2 {
             }
         }
 
-        assert cong(A_val', (temp + x_i * y_val) * BASE_INV, m_val) by {
+        assert assert_3: cong(A_val', (temp + x_i * y_val) * BASE_INV, m_val) by {
             reveal assert_1;
             reveal assert_2;
             cong_trans_lemma(A_val', (A_val + x_i * y_val) * BASE_INV, (temp + x_i * y_val) * BASE_INV, m_val);
         }
 
+        assert assert_4: cong((temp + x_i * y_val) * BASE_INV, y_val * seq_interp(x[..i+1]) * ps_inv * BASE_INV, m_val) by {
+            calc == {
+                (temp + x_i * y_val) % m_val;
+                {
+                    assert temp == seq_interp(x[..i]) * y_val * ps_inv;
+                }
+                (seq_interp(x[..i]) * y_val * ps_inv + x_i * y_val) % m_val;
+                (y_val * (seq_interp(x[..i]) * ps_inv + x_i)) % m_val;
+                {
+                    // assert (y_val * (seq_interp(x[..i]) * ps_inv + x[i] as int)) % m_val == (y_val * (seq_interp(x[..i+1]) * ps_inv)) % m_val;
+                    mont_mul_congruent_aux_lemma_1(x, i, y_val, power(BASE, i), power(BASE_INV, i), BASE_INV, m_val);
+                }
+                (y_val * seq_interp(x[..i+1]) * ps_inv) % m_val;
+            }
+            reveal cong();
+            assert cong(temp + x_i * y_val, y_val * seq_interp(x[..i+1]) * ps_inv, m_val);
+            cong_mul_lemma_1(temp + x_i * y_val, y_val * seq_interp(x[..i+1]) * ps_inv, BASE_INV, m_val);
+        }
 
-        // assert assert_3: cong(temp + x_i * y_val, y_val * (seq_interp(x[..i+1]) * ps_inv))
-        // calc == {
-        //     (temp + x_i * y_val) % m_val;
-        //     {
-        //         assert temp == seq_interp(x[..i]) * y_val * ps_inv;
-        //     }
-        //     (seq_interp(x[..i]) * y_val * ps_inv + x_i * y_val) % m_val;
-        //     (y_val * (seq_interp(x[..i]) * ps_inv + x_i)) % m_val;
-        //     {
-        //         // assert (y_val * (seq_interp(x[..i]) * ps_inv + x[i] as int)) % m_val == (y_val * (seq_interp(x[..i+1]) * ps_inv)) % m_val;
-        //         mont_mul_congruent_aux_lemma_1(x, i, y_val, power(BASE, i), power(BASE_INV, i), BASE_INV, m_val);
-        //     }
-        //     (y_val * (seq_interp(x[..i+1]) * ps_inv)) % m_val;
-        // }
-
-        // assert cong((temp + x_i * y_val) * BASE_INV, y_val * seq_interp(x[..i+1]) * ps_inv * BASE_INV, m_val) by {
-        //     assert cong(temp + x_i * y_val, y_val * (seq_interp(x[..i+1]) * ps_inv), m_val) by {
-        //         assert (temp + x_i * y_val) % m_val == (y_val * (seq_interp(x[..i+1]) * ps_inv)) % m_val;
-        //         reveal cong();
-        //     }
-        //     cong_mul_lemma_1(temp + x_i * y_val, y_val * seq_interp(x[..i+1]) * ps_inv, BASE_INV, m_val);
-        // }
-
+        assert cong(A_val', y_val * seq_interp(x[..i+1]) * power(BASE_INV, i + 1), m_val) by {
+            reveal assert_3;
+            reveal assert_4;
+            cong_trans_lemma(A_val', (temp + x_i * y_val) * BASE_INV, y_val * seq_interp(x[..i+1]) * ps_inv * BASE_INV, m_val);
+            assert cong(A_val', y_val * seq_interp(x[..i+1]) * ps_inv * BASE_INV, m_val);
+            assert ps_inv * BASE_INV == power(BASE_INV, i + 1) by {
+                power_add_one_lemma(BASE_INV, i);
+            }
+        }
     }
 
 /*
