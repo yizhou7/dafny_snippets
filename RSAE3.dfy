@@ -400,7 +400,7 @@ module RSAE3 {
         requires p == power(BASE, i);
         requires p_inv == power(BASE_INV, i);
         
-        ensures (y_val * (seq_interp(x[..i]) * p_inv + x[i] as int)) % m_val == (y_val * (seq_interp(x[..i+1]) * p_inv)) % m_val;
+        ensures (y_val * (seq_interp(x[..i]) * p_inv + x[i] as int)) % m_val == (y_val * seq_interp(x[..i+1]) * p_inv) % m_val;
     {
         ghost var x_1 := x[..i];
         ghost var x_2 := x[..i+1];
@@ -470,9 +470,13 @@ module RSAE3 {
             }
             (y_val * a) % m_val == (y_val * b) % m_val;
             (y_val * (seq_interp(x_1) * p_inv + x[i] as int)) % m_val == (y_val * (seq_interp(x_2) * p_inv)) % m_val;
+            {
+                assert y_val * (seq_interp(x_2) * p_inv) == y_val * seq_interp(x_2) * p_inv;
+            }
+            (y_val * (seq_interp(x_1) * p_inv + x[i] as int)) % m_val == (y_val * seq_interp(x_2) * p_inv) % m_val;
         }
 
-        assert (y_val * (seq_interp(x_1) * p_inv + x[i] as int)) % m_val == (y_val * (seq_interp(x_2) * p_inv)) % m_val;
+        assert (y_val * (seq_interp(x_1) * p_inv + x[i] as int)) % m_val == (y_val * seq_interp(x_2) * p_inv) % m_val;
     }
 
     lemma mont_mul_congruent_aux_lemma_2(
