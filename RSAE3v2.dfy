@@ -263,17 +263,13 @@ module RSAE3v2 {
     lemma cmm_bounded_lemma(
         m: seq<uint32>,
         A: seq<uint32>, 
-        A': seq<uint32>,
         x_i: uint32,
         u_i: uint32,
-        p_1: uint64,
         y: seq<uint32>,
         S: seq<uint32>,
         n: nat)
 
-        requires |S| == n + 2 != 0;
-        requires A' == S[1..n+1];
-        requires S[n + 1] as int == uh64(p_1) as int;
+        requires |S| == n + 2;
 
         requires S[0] == 0;
         requires seq_interp(m) != 0;
@@ -281,7 +277,7 @@ module RSAE3v2 {
         requires 0 <= seq_interp(y) < seq_interp(m);
         requires seq_interp(A) < 2 * seq_interp(m) - 1;
 
-        ensures uh64(p_1) as nat * power(BASE, n) + seq_interp(A') < 2 * seq_interp(m) - 1;
+        ensures  seq_interp(S[1..]) < 2 * seq_interp(m) - 1;
     {
         ghost var m_val := seq_interp(m);
         ghost var m_bound := m_val - 1;
@@ -329,7 +325,18 @@ module RSAE3v2 {
             } 
             seq_div_base_lemma(S, n + 2);
         }
-        
+    }
+
+    lemma ghost_follows_lemma(
+        A': seq<uint32>,
+        S: seq<uint32>,
+        p_1: uint64,
+        n: nat)
+
+        requires |S| == n + 2;
+        requires A' == S[1..n+1];
+        requires S[n + 1] as int == uh64(p_1) as int;
+    {
         assert uh64(p_1) as nat * power(BASE, n) + seq_interp(A') == seq_interp(S[1..]) by {
             calc == {
                 seq_interp(S[1..]);
@@ -343,9 +350,6 @@ module RSAE3v2 {
                 uh64(p_1) as nat * power(BASE, n) + seq_interp(A');
             }
         }
-
-        assert seq_interp(S[1..]) < 2 * seq_interp(m) - 1;
-        assert uh64(p_1) as nat * power(BASE, n) + seq_interp(A') < 2 * seq_interp(m) - 1;
     }
 
 /*
@@ -440,21 +444,25 @@ module RSAE3v2 {
         A' := A'[j-1 := lh64(p_1)];
         S := S + [lh64(p_1), uh64(p_1)];
 
-        assert forall k :: 0 <= k < n ==> A'[k] == S[k + 1];
-        assert A' == A'[0..n] == S[1..n+1];
+        assert A' == A'[0..n] == S[1..n+1] by {
+            assert forall k :: 0 <= k < n ==> A'[k] == S[k + 1];
+        }
 
         assert seq_interp(S) == x_i as nat * seq_interp(y) + u_i as nat * seq_interp(m) + seq_interp(A) by {
             cmm_invarint_aux_lemma_3(m, A, x_i, y, n, p_1, p_1', p_2, p_2', u_i, S, S');
         }
 
-        // assert seq_interp(S[1..]) < 2 * seq_interp(m) - 1 by {
-        //     cmm_bounded_lemma(m, A, x_i, u_i, y, S, n + 2);
-        //     // assert A' == S[1..n];
-        // }
+        assert uh64(p_1) as nat * power(BASE, n) + seq_interp(A') < 2 * seq_interp(m) - 1 by {
+            cmm_bounded_lemma(m, A, x_i, u_i, y, S, n); 
+        }
 
         if uh64(p_1) != 0 {
             var _, A'' := seq_sub(A', m);
             A' := A'';
+        } else {
+            assert cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) * power(BASE_INV, i), seq_interp(m));
+
+
         }
     }
 
