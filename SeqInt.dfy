@@ -389,6 +389,7 @@ module SeqInt {
         ensures |S| == |A|;
         ensures seq_interp(A) - seq_interp(B) == seq_interp(S) - b as int * postional_weight(|A|);
         ensures seq_interp(A) >= seq_interp(B) ==> b == 0;
+        ensures seq_interp(A) < seq_interp(B) ==> b == 1;
     {
         var temp := new uint32[|A|];
         b, S := 0, temp[..];
@@ -464,20 +465,18 @@ module SeqInt {
         requires |A| == |B| == |S|;
         requires seq_interp(A) - seq_interp(B) == seq_interp(S) - b as int * postional_weight(|A|);
         ensures seq_interp(A) >= seq_interp(B) ==> b == 0;
+        ensures seq_interp(A) < seq_interp(B) ==> b == 1;
     {
         var n := |A|;
 
-        if b != 0 {
+        if seq_interp(A) >= seq_interp(B) && b != 0 {
             assert b == 1;
             assert seq_interp(S) < R(n) by {
                 seq_interp_upper_bound_lemma(S, n);
             }
 
             assert seq_interp(S) - b as int * postional_weight(|A|) < 0;
-
-            if seq_interp(A) >= seq_interp(B) {
-                assert false;
-            }
+            assert false;
         }
     }
 
