@@ -277,8 +277,8 @@ module RSAE3v2 {
         requires 0 <= seq_interp(y) < seq_interp(m);
         requires seq_interp(A) < 2 * seq_interp(m) - 1;
 
-        ensures seq_interp(S) < BASE * (2 * seq_interp(m) - 1);
         ensures seq_interp(S) % BASE == 0 && seq_interp(S) / BASE == seq_interp(S[1..]);
+        ensures seq_interp(S[1..]) < 2 * seq_interp(m) - 1;
     {
         ghost var m_val := seq_interp(m);
         ghost var m_bound := m_val - 1;
@@ -548,7 +548,7 @@ module RSAE3v2 {
             cmm_invarint_aux_lemma_3(m, A, x_i, y, n, p_1, p_1', p_2, p_2', u_i, S, S');
         }
 
-        assert seq_interp(S) < BASE * (2 * seq_interp(m) - 1) 
+        assert seq_interp(S[1..]) < 2 * seq_interp(m) - 1
             && seq_interp(S) % BASE == 0
             && seq_interp(S) / BASE == seq_interp(S[1..]) by {
             cmm_bounded_lemma(m, A, x_i, u_i, y, S, n); 
@@ -562,12 +562,23 @@ module RSAE3v2 {
         }
 
         if uh64(p_1) != 0 {
-            var _, A'' := seq_sub(A', m);
+            assert uh64(p_1) as nat * power(BASE, n) + seq_interp(A') < 2 * seq_interp(m) - 1;
+    
+            var b, A'' := seq_sub(A', m);
+            assert seq_interp(A') - seq_interp(m) == seq_interp(A'') - b as int * postional_weight(n);
+
             A' := A'';
+        } else {
+            assert cong(seq_interp(A') * BASE, x_i as nat * seq_interp(y) + u_i as nat * seq_interp(m) + seq_interp(A), seq_interp(m)) by {
+                assert seq_interp(A') == seq_interp(S[1..]);
+                assert seq_interp(A') * BASE == seq_interp(S);
+                assert seq_interp(A') * BASE == x_i as nat * seq_interp(y) + u_i as nat * seq_interp(m) + seq_interp(A);
+                reveal cong();
+            }
         }
 
-        assert cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) * power(BASE_INV, i), seq_interp(m));
-        assume cong(seq_interp(A') * BASE, x_i as nat * seq_interp(y) + u_i as nat * seq_interp(m) + seq_interp(A), seq_interp(m));
+        // assert cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) * power(BASE_INV, i), seq_interp(m));
+        // assume cong(seq_interp(A') * BASE, x_i as nat * seq_interp(y) + u_i as nat * seq_interp(m) + seq_interp(A), seq_interp(m));
 
     }
 
