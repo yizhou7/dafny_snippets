@@ -452,6 +452,49 @@ module RSAE3v2 {
         }
     }
 
+    lemma cmm_hihger_bit_lemma(
+        S: seq<uint32>,
+        A': seq<uint32>,
+        uh_p_1: nat,
+        m_val: nat,
+        n: nat
+    )
+        requires |A'| == n;
+        requires |S| == n + 2;
+        requires m_val < power(BASE, n);
+        requires uh_p_1 * power(BASE, n) + seq_interp(A')  < 2 * m_val - 1;
+        ensures uh_p_1 <= 1;
+    {
+        if uh_p_1 > 1 {
+            assert uh_p_1 * power(BASE, n) >= 2 * power(BASE, n);
+            assert false; // contradiction 
+        }
+    }
+
+    lemma cmm_subtract_lemma(
+        A': seq<uint32>,
+        A'': seq<uint32>,
+        S: seq<uint32>,
+        m_val: nat,
+        b: uint2,
+        n: nat)
+
+        requires n != 0;
+        requires |A'| == |A''| == n;
+        requires |S| == n + 2;
+
+        requires power(BASE, n) + seq_interp(A') == seq_interp(S[1..]);
+        requires seq_interp(A') - m_val == seq_interp(A'') - b as int * power(BASE, n);
+
+        // ensures cong(seq_interp(A'') * BASE, x_i as nat * seq_interp(y) + u_i as nat * seq_interp(m) + seq_interp(A), seq_interp(m))
+    {
+        if b == 0 {
+            assert seq_interp(A') == seq_interp(A'') + m_val;
+        } else {
+            assert seq_interp(A') + power(BASE, n) == seq_interp(A'') + m_val;
+            assert seq_interp(A'') + m_val == seq_interp(S[1..]);
+        }
+    }
 /*
     uint64_t p_1 = (uint64_t)x_i * y[0] + A[0];
     uint32_t u_i = (uint32_t)p_1 * m';
@@ -562,10 +605,9 @@ module RSAE3v2 {
         }
 
         if uh64(p_1) != 0 {
-            assert uh64(p_1) as nat * power(BASE, n) + seq_interp(A') < 2 * seq_interp(m) - 1;
-    
+            assert |S[1..]| == n + 1;
+            // assert uh64(p_1) as nat * power(BASE, n) + seq_interp(A') < 2 * seq_interp(m) - 1;
             var b, A'' := seq_sub(A', m);
-            assert seq_interp(A') - seq_interp(m) == seq_interp(A'') - b as int * postional_weight(n);
 
             A' := A'';
         } else {
