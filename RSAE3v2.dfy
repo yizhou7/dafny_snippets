@@ -55,7 +55,7 @@ module RSAE3v2 {
         }
     }
 
-    lemma cmm_invarint_aux_lemma_1(
+    lemma cmm_invarint_lemma_1(
         m: seq<uint32>,
         A: seq<uint32>, 
         x_i: uint32,
@@ -101,7 +101,7 @@ module RSAE3v2 {
         }
     }
 
-    lemma cmm_invarint_aux_lemma_2(
+    lemma cmm_invarint_lemma_2(
         m: seq<uint32>,
         A: seq<uint32>, 
         x_i: uint32,
@@ -200,7 +200,7 @@ module RSAE3v2 {
         }
     }
 
-    lemma cmm_invarint_aux_lemma_3(
+    lemma cmm_invarint_lemma_3(
         m: seq<uint32>,
         A: seq<uint32>, 
         x_i: uint32,
@@ -452,15 +452,8 @@ module RSAE3v2 {
         }
     }
 
-    lemma cmm_hihger_bit_lemma(
-        S: seq<uint32>,
-        A': seq<uint32>,
-        uh_p_1: nat,
-        m_val: nat,
-        n: nat
-    )
+    lemma cmm_hihger_bit_lemma(A': seq<uint32>, uh_p_1: nat, m_val: nat, n: nat)
         requires |A'| == n;
-        requires |S| == n + 2;
         requires m_val < power(BASE, n);
         requires uh_p_1 * power(BASE, n) + seq_interp(A')  < 2 * m_val - 1;
         ensures uh_p_1 <= 1;
@@ -471,30 +464,43 @@ module RSAE3v2 {
         }
     }
 
-    lemma cmm_subtract_lemma(
-        A': seq<uint32>,
-        A'': seq<uint32>,
-        S: seq<uint32>,
-        m_val: nat,
-        b: uint2,
-        n: nat)
-
+    lemma cmm_subtract_lemma_1(A': seq<uint32>, S: seq<uint32>, m_val: nat, p_1: uint64, n: nat)
         requires n != 0;
-        requires |A'| == |A''| == n;
+        requires |A'| == n;
         requires |S| == n + 2;
 
-        requires power(BASE, n) + seq_interp(A') == seq_interp(S[1..]);
-        requires seq_interp(A') - m_val == seq_interp(A'') - b as int * power(BASE, n);
+        requires m_val < power(BASE, n);
+        requires uh64(p_1) != 0;
+        requires uh64(p_1) as nat * power(BASE, n) + seq_interp(A') == seq_interp(S[1..]);
+        requires seq_interp(S[1..]) < 2 * m_val - 1;
 
+        ensures power(BASE, n) + seq_interp(A') == seq_interp(S[1..]);
+        ensures seq_interp(A') < m_val;
+        // requires seq_interp(A') - m_val == seq_interp(A'') - b as int * power(BASE, n);
         // ensures cong(seq_interp(A'') * BASE, x_i as nat * seq_interp(y) + u_i as nat * seq_interp(m) + seq_interp(A), seq_interp(m))
     {
-        if b == 0 {
-            assert seq_interp(A') == seq_interp(A'') + m_val;
-        } else {
-            assert seq_interp(A') + power(BASE, n) == seq_interp(A'') + m_val;
-            assert seq_interp(A'') + m_val == seq_interp(S[1..]);
+        assert power(BASE, n) + seq_interp(A') == seq_interp(S[1..]) by {
+            cmm_hihger_bit_lemma(A', uh64(p_1) as nat, m_val, n);
+            assert uh64(p_1) == 1;
+        }
+
+        calc ==> {
+            power(BASE, n) + seq_interp(A') < 2 * m_val - 1;
+            seq_interp(A') < 2 * m_val - 1 - power(BASE, n);
+            {
+                assert m_val < power(BASE, n);
+            }
+            seq_interp(A') < m_val;
         }
     }
+
+        // if b == 0 {
+        //     assert seq_interp(A') == seq_interp(A'') + m_val;
+        // } else {
+        //     assert seq_interp(A') + power(BASE, n) == seq_interp(A'') + m_val;
+        //     assert seq_interp(A'') + m_val == seq_interp(S[1..]);
+        // }
+
 /*
     uint64_t p_1 = (uint64_t)x_i * y[0] + A[0];
     uint32_t u_i = (uint32_t)p_1 * m';
@@ -525,7 +531,7 @@ module RSAE3v2 {
 
         returns (A': seq<uint32>)
 
-        requires seq_interp(m) != 0;
+        requires 0 != seq_interp(m) < power(BASE, n);
         requires |m| == |A| == |y| == |x| == n > 1;
         requires i < n;
         requires cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) * power(BASE_INV, i), seq_interp(m));
@@ -556,7 +562,7 @@ module RSAE3v2 {
 
         assert x_i as nat * seq_interp(y[..j]) + u_i as nat * seq_interp(m[..j]) + seq_interp(A[..1]) as nat == 
             uh64(p_2) as int * power(BASE, j) + uh64(p_1) as int * power(BASE, j) by {
-            cmm_invarint_aux_lemma_1(m, A, x_i, y, n, p_1, p_2, u_i);
+            cmm_invarint_lemma_1(m, A, x_i, y, n, p_1, p_2, u_i);
         }
 
         while j != n
@@ -578,7 +584,7 @@ module RSAE3v2 {
             S := S + [lh64(p_2)];
             j := j + 1;
 
-            cmm_invarint_aux_lemma_2(m, A, x_i, y, n, p_1, p_1', p_2, p_2', u_i, j, S, S');
+            cmm_invarint_lemma_2(m, A, x_i, y, n, p_1, p_1', p_2, p_2', u_i, j, S, S');
         }
 
         ghost var S', p_1', p_2' := S, p_1, p_2;
@@ -588,7 +594,7 @@ module RSAE3v2 {
         S := S + [lh64(p_1), uh64(p_1)];
 
         assert seq_interp(S) == x_i as nat * seq_interp(y) + u_i as nat * seq_interp(m) + seq_interp(A) by {
-            cmm_invarint_aux_lemma_3(m, A, x_i, y, n, p_1, p_1', p_2, p_2', u_i, S, S');
+            cmm_invarint_lemma_3(m, A, x_i, y, n, p_1, p_1', p_2, p_2', u_i, S, S');
         }
 
         assert seq_interp(S[1..]) < 2 * seq_interp(m) - 1
@@ -607,6 +613,10 @@ module RSAE3v2 {
         if uh64(p_1) != 0 {
             assert |S[1..]| == n + 1;
             // assert uh64(p_1) as nat * power(BASE, n) + seq_interp(A') < 2 * seq_interp(m) - 1;
+            assert seq_interp(m) < power(BASE, n);
+
+            cmm_subtract_lemma_1(A', S, seq_interp(m), p_1, n);
+
             var b, A'' := seq_sub(A', m);
 
             A' := A'';
@@ -624,12 +634,11 @@ module RSAE3v2 {
 
     }
 
-    method compact_mont_mul(m: seq<uint32>, x: seq<uint32>, y: seq<uint32>, m': uint32, n: nat, ghost R: int, ghost BASE_INV: nat)
+    method compact_mont_mul(m: seq<uint32>, x: seq<uint32>, y: seq<uint32>, m': uint32, n: nat, ghost BASE_INV: nat)
         returns (A: seq<uint32>)
 
         requires n > 2;
         requires |m| == n && |x| == n && |y| == n;
-        requires R == power(BASE, n);
         requires cong(m' as int * seq_interp(m), -1, BASE);
         requires 0 <= seq_interp(x) < seq_interp(m); 
         requires 0 <= seq_interp(y) < seq_interp(m); 
