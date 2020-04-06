@@ -369,7 +369,7 @@ module RSAE3v2 {
         requires cong(A_val, seq_interp(x[..i]) * y_val * power(BASE_INV, i), m_val);
         requires cong(A_val' * BASE, x_i * y_val + u_i * m_val + A_val, m_val);
 
-        ensures cong(A_val', y_val * seq_interp(x[..i+1]) * power(BASE_INV, i + 1), m_val);
+        ensures cong(A_val', y_val * seq_interp(x[..i+1]) * power(BASE_INV, i+1), m_val);
     {
         assert assert_1 : cong(A_val', (A_val + x_i * y_val) * BASE_INV, m_val) by {
             calc ==> {
@@ -526,7 +526,7 @@ module RSAE3v2 {
         requires seq_interp(m) == m_val;
         requires 0 != m_val < power(BASE, n);
         requires |m| == |A| == |y| == |x| == n > 1;
-        requires i < n;
+        requires i < |x| == n && x[i] == x_i;
         requires cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) * power(BASE_INV, i), m_val);
 
         requires 0 <= seq_interp(x) < m_val;
@@ -635,8 +635,9 @@ module RSAE3v2 {
         }
 
         // assert cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) * power(BASE_INV, i), m_val);
-        // assume cong(seq_interp(A') * BASE, x_i as nat * seq_interp(y) + u_i as nat * m_val + seq_interp(A), m_val);
+        // assert cong(seq_interp(A') * BASE, x_i as nat * seq_interp(y) + u_i as nat * m_val + seq_interp(A), m_val);
 
+        cmm_congruent_lemma(x, n, i, x_i as nat, u_i as nat, seq_interp(A), seq_interp(A'), seq_interp(y), m_val, BASE_INV);
     }
 
     method compact_mont_mul(m: seq<uint32>, x: seq<uint32>, y: seq<uint32>, m': uint32, n: nat, ghost BASE_INV: nat)
