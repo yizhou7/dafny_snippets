@@ -68,6 +68,7 @@ module RSAE3v2 {
         requires |m| == |A| == |y| == n > 1;
         requires p_1 as int == x_i as int * y[0] as int  + A[0] as int;
         requires p_2 as int == u_i as int * m[0] as int + lh64(p_1) as int;
+        requires cong(p_2 as int, 0, BASE);
 
         ensures x_i as nat * seq_interp(y[..1]) + u_i as nat * seq_interp(m[..1]) + seq_interp(A[..1]) as nat == 
             uh64(p_2) as int * power(BASE, 1) + uh64(p_1) as int * power(BASE, 1);
@@ -91,7 +92,12 @@ module RSAE3v2 {
             }
             lh64(p_2) as int + uh64(p_2) as int * BASE + uh64(p_1) as int * BASE;
             {
-                assume lh64(p_2) == 0;
+                assert p_2 as int % BASE == 0 by {
+                    assert cong(p_2 as int, 0, BASE);
+                    reveal cong();
+                }
+                split64_lemma(p_2);
+                assert lh64(p_2) == 0;
             }
             uh64(p_2) as int * BASE + uh64(p_1) as int * BASE;
             {
@@ -535,8 +541,9 @@ module RSAE3v2 {
         requires seq_interp(A) < 2 * m_val - 1;
         requires cong(BASE * BASE_INV, 1, m_val);
     
-        ensures cong(seq_interp(A'), seq_interp(x[..i+1]) * seq_interp(y) * power(BASE_INV, i+1), m_val)
-
+        ensures cong(seq_interp(A'), seq_interp(x[..i+1]) * seq_interp(y) * power(BASE_INV, i+1), m_val);
+        ensures seq_interp(A') < 2 * m_val - 1;
+        ensures |A'| == n;
     {
         single_digit_mul_lemma(x_i, y[0], A[0]);
         var p_1 :uint64 := x_i as uint64 * y[0] as uint64 + A[0] as uint64;
@@ -639,6 +646,8 @@ module RSAE3v2 {
         assert cong(seq_interp(A'), seq_interp(x[..i+1]) * seq_interp(y) * power(BASE_INV, i+1), m_val) by {
             cmm_congruent_lemma(x, n, i, x_i as nat, u_i as nat, seq_interp(A), seq_interp(A'), seq_interp(y), m_val, BASE_INV);
         }
+    
+        assert seq_interp(A') < 2 * m_val - 1;
     }
 
     method compact_mont_mul(m: seq<uint32>, x: seq<uint32>, y: seq<uint32>, m': uint32, n: nat, ghost BASE_INV: nat)
@@ -650,10 +659,10 @@ module RSAE3v2 {
         requires 0 <= seq_interp(x) < seq_interp(m); 
         requires 0 <= seq_interp(y) < seq_interp(m); 
         requires cong(BASE * BASE_INV, 1, seq_interp(m));
+        requires 0 != seq_interp(m) < power(BASE, n);
+
         // ensures seq_interp(A) == (seq_interp(x) * seq_interp(y) * power(BASE_INV, n)) % seq_interp(m);
     {
-        assume false;
-
         A  := zero_seq_int(n);
         assert seq_interp(A) == 0;
 
@@ -661,6 +670,8 @@ module RSAE3v2 {
         ghost var y_val := seq_interp(y);
 
         var i := 0;
+
+        assume cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) * power(BASE_INV, i), seq_interp(m));
         
         while i < n
             decreases n - i;
@@ -668,10 +679,10 @@ module RSAE3v2 {
             invariant |A| == n;
 
             invariant cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) * power(BASE_INV, i), seq_interp(m));
-            invariant seq_interp(A) <= m_val;
+            invariant seq_interp(A) < 2 * m_val - 1;
             invariant cong(BASE * BASE_INV, 1, seq_interp(m));
         {
-            // A := compact_mont_mul_add(m, A, x[i], y, m', n, i, BASE_INV, x);
+            A := compact_mont_mul_add(m, A, x[i], y, m', n, m_val, i, BASE_INV, x);
             i := i + 1;
         }
     }
