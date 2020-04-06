@@ -679,7 +679,10 @@ module RSAE3v2 {
 
         var i := 0;
 
-        assume cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) * power(BASE_INV, i), seq_interp(m));
+        assert cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) * power(BASE_INV, i), seq_interp(m)) by {
+            assert seq_interp(A) == seq_interp(x[..i]) * seq_interp(y) * power(BASE_INV, i);
+            reveal cong();
+        }
         
         while i < n
             decreases n - i;
