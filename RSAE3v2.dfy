@@ -369,7 +369,7 @@ module RSAE3v2 {
         requires cong(A_val, seq_interp(x[..i]) * y_val * power(BASE_INV, i), m_val);
         requires cong(A_val' * BASE, x_i * y_val + u_i * m_val + A_val, m_val);
 
-        ensures cong(A_val', y_val * seq_interp(x[..i+1]) * power(BASE_INV, i+1), m_val);
+        ensures cong(A_val', seq_interp(x[..i+1]) * y_val * power(BASE_INV, i+1), m_val);
     {
         assert assert_1 : cong(A_val', (A_val + x_i * y_val) * BASE_INV, m_val) by {
             calc ==> {
@@ -441,7 +441,7 @@ module RSAE3v2 {
             cong_mul_lemma_1(temp + x_i * y_val, y_val * seq_interp(x[..i+1]) * ps_inv, BASE_INV, m_val);
         }
 
-        assert cong(A_val', y_val * seq_interp(x[..i+1]) * power(BASE_INV, i + 1), m_val) by {
+        assert cong(A_val', seq_interp(x[..i+1]) * y_val * power(BASE_INV, i + 1), m_val) by {
             reveal assert_3;
             reveal assert_4;
             cong_trans_lemma(A_val', (temp + x_i * y_val) * BASE_INV, y_val * seq_interp(x[..i+1]) * ps_inv * BASE_INV, m_val);
@@ -449,6 +449,7 @@ module RSAE3v2 {
             assert ps_inv * BASE_INV == power(BASE_INV, i + 1) by {
                 power_add_one_lemma(BASE_INV, i);
             }
+            assert y_val * seq_interp(x[..i+1]) * power(BASE_INV, i + 1) == seq_interp(x[..i+1]) * y_val * power(BASE_INV, i + 1);
         }
     }
 
@@ -534,7 +535,8 @@ module RSAE3v2 {
         requires seq_interp(A) < 2 * m_val - 1;
         requires cong(BASE * BASE_INV, 1, m_val);
     
-        // ensures cong(seq_interp(A'), seq_interp(x[..i + 1]) * seq_interp(y) * power(BASE_INV, i), m_val);
+        ensures cong(seq_interp(A'), seq_interp(x[..i+1]) * seq_interp(y) * power(BASE_INV, i+1), m_val)
+
     {
         single_digit_mul_lemma(x_i, y[0], A[0]);
         var p_1 :uint64 := x_i as uint64 * y[0] as uint64 + A[0] as uint64;
@@ -634,10 +636,9 @@ module RSAE3v2 {
             }
         }
 
-        // assert cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) * power(BASE_INV, i), m_val);
-        // assert cong(seq_interp(A') * BASE, x_i as nat * seq_interp(y) + u_i as nat * m_val + seq_interp(A), m_val);
-
-        cmm_congruent_lemma(x, n, i, x_i as nat, u_i as nat, seq_interp(A), seq_interp(A'), seq_interp(y), m_val, BASE_INV);
+        assert cong(seq_interp(A'), seq_interp(x[..i+1]) * seq_interp(y) * power(BASE_INV, i+1), m_val) by {
+            cmm_congruent_lemma(x, n, i, x_i as nat, u_i as nat, seq_interp(A), seq_interp(A'), seq_interp(y), m_val, BASE_INV);
+        }
     }
 
     method compact_mont_mul(m: seq<uint32>, x: seq<uint32>, y: seq<uint32>, m': uint32, n: nat, ghost BASE_INV: nat)
