@@ -239,8 +239,16 @@ module RSAE3v2 {
             }
             S[n] as nat * power(BASE, n) + seq_interp(S') + uh64(p_1) as nat * power(BASE, n+1);
             lh64(p_1) as nat * power(BASE, n) + seq_interp(S') + uh64(p_1) as nat * power(BASE, n+1);
+            lh64(p_1) as nat * power(BASE, n) + uh64(p_1) as nat * power(BASE, n+1) + seq_interp(S') ;
             {
-                assume false;
+                assert power(BASE, n+1) == BASE * power(BASE, n) by {
+                    power_add_one_lemma(BASE, n);
+                }
+            }
+            lh64(p_1) as nat * power(BASE, n) + uh64(p_1) as nat * BASE * power(BASE, n) + seq_interp(S') ;
+            {
+                assert lh64(p_1) as nat * power(BASE, n) + uh64(p_1) as nat * BASE * power(BASE, n) ==
+                    (lh64(p_1) as nat + uh64(p_1) as nat * BASE) * power(BASE, n);
             }
             (lh64(p_1) as nat + uh64(p_1) as nat * BASE) * power(BASE, n) + seq_interp(S');
             {
