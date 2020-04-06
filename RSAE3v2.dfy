@@ -550,6 +550,7 @@ module RSAE3v2 {
         requires |m| == |A| == |y| == |x| == n > 1;
         requires i < |x| == n && x[i] == x_i;
         requires cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) * power(BASE_INV, i), m_val);
+        requires cong(m' as nat * m[0] as nat, -1, BASE);
 
         requires 0 <= seq_interp(x) < m_val;
         requires 0 <= seq_interp(y) < m_val;
@@ -568,7 +569,6 @@ module RSAE3v2 {
         var p_2 :uint64 := u_i as uint64 * m[0] as uint64 + lh64(p_1) as uint64;
 
         assert cong(p_2 as int, 0, BASE) by {
-            assume cong(m' as nat * m[0] as nat, -1, BASE);
             cmm_divisible_lemma(p_1 as nat, p_2 as nat, x_i as nat, y[0] as nat, A[0] as nat, u_i as nat, m' as nat, m[0] as nat);
         }
 
@@ -670,11 +670,12 @@ module RSAE3v2 {
 
         requires n > 2;
         requires |m| == n && |x| == n && |y| == n;
-        requires cong(m' as int * seq_interp(m), -1, BASE);
         requires 0 <= seq_interp(x) < seq_interp(m); 
         requires 0 <= seq_interp(y) < seq_interp(m); 
         requires cong(BASE * BASE_INV, 1, seq_interp(m));
         requires 0 != seq_interp(m) < power(BASE, n);
+        requires cong(m' as nat * m[0] as nat, -1, BASE);
+        // requires cong(m' as int * seq_interp(m), -1, BASE); // TODO: figure out which one to use
 
         ensures seq_interp(A) == (seq_interp(x) * seq_interp(y) * power(BASE_INV, n)) % seq_interp(m);
     {
