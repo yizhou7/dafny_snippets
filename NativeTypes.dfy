@@ -90,11 +90,11 @@ module NativeTypes {
  	 	ensures uh64(x) as int * (UINT32_MAX as int + 1) + lh64(x) as int == x as int;
  	 	ensures lh64(x) as int == x as int % (UINT32_MAX as int + 1);
 
- 	function method reinterp64(a: int64) : uint64
- 	  ensures a >= 0 ==> (
- 	 	&& a as int == reinterp64(a) as int
- 	 	&& reinterp64(a) as int <= UINT32_MAX as int); // this caluse should be provable
- 	  ensures a < 0 ==> (
- 	 	&& reinterp64(a) as int - a as int == UINT64_MAX as int + 1
-	 	&& uh64(reinterp64(a)) as int == UINT32_MAX as int + 1); // this caluse should be provable
+ 	function method reinterp64(a: int64) : (b: uint64)
+		ensures a >= 0 ==> (
+			&& a as int == b as int
+			&& b as int <= UINT32_MAX as int); // this should be provable
+		ensures a < 0 ==> (
+			&& reinterp64(a) as int - a as int == UINT64_MAX as int + 1
+			&& uh64(b) as int == UINT32_MAX as int + 1); // this should be provable
 }
