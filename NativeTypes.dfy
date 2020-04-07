@@ -89,4 +89,7 @@ module NativeTypes {
     lemma split64_lemma(x: uint64)
         ensures uh64(x) as int * (UINT32_MAX as int + 1) + lh64(x) as int == x as int;
         ensures lh64(x) as int == x as int % (UINT32_MAX as int + 1);
+
+    function method reinterpret_cast(a: int64) : uint64
+      ensures a >= 0 ==> a as int == reinterpret_cast(a) as int <= UINT32_MAX as int;
 }
