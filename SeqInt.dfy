@@ -404,7 +404,7 @@ module SeqInt {
             assert interp(A, i_old) - interp(B, i_old) == interp(S, i_old) - b_old as int * postional_weight(i_old);
 
             var diff: int64 := A[i] as int64 - B[i] as int64 - b as int64;
-            var casted: uint64 := reinterpret_cast(diff);
+            var casted: uint64 := reinterp64(diff);
             var masked := lh64(casted);
 
             if diff >= 0 {
@@ -416,8 +416,6 @@ module SeqInt {
                 split64_lemma(casted);
 
                 ghost var upper := uh64(casted) as int;
-                assume upper == UINT32_MAX as int;
-
                 assert masked as int + upper * BASE == casted as int;
                 assert masked as int == UINT64_MAX as int + 1 - upper * BASE + diff as int;
                 assert masked as int == diff as int + BASE as int;
