@@ -411,10 +411,17 @@ module SeqInt {
                 assert casted as int <= UINT32_MAX as int;
                 split64_lemma(casted);
                 assert masked as int == casted as int == diff as int;
-            }
+            } else {
+                assert casted as int - diff as int == UINT64_MAX as int + 1;
+                split64_lemma(casted);
 
-            // var masked := and64(casted, UINT32_MAX as uint64) as uint32;
-            assume diff < 0 ==> masked as int == diff as int + BASE as int;
+                ghost var upper := uh64(casted) as int;
+                assume upper == UINT32_MAX as int;
+
+                assert masked as int + upper * BASE == casted as int;
+                assert masked as int == UINT64_MAX as int + 1 - upper * BASE + diff as int;
+                assert masked as int == diff as int + BASE as int;
+            }
 
             ghost var S_old := S;
             ghost var prefix_sum := interp(S_old, i);

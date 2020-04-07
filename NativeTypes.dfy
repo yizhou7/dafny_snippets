@@ -91,5 +91,10 @@ module NativeTypes {
         ensures lh64(x) as int == x as int % (UINT32_MAX as int + 1);
 
     function method reinterpret_cast(a: int64) : uint64
-      ensures a >= 0 ==> a as int == reinterpret_cast(a) as int <= UINT32_MAX as int;
+      ensures a >= 0 ==> (
+        && a as int == reinterpret_cast(a) as int
+        && reinterpret_cast(a) as int <= UINT32_MAX as int);
+      ensures a < 0 ==> (
+        && reinterpret_cast(a) as int - a as int == UINT64_MAX as int + 1
+        && reinterpret_cast(a) as int > UINT32_MAX as int);
 }
