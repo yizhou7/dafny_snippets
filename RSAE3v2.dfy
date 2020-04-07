@@ -163,7 +163,13 @@ module RSAE3v2 {
             (uh64(p_2') as nat + u_i as nat * m[j-1] as nat + lh64(p_1) as nat) * power(BASE, j-1) + seq_interp(S') + uh64(p_1) as int * power(BASE, j);
             (uh64(p_2') as nat + u_i as nat * m[j-1] as nat) * power(BASE, j-1) + lh64(p_1) as nat * power(BASE, j-1) + seq_interp(S') + uh64(p_1) as int * power(BASE, j);
             {
-                assume false;
+                power_add_one_lemma(BASE, j - 1);
+                assert uh64(p_1) as int * power(BASE, j) == uh64(p_1) as int * BASE * power(BASE, j - 1);
+            }
+            (uh64(p_2') as nat + u_i as nat * m[j-1] as nat) * power(BASE, j-1) + lh64(p_1) as nat * power(BASE, j-1) + seq_interp(S') +  uh64(p_1) as int * BASE * power(BASE, j - 1);
+            (uh64(p_2') as nat + u_i as nat * m[j-1] as nat) * power(BASE, j-1) + seq_interp(S') + lh64(p_1) as nat * power(BASE, j-1) +  uh64(p_1) as int * BASE * power(BASE, j - 1);
+            {
+                assert lh64(p_1) as nat * power(BASE, j-1) +  uh64(p_1) as int * BASE * power(BASE, j - 1) == (lh64(p_1) as nat +  uh64(p_1) as int * BASE) * power(BASE, j - 1);
             }
             (uh64(p_2') as nat + u_i as nat * m[j-1] as nat) * power(BASE, j-1) + seq_interp(S')  + (lh64(p_1) as nat + uh64(p_1) as nat * BASE)* power(BASE, j-1);
             {
@@ -640,7 +646,10 @@ module RSAE3v2 {
                     }
                     cong(seq_interp(A'') + m_val, seq_interp(S[1..]), m_val);
                     {
-                        assume false;
+                        assert cong(seq_interp(A''), seq_interp(A'') + m_val, m_val) by {
+                            cong_add_lemma_3(seq_interp(A''), m_val, m_val);
+                        }
+                        cong_trans_lemma(seq_interp(A''), seq_interp(A'') + m_val, seq_interp(S[1..]), m_val);
                     }
                     cong(seq_interp(A''), seq_interp(S[1..]), m_val);
                     {
