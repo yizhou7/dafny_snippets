@@ -96,5 +96,5 @@ module NativeTypes {
 			&& b as int <= UINT32_MAX as int); // this should be provable
 		ensures a < 0 ==> (
 			&& reinterp64(a) as int - a as int == UINT64_MAX as int + 1
-			&& uh64(b) as int == UINT32_MAX as int + 1); // this should be provable
+			&& uh64(b) == UINT32_MAX); // this should be provable
 }
