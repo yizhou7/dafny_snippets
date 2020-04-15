@@ -9,8 +9,6 @@ module SeqInt {
 
     const BASE :int := UINT32_MAX as int + 1;
 
-    function method reinterpret_cast(a: int64) : uint64
-
     // |A[..n]| == n, interp A[..n] as an int 
     function interp(A: seq<uint32>, n: nat) : nat
         decreases n;
@@ -406,10 +404,22 @@ module SeqInt {
             assert interp(A, i_old) - interp(B, i_old) == interp(S, i_old) - b_old as int * postional_weight(i_old);
 
             var diff: int64 := A[i] as int64 - B[i] as int64 - b as int64;
-            var masked := and64(reinterpret_cast(diff), UINT32_MAX as uint64) as uint32;
+            var casted: uint64 := reinterp64(diff);
+            var masked := lh64(casted);
 
-            assume diff < 0 ==> masked as int == diff as int + BASE as int;
-            assume diff >= 0 ==> masked as int == diff as int;
+            if diff >= 0 {
+                assert casted as int <= UINT32_MAX as int;
+                split64_lemma(casted);
+                assert masked as int == casted as int == diff as int;
+            } else {
+                assert casted as int - diff as int == UINT64_MAX as int + 1;
+                split64_lemma(casted);
+
+                ghost var upper := uh64(casted) as int;
+                assert masked as int + upper * BASE == casted as int;
+                assert masked as int == UINT64_MAX as int + 1 - upper * BASE + diff as int;
+                assert masked as int == diff as int + BASE as int;
+            }
 
             ghost var S_old := S;
             ghost var prefix_sum := interp(S_old, i);

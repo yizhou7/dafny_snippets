@@ -1,6 +1,6 @@
 include "Powers.dfy"
 
-module MONTGOMERY {
+module RSAE3v0 {
     import opened Powers
 
     predicate cong_def(a: int, b: int, n: int)

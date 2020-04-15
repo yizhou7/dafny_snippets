@@ -2,14 +2,14 @@ include "NativeTypes.dfy"
 include "Powers.dfy"
 include "Congruences.dfy"
 include "SeqInt.dfy"
-include "RSAE3.dfy"
+include "RSAE3v1.dfy"
 
 module RSAE3v2 {
     import opened NativeTypes
     import opened Powers
     import opened Congruences
     import opened SeqInt
-    import opened RSAE3
+    import opened RSAE3v1
 
     lemma cmm_divisible_lemma(p_1: nat, p_2: nat, x_i: nat, y_0: nat, a_0: nat, u_i: nat, m': nat, m_0: nat)
         requires cong(m' * m_0, -1, BASE);

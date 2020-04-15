@@ -3,7 +3,7 @@ include "Powers.dfy"
 include "Congruences.dfy"
 include "SeqInt.dfy"
 
-module RSAE3 {
+module RSAE3v1 {
     import opened NativeTypes
     import opened Powers
     import opened Congruences
