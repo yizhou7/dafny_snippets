@@ -1,0 +1,9 @@
+clang version 10.0.0 
+Target: x86_64-unknown-linux-gnu
+Thread model: posix
+InstalledDir: /home/yizhou7/Desktop/research/open_titan/clang+llvm-10.0.0-x86_64-linux-gnu-ubuntu-18.04/bin/.
+
+./clang --target=riscv64  -S ../../veri_titan/c_impl/rsa_e_3.c -O0 -o rsa_e_3.o0.s
+./clang --target=riscv64  -S ../../veri_titan/c_impl/rsa_e_3.c -O1 -o rsa_e_3.o1.s
+./clang --target=riscv64  -S ../../veri_titan/c_impl/rsa_e_3.c -O2 -o rsa_e_3.o2.s
+./clang --target=riscv64  -S ../../veri_titan/c_impl/rsa_e_3.c -O3 -o rsa_e_3.o3.s

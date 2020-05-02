@@ -1,0 +1,18 @@
+{
+  "id": "d7429fc7052efb2a8d3d4490008083f48d76d640",
+  "repo": "platform/system/core.git",
+  "revision": "android-4.2.2_r1",
+  "path": "include/mincrypt/rsa.h"
+}
+{
+  "id": "af63e8775e71f42639ecc907b9db79e7d2199b20",
+  "repo": "platform/system/core.git",
+  "revision": "android-4.2.2_r1",
+  "path": "include/mincrypt/sha.h"
+}
+{
+  "id": "c8c02c41ed91cacde333d2107cee3238466ebd11",
+  "repo": "platform/system/core.git",
+  "revision": "android-4.2.2_r1",
+  "path": "libmincrypt/rsa_e_3.c"
+}
