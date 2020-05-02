@@ -1,0 +1,6 @@
+{
+  "id": "c8c02c41ed91cacde333d2107cee3238466ebd11",
+  "repo": "platform/system/core.git",
+  "revision": "android-4.2.2_r1",
+  "path": "libmincrypt/rsa_e_3.c"
+}
