@@ -1,0 +1,6 @@
+{
+  "id": "b8f8fef4f486a0e876857381aae9a5a505789b38",
+  "repo": "chromiumos/platform/ec",
+  "revision": "refs/heads/cr50_stab",
+  "path": "chip/g/dcrypto/dcrypto_bn.c"
+}
