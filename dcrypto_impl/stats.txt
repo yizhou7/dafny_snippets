@@ -1,0 +1,3 @@
+file_name: dcrypto_bn.c
+totoal_ins_count: 968
+uique_opcode_count: 36
