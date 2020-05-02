@@ -537,7 +537,7 @@ module RSAE3v2 {
         subM(key, A);
     }
 */
-    method compact_mont_mul_add(
+    method montMulAdd(
         m: seq<uint32>,
         A: seq<uint32>, 
         x_i: uint32,
@@ -674,7 +674,7 @@ module RSAE3v2 {
         assert seq_interp(A') < 2 * m_val - 1;
     }
 
-    method compact_mont_mul(m: seq<uint32>, x: seq<uint32>, y: seq<uint32>, m': uint32, n: nat, ghost BASE_INV: nat)
+    method montMul(m: seq<uint32>, x: seq<uint32>, y: seq<uint32>, m': uint32, n: nat, ghost BASE_INV: nat)
         returns (A: seq<uint32>)
 
         requires n > 2;
@@ -686,7 +686,9 @@ module RSAE3v2 {
         requires cong(m' as nat * m[0] as nat, -1, BASE);
         // requires cong(m' as int * seq_interp(m), -1, BASE); // TODO: figure out which one to use
 
-        ensures seq_interp(A) == (seq_interp(x) * seq_interp(y) * power(BASE_INV, n)) % seq_interp(m);
+        // ensures seq_interp(A) == (seq_interp(x) * seq_interp(y) * power(BASE_INV, n)) % seq_interp(m);
+        ensures seq_interp(A) < 2 * seq_interp(m) - 1;
+        ensures cong(seq_interp(A), seq_interp(x) * seq_interp(y) * power(BASE_INV, n), seq_interp(m));
     {
         A  := zero_seq_int(n);
         assert seq_interp(A) == 0;
@@ -710,7 +712,7 @@ module RSAE3v2 {
             invariant seq_interp(A) < 2 * m_val - 1;
             invariant cong(BASE * BASE_INV, 1, seq_interp(m));
         {
-            A := compact_mont_mul_add(m, A, x[i], y, m', n, m_val, i, BASE_INV, x);
+            A := montMulAdd(m, A, x[i], y, m', n, m_val, i, BASE_INV, x);
             i := i + 1;
         }
 
@@ -719,8 +721,11 @@ module RSAE3v2 {
         }
 
         assert cong(seq_interp(A), seq_interp(x) * seq_interp(y) * power(BASE_INV, n), seq_interp(m));
+    }
 
-        // TODO: refactor the proofs there?
+/*
+    {
+       // TODO: refactor the proofs there?
         var geq := seq_geq(A, m);
 
         if geq {
@@ -760,4 +765,39 @@ module RSAE3v2 {
             cong_residual_lemma(temp, seq_interp(A), seq_interp(m));
         }
     }
+*/
+
+    // method modpow3() 
+
+    // static void modpow3(const RSAPublicKey *key, uint8_t* inout) {
+    //     uint32_t a[RSANUMWORDS];
+    //     uint32_t aR[RSANUMWORDS];
+    //     uint32_t aaR[RSANUMWORDS];
+    //     uint32_t *aaa = aR;  /* Re-use location. */
+    //     int i;
+    //     /* Convert from big endian byte array to little endian word array. */
+    //     for (i = 0; i < key->len; ++i) {
+    //         uint32_t tmp =
+    //             (inout[((key->len - 1 - i) * 4) + 0] << 24) |
+    //             (inout[((key->len - 1 - i) * 4) + 1] << 16) |
+    //             (inout[((key->len - 1 - i) * 4) + 2] << 8) |
+    //             (inout[((key->len - 1 - i) * 4) + 3] << 0);
+    //         a[i] = tmp;
+    //     }
+    //     montMul(key, aR, a, key->rr);  /* aR = a * RR / R mod M   */
+    //     montMul(key, aaR, aR, aR);     /* aaR = aR * aR / R mod M */
+    //     montMul(key, aaa, aaR, a);     /* aaa = aaR * a / R mod M */
+    //     /* Make sure aaa < mod; aaa is at most 1x mod too large. */
+    //     if (geM(key, aaa)) {
+    //         subM(key, aaa);
+    //     }
+    //     /* Convert to bigendian byte array */
+    //     for (i = key->len - 1; i >= 0; --i) {
+    //         uint32_t tmp = aaa[i];
+    //         *inout++ = tmp >> 24;
+    //         *inout++ = tmp >> 16;
+    //         *inout++ = tmp >> 8;
+    //         *inout++ = tmp >> 0;
+    //     }
+    // }
 }
