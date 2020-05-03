@@ -657,6 +657,14 @@ module RSAE3v2 {
             cmm_ghost_lemma(A', S, p_1, n);
         }
 
+        if uh64(p_1) == 0 {
+            assert |S| == n + 2;
+            // assert seq_interp(A') == seq_interp(S[1..]) == 
+            // (x_i as nat * seq_interp(y) + u_i as nat * m_val + seq_interp(A)) / BASE;
+        }
+
+
+
         assume false;
 
         calc ==> {
@@ -701,8 +709,6 @@ module RSAE3v2 {
                 }
             }
         } else {
-            assume false;
-
             assert cong(seq_interp(A') * BASE, x_i as nat * seq_interp(y) + u_i as nat * m_val + seq_interp(A), m_val) by {
                 assert seq_interp(A') == seq_interp(S[1..]);
                 assert seq_interp(A') * BASE == seq_interp(S);
