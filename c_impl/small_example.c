@@ -13,6 +13,15 @@ typedef struct RSAPublicKey {
     int exponent;             /* 3 or 65537 */
 } RSAPublicKey;
 
+void dump_uint32_array(const char* name, const uint32_t *a, int len)
+{
+    printf("%s [", name);
+    for (int i = 0; i < len; i ++) {
+        printf("%x, ", a[i]);
+    }
+    printf("]\n");
+}
+
 /* a[] -= mod */
 static void subM(const RSAPublicKey *key, uint32_t *a) {
     int64_t A = 0;
@@ -59,6 +68,12 @@ void montMulAdd(const RSAPublicKey *key,
         printf("mont subtraction\n");
         subM(key, c);
     }
+
+    if (c[0] > key->n[0]) {
+        printf("result larger than key.n\n");
+    } else {
+        printf("result not larger than key.n\n");
+    }
 }
 
 /* montgomery c[] = a[] * b[] / R % mod */
@@ -66,6 +81,9 @@ void montMul(const RSAPublicKey *key,
                     uint32_t* c,
                     const uint32_t* a,
                     const uint32_t* b) {
+    dump_uint32_array("input a", a, 1);
+    dump_uint32_array("input b", b, 1);
+
     int i;
     for (i = 0; i < key->len; ++i) {
         c[i] = 0;
@@ -73,6 +91,7 @@ void montMul(const RSAPublicKey *key,
     for (i = 0; i < key->len; ++i) {
         montMulAdd(key, c, a[i], b);
     }
+    dump_uint32_array("output c", c, 1);
 }
 
 /* In-place public exponentiation.
@@ -94,15 +113,6 @@ void modpow3(const RSAPublicKey *key, uint32_t* a) {
     }
 
     a[0] = aaa[0];
-}
-
-void dump_uint32_array(const uint32_t *a, int len)
-{
-    printf("[");
-    for (int i = 0; i < len; i ++) {
-        printf("%x, ", a[i]);
-    }
-    printf("]\n");
 }
 
 void mont_mul_test() {
@@ -127,7 +137,7 @@ void mont_mul_test() {
     // c == (a * b * R_inv) mod key.n
     // c < 2 * key.n
 
-    dump_uint32_array(c, 1);
+    dump_uint32_array("c", c, 1);
 }
 
 void mont_exp_test() {
@@ -145,9 +155,7 @@ void mont_exp_test() {
     uint32_t a[RSANUMWORDS] = {0x933d77e9};
     modpow3(&key, a);
 
-    // c == (a * b * R_inv) mod key.n
-    // c < 2 * key.n
-    dump_uint32_array(a, 1);
+    dump_uint32_array("a", a, 1);
 }
 
 int main() {
