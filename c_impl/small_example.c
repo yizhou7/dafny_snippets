@@ -97,7 +97,7 @@ void dump_uint32_array(const uint32_t *a, int len)
 {
     printf("[");
     for (int i = 0; i < len; i ++) {
-        printf("%u, ", a[i]);
+        printf("%x, ", a[i]);
     }
     printf("]\n");
 }
@@ -109,21 +109,15 @@ int main() {
 
     printf("number of words: %lu\n", RSANUMWORDS);
 
-    // uint32_t n0inv;           /* -1 / n[0] mod 2^32 */
-    // uint32_t n[RSA_TEST_NUM_WORDS];  /* modulus as little endian array */
-    // uint32_t rr[RSA_TEST_NUM_WORDS]; /* R^2 as little endian array */
+    key.n0inv = 0x878b64b9; // key.n0inv * key.n[0] == -1 mod R
 
-    key.n0inv = 0x78749b47;
     key.n[0] = 0x755a9e77;
-
-    // key.n[2] = 1;
-    // key.n[3] = 1;
-    // key.n[4] = 1;
+    // R_inv = 0x3e22aff1 // R_inv * R == 1 mod key.n
 
     uint32_t c[RSANUMWORDS];
 
-    uint32_t a[RSANUMWORDS] = {1};
-    uint32_t b[RSANUMWORDS] = {1};
+    uint32_t a[RSANUMWORDS] = {0x23f089ea};
+    uint32_t b[RSANUMWORDS] = {0xd32469e0};
 
     montMul(&key, c, a, b);
 
