@@ -55,6 +55,7 @@ void montMulAdd(const RSAPublicKey *key,
     c[i - 1] = (uint32_t)A;
 
     if (A >> 32) {
+        printf("subtraction!\n");
         subM(key, c);
     }
 }
@@ -109,15 +110,14 @@ int main() {
 
     printf("number of words: %lu\n", RSANUMWORDS);
 
-    key.n0inv = 0x878b64b9; // key.n0inv * key.n[0] == -1 mod R
-
+    key.n0inv = 0x878b64b9; // key.n0inv * key.n[0] == -1 mod b
     key.n[0] = 0x755a9e77;
     // R_inv = 0x3e22aff1 // R_inv * R == 1 mod key.n
 
     uint32_t c[RSANUMWORDS];
 
-    uint32_t a[RSANUMWORDS] = {0x23f089ea};
-    uint32_t b[RSANUMWORDS] = {0xd32469e0};
+    uint32_t a[RSANUMWORDS] = {1933408233};
+    uint32_t b[RSANUMWORDS] = {1536005383};
 
     montMul(&key, c, a, b);
 
