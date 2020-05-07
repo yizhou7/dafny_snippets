@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <assert.h>
 
 #define RSANUMBYTES 4           /* 32 bit key length */
 #define RSANUMWORDS (RSANUMBYTES / sizeof(uint32_t))
@@ -103,25 +104,33 @@ void dump_uint32_array(const uint32_t *a, int len)
     printf("]\n");
 }
 
-int main() {
+void mont_mul_upper_bound() {
     RSAPublicKey key;
     key.len = RSANUMWORDS;
     key.exponent = 3;
 
     printf("number of words: %lu\n", RSANUMWORDS);
 
-    key.n0inv = 0x878b64b9; // key.n0inv * key.n[0] == -1 mod b
     key.n[0] = 0x755a9e77;
+    key.n0inv = 0x878b64b9; // key.n0inv * key.n[0] == -1 mod b
     // R_inv = 0x3e22aff1 // R_inv * R == 1 mod key.n
 
     uint32_t c[RSANUMWORDS];
-
-    uint32_t a[RSANUMWORDS] = {1933408233};
-    uint32_t b[RSANUMWORDS] = {1536005383};
+    uint32_t a[RSANUMWORDS] = {0x733d77e9}; // a < key.n
+    uint32_t b[RSANUMWORDS] = {0x5b8d9507}; // b < key.n
 
     montMul(&key, c, a, b);
+    assert(c[0] == 0x87740fa7);
+
+    // c == (a * b * R_inv) mod key.n
+    // c < 2 * key.n
 
     dump_uint32_array(c, 1);
+}
+
+
+int main() {
+    mont_mul_upper_bound();
     // modpow3(key, buf);
-    return 1;
+    return 0;
 }
