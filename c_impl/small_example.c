@@ -9,7 +9,7 @@ typedef struct RSAPublicKey {
     int len;                  /* Length of n[] in number of uint32_t */
     uint32_t n0inv;           /* -1 / n[0] mod 2^32 */
     uint32_t n[RSANUMWORDS];  /* modulus as little endian array */
-    // uint32_t rr[RSANUMWORDS]; /* R^2 as little endian array */
+    uint32_t rr[RSANUMWORDS]; /* R^2 as little endian array */
     int exponent;             /* 3 or 65537 */
 } RSAPublicKey;
 
@@ -56,7 +56,7 @@ void montMulAdd(const RSAPublicKey *key,
     c[i - 1] = (uint32_t)A;
 
     if (A >> 32) {
-        printf("subtraction!\n");
+        printf("mont subtraction\n");
         subM(key, c);
     }
 }
@@ -75,25 +75,26 @@ void montMul(const RSAPublicKey *key,
     }
 }
 
-// /* In-place public exponentiation.
-// ** Input and output big-endian byte array in inout.
-// */
-// void modpow3(const RSAPublicKey *key, uint8_t* inout) {
-//     uint32_t a[RSANUMWORDS];
-//     uint32_t aR[RSANUMWORDS];
-//     uint32_t aaR[RSANUMWORDS];
-//     uint32_t *aaa = aR;  /* Re-use location. */
-//     int i;
+/* In-place public exponentiation.
+** Input and output big-endian byte array in inout.
+*/
+void modpow3(const RSAPublicKey *key, uint32_t* a) {
+    uint32_t aR[RSANUMWORDS];
+    uint32_t aaR[RSANUMWORDS];
+    uint32_t *aaa = aR;  /* Re-use location. */
 
-//     montMul(key, aR, a, key->rr);  /* aR = a * RR / R mod M   */
-//     montMul(key, aaR, aR, aR);     /* aaR = aR * aR / R mod M */
-//     montMul(key, aaa, aaR, a);     /* aaa = aaR * a / R mod M */
+    montMul(key, aR, a, key->rr);  /* aR = a * RR / R mod M   */
+    montMul(key, aaR, aR, aR);     /* aaR = aR * aR / R mod M */
+    montMul(key, aaa, aaR, a);     /* aaa = aaR * a / R mod M */
 
-//     /* Make sure aaa < mod; aaa is at most 1x mod too large. */
-//     if (geM(key, aaa)) {
-//         subM(key, aaa);
-//     }
-// }
+    /* Make sure aaa < mod; aaa is at most 1x mod too large. */
+    if (geM(key, aaa)) {
+        subM(key, aaa);
+        printf("post subtraction\n");
+    }
+
+    a[0] = aaa[0];
+}
 
 void dump_uint32_array(const uint32_t *a, int len)
 {
@@ -104,7 +105,7 @@ void dump_uint32_array(const uint32_t *a, int len)
     printf("]\n");
 }
 
-void mont_mul_upper_bound() {
+void mont_mul_test() {
     RSAPublicKey key;
     key.len = RSANUMWORDS;
     key.exponent = 3;
@@ -112,8 +113,8 @@ void mont_mul_upper_bound() {
     printf("number of words: %lu\n", RSANUMWORDS);
 
     key.n[0] = 0x755a9e77;
-    key.n0inv = 0x878b64b9; // key.n0inv * key.n[0] == -1 mod b
     // R_inv = 0x3e22aff1 // R_inv * R == 1 mod key.n
+    key.n0inv = 0x878b64b9; // key.n0inv * key.n[0] == -1 mod b
 
     uint32_t c[RSANUMWORDS];
     uint32_t a[RSANUMWORDS] = {0x733d77e9}; // a < key.n
@@ -121,6 +122,7 @@ void mont_mul_upper_bound() {
 
     montMul(&key, c, a, b);
     assert(c[0] == 0x87740fa7);
+    assert(c[0] > key.n[0]);
 
     // c == (a * b * R_inv) mod key.n
     // c < 2 * key.n
@@ -128,9 +130,28 @@ void mont_mul_upper_bound() {
     dump_uint32_array(c, 1);
 }
 
+void mont_exp_test() {
+    RSAPublicKey key;
+    key.len = RSANUMWORDS;
+    key.exponent = 3;
+
+    printf("number of words: %lu\n", RSANUMWORDS);
+
+    key.n[0] = 0x755a9e77;
+    // R_inv = 0x3e22aff1 // R_inv * R == 1 mod key.n
+    key.n0inv = 0x878b64b9; // key.n0inv * key.n[0] == -1 mod b
+    key.rr[0] = 0x2f305830;
+
+    uint32_t a[RSANUMWORDS] = {0x933d77e9};
+    modpow3(&key, a);
+
+    // c == (a * b * R_inv) mod key.n
+    // c < 2 * key.n
+    dump_uint32_array(a, 1);
+}
 
 int main() {
-    mont_mul_upper_bound();
-    // modpow3(key, buf);
+    // mont_mul_test();
+    mont_exp_test();
     return 0;
 }
