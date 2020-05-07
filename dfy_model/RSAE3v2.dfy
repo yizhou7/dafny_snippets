@@ -619,12 +619,12 @@ module RSAE3v2 {
 
         ghost var S', p_1', p_2' := S, p_1, p_2;
 
-        p_1 := uh64(p_1) as uint64 + uh64(p_2) as uint64;
-        A' := A'[j-1 := lh64(p_1)];
-        S := S + [lh64(p_1), uh64(p_1)];
+        var temp := uh64(p_1) as uint64 + uh64(p_2) as uint64;
+        A' := A'[j-1 := lh64(temp)];
+        S := S + [lh64(temp), uh64(temp)];
 
         assert seq_interp(S) == x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A) by {
-            cmm_invarint_lemma_3(key.m, A, x_i, y, key.len, p_1, p_1', p_2, p_2', u_i, S, S');
+            cmm_invarint_lemma_3(key.m, A, x_i, y, key.len, temp, p_1', p_2, p_2', u_i, S, S');
         }
 
         assert seq_interp(S[1..]) < 2 * key.m_val - 1
@@ -633,15 +633,15 @@ module RSAE3v2 {
             cmm_bounded_lemma(key.m, A, x_i, u_i, y, S, key.len); 
         }
 
-        assert uh64(p_1) as nat * power(BASE, key.len) + seq_interp(A') == seq_interp(S[1..]) by {
+        assert uh64(temp) as nat * power(BASE, key.len) + seq_interp(A') == seq_interp(S[1..]) by {
             assert A' == A'[0..key.len] == S[1..key.len+1] by {
                 assert forall k :: 0 <= k < key.len ==> A'[k] == S[k + 1];
             }
-            cmm_ghost_lemma(A', S, p_1, key.len);
+            cmm_ghost_lemma(A', S, temp, key.len);
         }
 
-        if uh64(p_1) != 0 {
-            cmm_subtract_lemma(A', S, key.m_val, p_1, key.len);
+        if uh64(temp) != 0 {
+            cmm_subtract_lemma(A', S, key.m_val, temp, key.len);
             var b, A'' := seq_sub(A', key.m);
             A' := A'';
     
