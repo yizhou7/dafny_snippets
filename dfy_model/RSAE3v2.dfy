@@ -537,144 +537,6 @@ module RSAE3v2 {
         subM(key, A);
     }
 */
-    method montMulAdd(
-        m: seq<uint32>,
-        A: seq<uint32>, 
-        x_i: uint32,
-        y: seq<uint32>,
-        m': uint32,
-        n: nat,
-        ghost m_val: nat,
-        ghost i: nat,
-        ghost BASE_INV: nat,
-        ghost x: seq<uint32>)
-
-        returns (A': seq<uint32>)
-
-        requires seq_interp(m) == m_val;
-        requires 0 != m_val < power(BASE, n);
-        requires |m| == |A| == |y| == |x| == n > 1;
-        requires i < |x| == n && x[i] == x_i;
-        requires cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) * power(BASE_INV, i), m_val);
-        requires cong(m' as nat * m[0] as nat, -1, BASE);
-
-        requires 0 <= seq_interp(x) < m_val;
-        requires 0 <= seq_interp(y) < m_val;
-        requires seq_interp(A) < 2 * m_val - 1;
-        requires cong(BASE * BASE_INV, 1, m_val);
-    
-        ensures cong(seq_interp(A'), seq_interp(x[..i+1]) * seq_interp(y) * power(BASE_INV, i+1), m_val);
-        ensures seq_interp(A') < 2 * m_val - 1;
-        ensures |A'| == n;
-    {
-        single_digit_mul_lemma(x_i, y[0], A[0]);
-        var p_1 :uint64 := x_i as uint64 * y[0] as uint64 + A[0] as uint64;
-        var u_i :uint32 := ((lh64(p_1) as nat * m' as nat) % BASE) as uint32;
-
-        single_digit_mul_lemma(u_i, m[0], lh64(p_1));
-        var p_2 :uint64 := u_i as uint64 * m[0] as uint64 + lh64(p_1) as uint64;
-
-        assert cong(p_2 as int, 0, BASE) by {
-            cmm_divisible_lemma(p_1 as nat, p_2 as nat, x_i as nat, y[0] as nat, A[0] as nat, u_i as nat, m' as nat, m[0] as nat);
-        }
-
-        ghost var S := [0];
-        A' := zero_seq_int(n);
-
-        var j := 1;
-
-        assert x_i as nat * seq_interp(y[..j]) + u_i as nat * seq_interp(m[..j]) + seq_interp(A[..1]) as nat == 
-            uh64(p_2) as int * power(BASE, j) + uh64(p_1) as int * power(BASE, j) by {
-            cmm_invarint_lemma_1(m, A, x_i, y, n, p_1, p_2, u_i);
-        }
-
-        while j != n
-            decreases n - j;
-            invariant 0 < j <= n;
-            invariant |A'| == n;
-            invariant |S| == j;
-            invariant S[0] == 0;
-            invariant x_i as nat * seq_interp(y[..j]) + u_i as nat * seq_interp(m[..j]) + seq_interp(A[..j]) == 
-                seq_interp(S) + uh64(p_2) as int * power(BASE, j) + uh64(p_1) as int * power(BASE, j);
-            invariant forall k :: 0 <= k < j - 1 ==> A'[k] == S[k + 1];
-        {
-            ghost var S', j', p_1', p_2' := S, j, p_1, p_2;
-
-            p_1 := uh64(p_1) as uint64 + x_i as uint64 * y[j] as uint64 + A[j] as uint64;
-            p_2 := uh64(p_2) as uint64 + u_i as uint64 * m[j] as uint64 + lh64(p_1) as uint64;
-            A' := A'[j-1 := lh64(p_2)];
-
-            S := S + [lh64(p_2)];
-            j := j + 1;
-
-            cmm_invarint_lemma_2(m, A, x_i, y, n, p_1, p_1', p_2, p_2', u_i, j, S, S');
-        }
-
-        ghost var S', p_1', p_2' := S, p_1, p_2;
-
-        p_1 := uh64(p_1) as uint64 + uh64(p_2) as uint64;
-        A' := A'[j-1 := lh64(p_1)];
-        S := S + [lh64(p_1), uh64(p_1)];
-
-        assert seq_interp(S) == x_i as nat * seq_interp(y) + u_i as nat * m_val + seq_interp(A) by {
-            cmm_invarint_lemma_3(m, A, x_i, y, n, p_1, p_1', p_2, p_2', u_i, S, S');
-        }
-
-        assert seq_interp(S[1..]) < 2 * m_val - 1
-            && seq_interp(S) % BASE == 0
-            && seq_interp(S) / BASE == seq_interp(S[1..]) by {
-            cmm_bounded_lemma(m, A, x_i, u_i, y, S, n); 
-        }
-
-        assert uh64(p_1) as nat * power(BASE, n) + seq_interp(A') == seq_interp(S[1..]) by {
-            assert A' == A'[0..n] == S[1..n+1] by {
-                assert forall k :: 0 <= k < n ==> A'[k] == S[k + 1];
-            }
-            cmm_ghost_lemma(A', S, p_1, n);
-        }
-
-        if uh64(p_1) != 0 {
-            cmm_subtract_lemma(A', S, m_val, p_1, n);
-            var b, A'' := seq_sub(A', m);
-            A' := A'';
-    
-            assert cong(seq_interp(A'') * BASE, x_i as nat * seq_interp(y) + u_i as nat * m_val + seq_interp(A), m_val) by {
-                calc ==> {
-                    seq_interp(A'') + m_val == seq_interp(S[1..]);
-                    {
-                        reveal cong();
-                    }
-                    cong(seq_interp(A'') + m_val, seq_interp(S[1..]), m_val);
-                    {
-                        assert cong(seq_interp(A''), seq_interp(A'') + m_val, m_val) by {
-                            cong_add_lemma_3(seq_interp(A''), m_val, m_val);
-                        }
-                        cong_trans_lemma(seq_interp(A''), seq_interp(A'') + m_val, seq_interp(S[1..]), m_val);
-                    }
-                    cong(seq_interp(A''), seq_interp(S[1..]), m_val);
-                    {
-                        cong_mul_lemma_1(seq_interp(A''), seq_interp(S[1..]), BASE, m_val);
-                    }
-                    cong(seq_interp(A'') * BASE, seq_interp(S[1..]) * BASE, m_val);
-                }
-            }
-        } else {
-            assert cong(seq_interp(A') * BASE, x_i as nat * seq_interp(y) + u_i as nat * m_val + seq_interp(A), m_val) by {
-                assert seq_interp(A') == seq_interp(S[1..]);
-                assert seq_interp(A') * BASE == seq_interp(S);
-                assert seq_interp(A') * BASE == x_i as nat * seq_interp(y) + u_i as nat * m_val + seq_interp(A);
-                reveal cong();
-            }
-        }
-
-        assert cong(seq_interp(A'), seq_interp(x[..i+1]) * seq_interp(y) * power(BASE_INV, i+1), m_val) by {
-            cmm_congruent_lemma(x, n, i, x_i as nat, u_i as nat, seq_interp(A), seq_interp(A'), seq_interp(y), m_val, BASE_INV);
-        }
-    
-        assert seq_interp(A') < 2 * m_val - 1;
-    }
-
-
     datatype raw_pub_key = raw_pub_key(
         m: seq<uint32>,
         m': uint32,
@@ -692,6 +554,135 @@ module RSAE3v2 {
         && cong(key.m' as nat * key.m[0] as nat, -1, BASE)
         && cong(BASE * key.BASE_INV, 1, key.m_val)
         && key.R_INV == power(key.BASE_INV, key.len)
+
+    method montMulAdd(
+        key: pub_key,
+        A: seq<uint32>, 
+        x_i: uint32,
+        y: seq<uint32>,
+        ghost i: nat,
+        ghost x: seq<uint32>)
+
+        returns (A': seq<uint32>)
+
+        requires |A| == |y| == |x| == key.len;
+        requires i < |x| == key.len && x[i] == x_i;
+        requires cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) * power(key.BASE_INV, i), key.m_val);
+
+        requires 0 <= seq_interp(x) < key.m_val;
+        requires 0 <= seq_interp(y) < key.m_val;
+        requires seq_interp(A) < 2 * key.m_val - 1;
+    
+        ensures cong(seq_interp(A'), seq_interp(x[..i+1]) * seq_interp(y) * power(key.BASE_INV, i+1), key.m_val);
+        ensures seq_interp(A') < 2 * key.m_val - 1;
+        ensures |A'| == key.len;
+    {
+        single_digit_mul_lemma(x_i, y[0], A[0]);
+        var p_1 :uint64 := x_i as uint64 * y[0] as uint64 + A[0] as uint64;
+        var u_i :uint32 := ((lh64(p_1) as nat * key.m' as nat) % BASE) as uint32;
+
+        single_digit_mul_lemma(u_i, key.m[0], lh64(p_1));
+        var p_2 :uint64 := u_i as uint64 * key.m[0] as uint64 + lh64(p_1) as uint64;
+
+        assert cong(p_2 as int, 0, BASE) by {
+            cmm_divisible_lemma(p_1 as nat, p_2 as nat, x_i as nat, y[0] as nat, A[0] as nat, u_i as nat, key.m' as nat, key.m[0] as nat);
+        }
+
+        ghost var S := [0];
+        A' := zero_seq_int(key.len);
+
+        var j := 1;
+
+        assert x_i as nat * seq_interp(y[..j]) + u_i as nat * seq_interp(key.m[..j]) + seq_interp(A[..1]) as nat == 
+            uh64(p_2) as int * power(BASE, j) + uh64(p_1) as int * power(BASE, j) by {
+            cmm_invarint_lemma_1(key.m, A, x_i, y, key.len, p_1, p_2, u_i);
+        }
+
+        while j != key.len
+            decreases key.len - j;
+            invariant 0 < j <= key.len;
+            invariant |A'| == key.len;
+            invariant |S| == j;
+            invariant S[0] == 0;
+            invariant x_i as nat * seq_interp(y[..j]) + u_i as nat * seq_interp(key.m[..j]) + seq_interp(A[..j]) == 
+                seq_interp(S) + uh64(p_2) as int * power(BASE, j) + uh64(p_1) as int * power(BASE, j);
+            invariant forall k :: 0 <= k < j - 1 ==> A'[k] == S[k + 1];
+        {
+            ghost var S', j', p_1', p_2' := S, j, p_1, p_2;
+
+            p_1 := uh64(p_1) as uint64 + x_i as uint64 * y[j] as uint64 + A[j] as uint64;
+            p_2 := uh64(p_2) as uint64 + u_i as uint64 * key.m[j] as uint64 + lh64(p_1) as uint64;
+            A' := A'[j-1 := lh64(p_2)];
+
+            S := S + [lh64(p_2)];
+            j := j + 1;
+
+            cmm_invarint_lemma_2(key.m, A, x_i, y, key.len, p_1, p_1', p_2, p_2', u_i, j, S, S');
+        }
+
+        ghost var S', p_1', p_2' := S, p_1, p_2;
+
+        p_1 := uh64(p_1) as uint64 + uh64(p_2) as uint64;
+        A' := A'[j-1 := lh64(p_1)];
+        S := S + [lh64(p_1), uh64(p_1)];
+
+        assert seq_interp(S) == x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A) by {
+            cmm_invarint_lemma_3(key.m, A, x_i, y, key.len, p_1, p_1', p_2, p_2', u_i, S, S');
+        }
+
+        assert seq_interp(S[1..]) < 2 * key.m_val - 1
+            && seq_interp(S) % BASE == 0
+            && seq_interp(S) / BASE == seq_interp(S[1..]) by {
+            cmm_bounded_lemma(key.m, A, x_i, u_i, y, S, key.len); 
+        }
+
+        assert uh64(p_1) as nat * power(BASE, key.len) + seq_interp(A') == seq_interp(S[1..]) by {
+            assert A' == A'[0..key.len] == S[1..key.len+1] by {
+                assert forall k :: 0 <= k < key.len ==> A'[k] == S[k + 1];
+            }
+            cmm_ghost_lemma(A', S, p_1, key.len);
+        }
+
+        if uh64(p_1) != 0 {
+            cmm_subtract_lemma(A', S, key.m_val, p_1, key.len);
+            var b, A'' := seq_sub(A', key.m);
+            A' := A'';
+    
+            assert cong(seq_interp(A'') * BASE, x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A), key.m_val) by {
+                calc ==> {
+                    seq_interp(A'') + key.m_val == seq_interp(S[1..]);
+                    {
+                        reveal cong();
+                    }
+                    cong(seq_interp(A'') + key.m_val, seq_interp(S[1..]), key.m_val);
+                    {
+                        assert cong(seq_interp(A''), seq_interp(A'') + key.m_val, key.m_val) by {
+                            cong_add_lemma_3(seq_interp(A''), key.m_val, key.m_val);
+                        }
+                        cong_trans_lemma(seq_interp(A''), seq_interp(A'') + key.m_val, seq_interp(S[1..]), key.m_val);
+                    }
+                    cong(seq_interp(A''), seq_interp(S[1..]), key.m_val);
+                    {
+                        cong_mul_lemma_1(seq_interp(A''), seq_interp(S[1..]), BASE, key.m_val);
+                    }
+                    cong(seq_interp(A'') * BASE, seq_interp(S[1..]) * BASE, key.m_val);
+                }
+            }
+        } else {
+            assert cong(seq_interp(A') * BASE, x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A), key.m_val) by {
+                assert seq_interp(A') == seq_interp(S[1..]);
+                assert seq_interp(A') * BASE == seq_interp(S);
+                assert seq_interp(A') * BASE == x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A);
+                reveal cong();
+            }
+        }
+
+        assert cong(seq_interp(A'), seq_interp(x[..i+1]) * seq_interp(y) * power(key.BASE_INV, i+1), key.m_val) by {
+            cmm_congruent_lemma(x, key.len, i, x_i as nat, u_i as nat, seq_interp(A), seq_interp(A'), seq_interp(y), key.m_val, key.BASE_INV);
+        }
+    
+        assert seq_interp(A') < 2 * key.m_val - 1;
+    }
 
     method montMul(key: pub_key, x: seq<uint32>, y: seq<uint32>)
         returns (A: seq<uint32>)
@@ -724,7 +715,7 @@ module RSAE3v2 {
             invariant cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) * power(key.BASE_INV, i), key.m_val);
             invariant seq_interp(A) < 2 * key.m_val - 1;
         {
-            A := montMulAdd(key.m, A, x[i], y, key.m', key.len, key.m_val, i, key.BASE_INV, x);
+            A := montMulAdd(key, A, x[i], y, i, x);
             i := i + 1;
         }
 
