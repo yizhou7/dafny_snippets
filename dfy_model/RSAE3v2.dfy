@@ -378,105 +378,102 @@ module RSAE3v2 {
     }
 
     lemma cmm_congruent_lemma(
+        key: pub_key,
         x: seq<uint32>,
-        n: nat,
         i: nat,
         x_i: nat,
         u_i: nat,
         A_val: nat,
         A_val': nat,
-        y_val: nat, 
-        m_val: nat,
-        BASE_INV: nat)
+        y_val: nat)
 
-        requires m_val != 0;
-        requires i < |x| == n && x[i] as int == x_i;
+        requires key.m_val != 0;
+        requires i < |x| == key.len && x[i] as int == x_i;
 
-        requires cong(BASE * BASE_INV, 1, m_val);
-        requires cong(A_val, seq_interp(x[..i]) * y_val * power(BASE_INV, i), m_val);
-        requires cong(A_val' * BASE, x_i * y_val + u_i * m_val + A_val, m_val);
+        requires cong(A_val, seq_interp(x[..i]) * y_val * power(key.BASE_INV, i), key.m_val);
+        requires cong(A_val' * BASE, x_i * y_val + u_i * key.m_val + A_val, key.m_val);
 
-        ensures cong(A_val', seq_interp(x[..i+1]) * y_val * power(BASE_INV, i+1), m_val);
+        ensures cong(A_val', seq_interp(x[..i+1]) * y_val * power(key.BASE_INV, i+1), key.m_val);
     {
-        assert assert_1 : cong(A_val', (A_val + x_i * y_val) * BASE_INV, m_val) by {
+        assert assert_1 : cong(A_val', (A_val + x_i * y_val) * key.BASE_INV, key.m_val) by {
             calc ==> {
-                cong(A_val' * BASE, x_i * y_val + u_i * m_val + A_val, m_val);
+                cong(A_val' * BASE, x_i * y_val + u_i * key.m_val + A_val,key. m_val);
                 {
-                    mod_mul_lemma(u_i, m_val, m_val);
-                    cong_add_lemma_3(x_i * y_val + A_val, u_i * m_val, m_val);
-                    assert cong(x_i * y_val + A_val, x_i * y_val + A_val + u_i * m_val, m_val);
+                    mod_mul_lemma(u_i, key.m_val, key.m_val);
+                    cong_add_lemma_3(x_i * y_val + A_val, u_i * key.m_val, key.m_val);
+                    assert cong(x_i * y_val + A_val, x_i * y_val + A_val + u_i * key.m_val, key.m_val);
                     reveal cong();
                 }
-                cong(A_val' * BASE, x_i * y_val + A_val, m_val);
+                cong(A_val' * BASE, x_i * y_val + A_val, key.m_val);
                 {
-                    cong_mul_lemma_1(A_val' * BASE, x_i * y_val + A_val, BASE_INV, m_val);
+                    cong_mul_lemma_1(A_val' * BASE, x_i * y_val + A_val, key.BASE_INV, key.m_val);
                 }
-                cong(A_val' * BASE * BASE_INV, (x_i * y_val + A_val) * BASE_INV, m_val);
+                cong(A_val' * BASE * key.BASE_INV, (x_i * y_val + A_val) * key.BASE_INV, key.m_val);
                 {
                     mod_mul_lemma(A_val', BASE,  BASE);
-                    mod_div_inv_leamma(A_val' * BASE, BASE, BASE_INV, m_val);
-                    assert cong(A_val' * BASE * BASE_INV, A_val', m_val);
+                    mod_div_inv_leamma(A_val' * BASE, BASE, key.BASE_INV, key.m_val);
+                    assert cong(A_val' * BASE * key.BASE_INV, A_val', key.m_val);
                     reveal cong();
                 }
-                cong(A_val', (x_i * y_val + A_val) * BASE_INV, m_val);
+                cong(A_val', (x_i * y_val + A_val) * key.BASE_INV, key.m_val);
                 {
                     assert A_val + x_i * y_val == x_i * y_val + A_val;
                 }
-                cong(A_val', (A_val + x_i * y_val) * BASE_INV, m_val);
+                cong(A_val', (A_val + x_i * y_val) * key.BASE_INV, key.m_val);
             }
         }
 
-        ghost var ps_inv := power(BASE_INV, i);
+        ghost var ps_inv := power(key.BASE_INV, i);
         var temp := seq_interp(x[..i]) * y_val * ps_inv;
 
-        assert assert_2: cong((A_val + x_i * y_val) * BASE_INV, (temp + x_i * y_val) * BASE_INV, m_val) by {
+        assert assert_2: cong((A_val + x_i * y_val) * key.BASE_INV, (temp + x_i * y_val) * key.BASE_INV, key.m_val) by {
             calc ==> {
-                cong(A_val, temp, m_val);
+                cong(A_val, temp, key.m_val);
                 {
-                    cong_add_lemma_1(A_val, temp, x_i * y_val, m_val);
+                    cong_add_lemma_1(A_val, temp, x_i * y_val, key.m_val);
                 }
-                cong(A_val + x_i * y_val, temp + x_i * y_val, m_val);
+                cong(A_val + x_i * y_val, temp + x_i * y_val, key.m_val);
                 {
-                    cong_mul_lemma_1(A_val + x_i * y_val, temp + x_i * y_val, BASE_INV, m_val);
+                    cong_mul_lemma_1(A_val + x_i * y_val, temp + x_i * y_val, key.BASE_INV, key.m_val);
                 }
-                cong((A_val + x_i * y_val) * BASE_INV, (temp + x_i * y_val) * BASE_INV, m_val);
+                cong((A_val + x_i * y_val) * key.BASE_INV, (temp + x_i * y_val) * key.BASE_INV, key.m_val);
             }
         }
 
-        assert assert_3: cong(A_val', (temp + x_i * y_val) * BASE_INV, m_val) by {
+        assert assert_3: cong(A_val', (temp + x_i * y_val) * key.BASE_INV, key.m_val) by {
             reveal assert_1;
             reveal assert_2;
-            cong_trans_lemma(A_val', (A_val + x_i * y_val) * BASE_INV, (temp + x_i * y_val) * BASE_INV, m_val);
+            cong_trans_lemma(A_val', (A_val + x_i * y_val) * key.BASE_INV, (temp + x_i * y_val) * key.BASE_INV, key.m_val);
         }
 
-        assert assert_4: cong((temp + x_i * y_val) * BASE_INV, y_val * seq_interp(x[..i+1]) * ps_inv * BASE_INV, m_val) by {
+        assert assert_4: cong((temp + x_i * y_val) * key.BASE_INV, y_val * seq_interp(x[..i+1]) * ps_inv * key.BASE_INV, key.m_val) by {
             calc == {
-                (temp + x_i * y_val) % m_val;
+                (temp + x_i * y_val) % key.m_val;
                 {
                     assert temp == seq_interp(x[..i]) * y_val * ps_inv;
                 }
-                (seq_interp(x[..i]) * y_val * ps_inv + x_i * y_val) % m_val;
-                (y_val * (seq_interp(x[..i]) * ps_inv + x_i)) % m_val;
+                (seq_interp(x[..i]) * y_val * ps_inv + x_i * y_val) % key.m_val;
+                (y_val * (seq_interp(x[..i]) * ps_inv + x_i)) % key.m_val;
                 {
-                    // assert (y_val * (seq_interp(x[..i]) * ps_inv + x[i] as int)) % m_val == (y_val * (seq_interp(x[..i+1]) * ps_inv)) % m_val;
-                    mont_mul_congruent_aux_lemma_1(x, i, y_val, power(BASE, i), power(BASE_INV, i), BASE_INV, m_val);
+                    // assert (y_val * (seq_interp(x[..i]) * ps_inv + x[i] as int)) % key.m_val == (y_val * (seq_interp(x[..i+1]) * ps_inv)) % key.m_val;
+                    mont_mul_congruent_aux_lemma_1(x, i, y_val, power(BASE, i), power(key.BASE_INV, i), key.BASE_INV, key.m_val);
                 }
-                (y_val * seq_interp(x[..i+1]) * ps_inv) % m_val;
+                (y_val * seq_interp(x[..i+1]) * ps_inv) % key.m_val;
             }
             reveal cong();
-            assert cong(temp + x_i * y_val, y_val * seq_interp(x[..i+1]) * ps_inv, m_val);
-            cong_mul_lemma_1(temp + x_i * y_val, y_val * seq_interp(x[..i+1]) * ps_inv, BASE_INV, m_val);
+            assert cong(temp + x_i * y_val, y_val * seq_interp(x[..i+1]) * ps_inv, key.m_val);
+            cong_mul_lemma_1(temp + x_i * y_val, y_val * seq_interp(x[..i+1]) * ps_inv, key.BASE_INV, key.m_val);
         }
 
-        assert cong(A_val', seq_interp(x[..i+1]) * y_val * power(BASE_INV, i + 1), m_val) by {
+        assert cong(A_val', seq_interp(x[..i+1]) * y_val * power(key.BASE_INV, i + 1), key.m_val) by {
             reveal assert_3;
             reveal assert_4;
-            cong_trans_lemma(A_val', (temp + x_i * y_val) * BASE_INV, y_val * seq_interp(x[..i+1]) * ps_inv * BASE_INV, m_val);
-            assert cong(A_val', y_val * seq_interp(x[..i+1]) * ps_inv * BASE_INV, m_val);
-            assert ps_inv * BASE_INV == power(BASE_INV, i + 1) by {
-                power_add_one_lemma(BASE_INV, i);
+            cong_trans_lemma(A_val', (temp + x_i * y_val) * key.BASE_INV, y_val * seq_interp(x[..i+1]) * ps_inv * key.BASE_INV, key.m_val);
+            assert cong(A_val', y_val * seq_interp(x[..i+1]) * ps_inv * key.BASE_INV, key.m_val);
+            assert ps_inv * key.BASE_INV == power(key.BASE_INV, i + 1) by {
+                power_add_one_lemma(key.BASE_INV, i);
             }
-            assert y_val * seq_interp(x[..i+1]) * power(BASE_INV, i + 1) == seq_interp(x[..i+1]) * y_val * power(BASE_INV, i + 1);
+            assert y_val * seq_interp(x[..i+1]) * power(key.BASE_INV, i + 1) == seq_interp(x[..i+1]) * y_val * power(key.BASE_INV, i + 1);
         }
     }
 
@@ -678,7 +675,7 @@ module RSAE3v2 {
         }
 
         assert cong(seq_interp(A'), seq_interp(x[..i+1]) * seq_interp(y) * power(key.BASE_INV, i+1), key.m_val) by {
-            cmm_congruent_lemma(x, key.len, i, x_i as nat, u_i as nat, seq_interp(A), seq_interp(A'), seq_interp(y), key.m_val, key.BASE_INV);
+            cmm_congruent_lemma(key, x, i, x_i as nat, u_i as nat, seq_interp(A), seq_interp(A'), seq_interp(y));
         }
     
         assert seq_interp(A') < 2 * key.m_val - 1;
