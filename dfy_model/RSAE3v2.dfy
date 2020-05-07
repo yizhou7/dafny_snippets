@@ -674,53 +674,65 @@ module RSAE3v2 {
         assert seq_interp(A') < 2 * m_val - 1;
     }
 
-    method montMul(m: seq<uint32>, x: seq<uint32>, y: seq<uint32>, m': uint32, n: nat, ghost BASE_INV: nat)
+
+    datatype raw_pub_key = raw_pub_key(
+        m: seq<uint32>,
+        m': uint32,
+        len: nat,
+        m_val: int,
+        BASE_INV: nat,
+        R_INV: nat
+    )
+
+    type pub_key = key:raw_pub_key |
+        && |key.m| == key.len
+        && key.len > 2
+        && seq_interp(key.m) == key.m_val
+        && 0 != key.m_val <  power(BASE, key.len)
+        && cong(key.m' as nat * key.m[0] as nat, -1, BASE)
+        && cong(BASE * key.BASE_INV, 1, key.m_val)
+        && key.R_INV == power(key.BASE_INV, key.len)
+
+    method montMul(key: pub_key, x: seq<uint32>, y: seq<uint32>)
         returns (A: seq<uint32>)
 
-        requires n > 2;
-        requires |m| == n && |x| == n && |y| == n;
-        requires 0 <= seq_interp(x) < seq_interp(m); 
-        requires 0 <= seq_interp(y) < seq_interp(m); 
-        requires cong(BASE * BASE_INV, 1, seq_interp(m));
-        requires 0 != seq_interp(m) < power(BASE, n);
-        requires cong(m' as nat * m[0] as nat, -1, BASE);
-        // requires cong(m' as int * seq_interp(m), -1, BASE); // TODO: figure out which one to use
+        requires |x| == |y| == key.len;
+        requires 0 <= seq_interp(x) < key.m_val; 
+        requires 0 <= seq_interp(y) < key.m_val; 
 
         // ensures seq_interp(A) == (seq_interp(x) * seq_interp(y) * power(BASE_INV, n)) % seq_interp(m);
-        ensures seq_interp(A) < 2 * seq_interp(m) - 1;
-        ensures cong(seq_interp(A), seq_interp(x) * seq_interp(y) * power(BASE_INV, n), seq_interp(m));
+        ensures seq_interp(A) < 2 * key.m_val - 1;
+        ensures cong(seq_interp(A), seq_interp(x) * seq_interp(y) * key.R_INV, key.m_val);
     {
-        A  := zero_seq_int(n);
+        A  := zero_seq_int(key.len);
         assert seq_interp(A) == 0;
 
-        ghost var m_val := seq_interp(m);
         ghost var y_val := seq_interp(y);
 
         var i := 0;
 
-        assert cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) * power(BASE_INV, i), seq_interp(m)) by {
-            assert seq_interp(A) == seq_interp(x[..i]) * seq_interp(y) * power(BASE_INV, i);
+        assert cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) * power(key.BASE_INV, i), key.m_val) by {
+            assert seq_interp(A) == seq_interp(x[..i]) * seq_interp(y) * power(key.BASE_INV, i);
             reveal cong();
         }
         
-        while i != n
-            decreases n - i;
+        while i != key.len
+            decreases key.len - i;
             invariant i <= |x|;
-            invariant |A| == n;
+            invariant |A| == key.len;
 
-            invariant cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) * power(BASE_INV, i), seq_interp(m));
-            invariant seq_interp(A) < 2 * m_val - 1;
-            invariant cong(BASE * BASE_INV, 1, seq_interp(m));
+            invariant cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) * power(key.BASE_INV, i), key.m_val);
+            invariant seq_interp(A) < 2 * key.m_val - 1;
         {
-            A := montMulAdd(m, A, x[i], y, m', n, m_val, i, BASE_INV, x);
+            A := montMulAdd(key.m, A, x[i], y, key.m', key.len, key.m_val, i, key.BASE_INV, x);
             i := i + 1;
         }
 
-        assert cong(seq_interp(A), seq_interp(x) * seq_interp(y) * power(BASE_INV, i), seq_interp(m)) by {
-            assert x == x[..n];
+        assert cong(seq_interp(A), seq_interp(x) * seq_interp(y) * power(key.BASE_INV, i), key.m_val) by {
+            assert x == x[..key.len];
         }
 
-        assert cong(seq_interp(A), seq_interp(x) * seq_interp(y) * power(BASE_INV, n), seq_interp(m));
+        assert cong(seq_interp(A), seq_interp(x) * seq_interp(y) * key.R_INV, key.m_val);
     }
 
 /*
