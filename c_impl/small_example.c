@@ -17,7 +17,7 @@ void dump_uint32_array(const char* name, const uint32_t *a, int len)
 {
     printf("%s [", name);
     for (int i = 0; i < len; i ++) {
-        printf("%x, ", a[i]);
+        printf("0x%x, ", a[i]);
     }
     printf("]\n");
 }
@@ -49,9 +49,20 @@ void montMulAdd(const RSAPublicKey *key,
                        uint32_t* c,
                        const uint32_t a,
                        const uint32_t* b) {
-    uint64_t A = (uint64_t)a * b[0] + c[0];
-    uint32_t d0 = (uint32_t)A * key->n0inv;
-    uint64_t B = (uint64_t)d0 * key->n[0] + (uint32_t)A;
+    printf("n: 0x%x\n", key->n[0]);
+
+    uint64_t A = (uint64_t)a * b[0] + c[0]; // A == a * b
+    uint32_t d0 = (uint32_t)A * key->n0inv; // d0 == (a * b * key->n0inv) % BASE
+    printf("d0 full: 0x%lx\n", A * ((uint64_t) key->n0inv));
+    printf("d0: 0x%x\n", d0);
+
+    uint64_t B = (uint64_t)d0 * key->n[0] + (uint32_t)A; // B == (a * b * key->n0inv) % BASE * key->n + lower(A)
+
+    printf("A: 0x%lx\n", A);
+    printf("B: 0x%lx\n", B);
+
+    // (a * b + d_0 * key.n) == (uh64(B) + uh64(A)) * BASE < key->n * BASE
+
     int i;
 
     for (i = 1; i < key->len; ++i) {
@@ -60,11 +71,16 @@ void montMulAdd(const RSAPublicKey *key,
         c[i - 1] = (uint32_t)B;
     }
 
-    A = (A >> 32) + (B >> 32);
+    printf("A: 0x%lx\n", A >> 32);
+    printf("B: 0x%lx\n", B >> 32);
 
-    c[i - 1] = (uint32_t)A;
+    uint64_t S = (A >> 32) + (B >> 32);
+    printf("S: 0x%lx\n", S);
+    assert(S < key->n[0]);
 
-    if (A >> 32) {
+    c[i - 1] = (uint32_t)S;
+
+    if (S >> 32) {
         printf("mont subtraction\n");
         subM(key, c);
     }
