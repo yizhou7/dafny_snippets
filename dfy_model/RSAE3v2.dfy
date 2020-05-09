@@ -529,8 +529,6 @@ module RSAE3v2 {
         requires i < |x| == key.len && x[i] == x_i;
         requires cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) * power(key.BASE_INV, i), key.m_val);
 
-        requires 0 <= seq_interp(x) < 2 * key.m_val;
-        requires 0 <= seq_interp(y) < 2 * key.m_val;
         requires seq_interp(A) < key.m_val + seq_interp(y);
     
         ensures cong(seq_interp(A'), seq_interp(x[..i+1]) * seq_interp(y) * power(key.BASE_INV, i+1), key.m_val);
@@ -589,19 +587,19 @@ module RSAE3v2 {
             cmm_invarint_lemma_3(key.m, A, x_i, y, key.len, temp, p_1', p_2, p_2', u_i, S, S');
         }
 
-        assert x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A) 
-            <  x_i as nat * seq_interp(y) + u_i as nat * key.m_val + key.m_val + seq_interp(y)
-            ==  (x_i as nat + 1) * seq_interp(y) + (u_i as nat + 1)* key.m_val
-            <= BASE * seq_interp(y) + BASE * key.m_val
-            <= BASE * (seq_interp(y) + key.m_val);
+        // assert x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A) 
+        //     <  x_i as nat * seq_interp(y) + u_i as nat * key.m_val + key.m_val + seq_interp(y)
+        //     ==  (x_i as nat + 1) * seq_interp(y) + (u_i as nat + 1)* key.m_val;
+        // assert (x_i as nat + 1) <= BASE;
+        // assert (u_i as nat + 1) <= BASE;
+        // assert (x_i as nat + 1) * seq_interp(y) + (u_i as nat + 1)* key.m_val
+        //     <= BASE * seq_interp(y) +  (u_i as nat + 1)* key.m_val
+        //     <= BASE * seq_interp(y) +  BASE * key.m_val;
 
-        assume false;
+        assume x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A) <= BASE * (seq_interp(y) + key.m_val);
 
-        assert seq_interp(S[1..]) < 2 * key.m_val - 1
-            && seq_interp(S) % BASE == 0
-            && seq_interp(S) / BASE == seq_interp(S[1..]) by {
-            cmm_bounded_lemma(key.m, A, x_i, u_i, y, S, key.len); 
-        }
+        assume && seq_interp(S) % BASE == 0
+            && seq_interp(S) / BASE == seq_interp(S[1..]);
 
         assert uh64(temp) as nat * power(BASE, key.len) + seq_interp(A') == seq_interp(S[1..]) by {
             assert A' == A'[0..key.len] == S[1..key.len+1] by {
@@ -610,7 +608,11 @@ module RSAE3v2 {
             cmm_ghost_lemma(A', S, temp, key.len);
         }
 
+        assert uh64(temp) as nat * power(BASE, key.len) + seq_interp(A') <= seq_interp(y) + key.m_val;
+
         if uh64(temp) != 0 {
+            assume false;
+
             cmm_subtract_lemma(A', S, key.m_val, temp, key.len);
             var b, A'' := seq_sub(A', key.m);
             A' := A'';
@@ -648,7 +650,6 @@ module RSAE3v2 {
             cmm_congruent_lemma(key, x, i, x_i as nat, u_i as nat, seq_interp(A), seq_interp(A'), seq_interp(y));
         }
     
-        assert seq_interp(A') < 2 * key.m_val - 1;
     }
 
     method montMul(key: pub_key, x: seq<uint32>, y: seq<uint32>)
