@@ -301,51 +301,12 @@ module RSAE3v2 {
         requires S[0] == 0;
         requires seq_interp(m) != 0;
         requires seq_interp(S) == x_i as nat * seq_interp(y) + u_i as nat * seq_interp(m) + seq_interp(A);
-        requires 0 <= seq_interp(y) < seq_interp(m);
-        requires seq_interp(A) < 2 * seq_interp(m) - 1;
 
         ensures seq_interp(S) % BASE == 0 && seq_interp(S) / BASE == seq_interp(S[1..]);
-        ensures seq_interp(S[1..]) < 2 * seq_interp(m) - 1;
     {
         ghost var m_val := seq_interp(m);
         ghost var m_bound := m_val - 1;
         ghost var base_bound := BASE - 1;
-
-        calc <= {
-            seq_interp(S);
-            x_i as nat * seq_interp(y) + u_i as nat * m_val + seq_interp(A);
-            {
-                assert x_i as nat <= base_bound;
-                assert u_i as nat <= base_bound;
-            }
-            base_bound * seq_interp(y) + base_bound * m_val + seq_interp(A);
-            {
-                assert seq_interp(y) <= m_bound;
-            }
-            base_bound * m_bound + base_bound * m_val + seq_interp(A);
-        }
-        
-        calc ==> {
-            seq_interp(S) <= base_bound * m_bound + base_bound * m_val + seq_interp(A);
-            {
-                assert seq_interp(A) < 2 * seq_interp(m) - 1;
-            }
-            seq_interp(S) < base_bound * m_bound + base_bound * m_val +  2 * m_val - 1;
-            seq_interp(S) < base_bound * m_bound + base_bound * m_val + 2 * m_val - 1;
-            seq_interp(S) < 2 * m_val - 1 + m_bound * base_bound + m_val * base_bound;
-            seq_interp(S) < 2 * m_val - 1 + (m_val - 1) * base_bound + m_val * base_bound;
-            seq_interp(S) < 2 * m_val - 1 + m_val * base_bound - base_bound + m_val * base_bound;
-            seq_interp(S) < 2 * m_val - 1 + m_val * (BASE - 1) - (BASE - 1) + m_val * (BASE - 1);
-            seq_interp(S) < 2 * m_val + m_val * (BASE - 1) - BASE + m_val * (BASE - 1);
-            seq_interp(S) < 2 * m_val + m_val * BASE - m_val - BASE + m_val * (BASE - 1);
-            seq_interp(S) < 2 * m_val + m_val * BASE - m_val - BASE + m_val * BASE - m_val;
-            seq_interp(S) < m_val * BASE - BASE + m_val * BASE;
-            seq_interp(S) < 2 * m_val * BASE - BASE;
-            seq_interp(S) < BASE * (2 * m_val - 1);
-            seq_interp(S) < BASE * (2 * seq_interp(m) - 1);
-        }
-
-        assert seq_interp(S) < BASE * (2 * seq_interp(m) - 1);
 
         assert seq_interp(S) % BASE == 0 && seq_interp(S) / BASE == seq_interp(S[1..]) by {
             assert cong(S[0] as int , 0, BASE) by {
@@ -540,6 +501,7 @@ module RSAE3v2 {
         len: nat,
         m_val: int,
         BASE_INV: nat,
+        R: nat,
         R_INV: nat
     )
 
@@ -550,6 +512,7 @@ module RSAE3v2 {
         && 0 != key.m_val <  power(BASE, key.len)
         && cong(key.m' as nat * key.m[0] as nat, -1, BASE)
         && cong(BASE * key.BASE_INV, 1, key.m_val)
+        && key.R == power(BASE, key.len)
         && key.R_INV == power(key.BASE_INV, key.len)
 
     method montMulAdd(
@@ -566,12 +529,11 @@ module RSAE3v2 {
         requires i < |x| == key.len && x[i] == x_i;
         requires cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) * power(key.BASE_INV, i), key.m_val);
 
-        requires 0 <= seq_interp(x) < key.m_val;
-        requires 0 <= seq_interp(y) < key.m_val;
-        requires seq_interp(A) < 2 * key.m_val - 1;
+        requires 0 <= seq_interp(x) < 2 * key.m_val;
+        requires 0 <= seq_interp(y) < 2 * key.m_val;
+        requires seq_interp(A) < key.m_val + seq_interp(y);
     
         ensures cong(seq_interp(A'), seq_interp(x[..i+1]) * seq_interp(y) * power(key.BASE_INV, i+1), key.m_val);
-        ensures seq_interp(A') < 2 * key.m_val - 1;
         ensures |A'| == key.len;
     {
         single_digit_mul_lemma(x_i, y[0], A[0]);
@@ -626,6 +588,14 @@ module RSAE3v2 {
         assert seq_interp(S) == x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A) by {
             cmm_invarint_lemma_3(key.m, A, x_i, y, key.len, temp, p_1', p_2, p_2', u_i, S, S');
         }
+
+        assert x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A) 
+            <  x_i as nat * seq_interp(y) + u_i as nat * key.m_val + key.m_val + seq_interp(y)
+            ==  (x_i as nat + 1) * seq_interp(y) + (u_i as nat + 1)* key.m_val
+            <= BASE * seq_interp(y) + BASE * key.m_val
+            <= BASE * (seq_interp(y) + key.m_val);
+
+        assume false;
 
         assert seq_interp(S[1..]) < 2 * key.m_val - 1
             && seq_interp(S) % BASE == 0
@@ -710,8 +680,9 @@ module RSAE3v2 {
             invariant |A| == key.len;
 
             invariant cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) * power(key.BASE_INV, i), key.m_val);
-            invariant seq_interp(A) < 2 * key.m_val - 1;
+            // invariant seq_interp(A) < 2 * key.m_val - 1;
         {
+            assume false;
             A := montMulAdd(key, A, x[i], y, i, x);
             i := i + 1;
         }
