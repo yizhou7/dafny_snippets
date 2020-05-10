@@ -472,6 +472,7 @@ module RSAE3v2 {
         requires (higher as nat * key.R + seq_interp(A')) * BASE == 
             x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A);
         ensures (higher as nat * key.R + seq_interp(A')) < (seq_interp(y) + key.m_val);
+        ensures higher <= 1;
     {
         assert (higher as nat * key.R + seq_interp(A')) * BASE < BASE * (seq_interp(y) + key.m_val) by {
             assert (higher as nat * key.R + seq_interp(A')) * BASE <
@@ -494,6 +495,14 @@ module RSAE3v2 {
         }
 
         assert (higher as nat * key.R + seq_interp(A')) < (seq_interp(y) + key.m_val);
+
+       if higher > 1 {
+            assert higher >= 2;
+            assert higher as nat * key.R + seq_interp(A') >= 2 * key.R + seq_interp(A');
+            assume seq_interp(y) < key.R;
+            assume key.m_val < key.R;
+            assert false;
+        }
     }
 
     lemma cmm_hihger_bit_lemma(A': seq<uint32>, uh_p_1: nat, m_val: nat, n: nat)
@@ -623,7 +632,8 @@ module RSAE3v2 {
         S := S + [lh64(temp), uh64(temp)];
 
         assert (uh64(temp) as nat * key.R + seq_interp(A')) * BASE == 
-            x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A) by {
+            x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A)
+        by {
             assert seq_interp(S) == x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A) by {
                 cmm_invarint_lemma_3(key.m, A, x_i, y, key.len, temp, p_1', p_2, p_2', u_i, S, S');
             }
@@ -638,21 +648,9 @@ module RSAE3v2 {
             }
         }
 
-       if uh64(temp) > 1 {
-            assert uh64(temp) >= 2;
-            assert uh64(temp) as nat * key.R + seq_interp(A') >= 2 * key.R + seq_interp(A');
-
-            // assert x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A)
-            //     < x_i as nat * seq_interp(y) + u_i as nat * key.m_val + key.m_val + seq_interp(y)
-            //     == (x_i as nat + 1) * seq_interp(y) + (u_i as nat + 1) * key.m_val;
-            assert (x_i as nat + 1) <= BASE;
-            assume false;
-
-            assert (x_i as nat + 1) * seq_interp(y) + (u_i as nat + 1) * key.m_val 
-                <= BASE * seq_interp(y) + (u_i as nat + 1) * key.m_val by {
-                    assert (x_i as nat + 1) <= BASE;
-
-                }
+        assert uh64(temp) as nat * key.R + seq_interp(A') < seq_interp(y) + key.m_val && uh64(temp) <= 1 
+        by {
+            cmm_bounded_lemma_1(key, u_i, x_i, uh64(temp), y, A', A);
         }
 
         assume false;
