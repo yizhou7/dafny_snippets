@@ -59,6 +59,8 @@ int geM(const RSAPublicKey *key, const uint32_t *a) {
     return 1;  /* equal */
 }
 
+uint32_t shift;
+
 /* montgomery c[] += a * b[] / R % mod */
 void montMulAdd(const RSAPublicKey *key,
                        uint32_t* c,
@@ -69,6 +71,7 @@ void montMulAdd(const RSAPublicKey *key,
     uint64_t B = (uint64_t)d0 * key->n[0] + (uint32_t)A; // B == (a * b * key->n0inv) % BASE * key->n + lower(A)
 
     uint64_t left = (uint64_t) a * (uint64_t) b[0] + (uint64_t) d0 * (uint64_t) key->n[0] + (uint64_t) c[0];
+    shift = left >> 32;
 
     // uint64_t question = A + (uint64_t) ((uint32_t)A * key->n0inv) * (uint64_t) key->n[0];
     // assert(question == left);
@@ -87,19 +90,19 @@ void montMulAdd(const RSAPublicKey *key,
     uint64_t S = (A >> 32) + (B >> 32);
     c[i - 1] = (uint32_t)S;
 
-    assert(left >> 32 == c[0]);
-
     if (S >> 32) {
         // printf("mont subtraction\n");
         subM(key, c);
     }
 
-    if (c[0] > key->n[0]) {
-        // printf("result larger than key.n\n");
-        if ((uint64_t) c[0] > 2 * (uint64_t) key->n[0]) {
-            // printf("!!!!! result larger than 2 * key.n\n");
-        }
-    }
+    assert(shift == c[0]);
+
+    // if (c[0] > key->n[0]) {
+    //     // printf("result larger than key.n\n");
+    //     if ((uint64_t) c[0] > 2 * (uint64_t) key->n[0]) {
+    //         // printf("!!!!! result larger than 2 * key.n\n");
+    //     }
+    // }
 }
 
 /* montgomery c[] = a[] * b[] / R % mod */
@@ -214,10 +217,16 @@ void mont_mul_test_2(const RSAPublicKey *key) {
 
         // print_uint32_array("c", c, 1);
         if (c_R > max_ratio) {
-            printf("N/R: %f\n", (double) key->n[0] / 0xffffffff);
 
-            printf("a/N: %f\n", (double) a[0] / key->n[0]);
-            printf("b/N: %f\n", (double) b[0] / key->n[0]);
+            uint64_t A = (uint64_t) a[0] * (uint64_t) b[0]; // A == a * b
+            uint32_t d0 = (uint32_t) A * key->n0inv; // d0 == (a * b * key->n0inv) % BASE
+            uint64_t left = (uint64_t) a[0] * (uint64_t) b[0];
+            left = left >> 32;
+
+            printf("??/R: %f\n", (double) left / key->n[0]);
+
+            // printf("a/N: %f\n", (double) a[0] / key->n[0]);
+            // printf("b/N: %f\n", (double) b[0] / key->n[0]);
 
             printf("S/R: %f\n", c_R);
             printf("S/N: %f\n\n", c_N);
