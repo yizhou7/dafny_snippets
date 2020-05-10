@@ -237,10 +237,10 @@ void mont_mul_example_2(RSAPublicKey *key) {
         double c2_n = (double) c2[0] / key->n[0];
 
         uint32_t c3[RSANUMWORDS];
-        montMul(key, c3, c2, c);
+        montMul(key, c3, c2, a);
         double c3_n = (double) c3[0] / key->n[0];
 
-        if (c3_n > max_ratio) {
+        if (c1_n > 2 || c2_n > 2 || c3_n > 2 ) {
             printf("c1_n: %f\n", c1_n);
             printf("c2_n: %f\n", c2_n);
             printf("c3_n: %f\n", c3_n);
