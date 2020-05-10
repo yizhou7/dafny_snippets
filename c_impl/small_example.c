@@ -207,31 +207,28 @@ void mont_mul_test_2(const RSAPublicKey *key) {
         double c_N = (double) c[0] / key->n[0];
         double c_R = (double) c[0] / 0xffffffff;
 
-        // uint32_t c2[RSANUMWORDS];
+        uint32_t c2[RSANUMWORDS];
 
-        // montMul(key, c2, c, c);
-        // double ratio_2 = (double) c2[0] / key->n[0];
-
-        // c == (a * b * R_inv) mod key.n
-        // c < 2 * key.n
+        montMul(key, c2, c, c);
+        double ratio_2 = (double) c2[0] / key->n[0];
 
         // print_uint32_array("c", c, 1);
-        if (c_R > max_ratio) {
+        if (ratio_2 > max_ratio) {
 
-            uint64_t A = (uint64_t) a[0] * (uint64_t) b[0]; // A == a * b
-            uint32_t d0 = (uint32_t) A * key->n0inv; // d0 == (a * b * key->n0inv) % BASE
-            uint64_t left = (uint64_t) a[0] * (uint64_t) b[0];
-            left = left >> 32;
+            // uint64_t A = (uint64_t) a[0] * (uint64_t) b[0]; // A == a * b
+            // uint32_t d0 = (uint32_t) A * key->n0inv; // d0 == (a * b * key->n0inv) % BASE
+            // uint64_t left = (uint64_t) a[0] * (uint64_t) b[0];
+            // left = left >> 32;
 
-            printf("??/R: %f\n", (double) left / key->n[0]);
+            // printf("??/R: %f\n", (double) left / key->n[0]);
 
             // printf("a/N: %f\n", (double) a[0] / key->n[0]);
             // printf("b/N: %f\n", (double) b[0] / key->n[0]);
 
-            printf("S/R: %f\n", c_R);
+            // printf("S/R: %f\n", c_R);
             printf("S/N: %f\n\n", c_N);
-            // printf("ratio_2: %f\n\n", ratio_2);
-            max_ratio = c_R;
+            printf("ratio_2: %f\n\n", ratio_2);
+            max_ratio = ratio_2;
         }
     }
 }
@@ -286,13 +283,13 @@ int main(int argc, char** argv) {
     // printf("number of words: %lu\n", RSANUMWORDS);
     srand(time(NULL));
 
-    key.n[0] = 0x755a9e77;
-    key.n0inv = 0x878b64b9; // key.n0inv * key.n[0] == -1 mod b
-    key.rr[0] = 0x2f305830; // key.rr == R * R % key.n
+    // key.n[0] = 0x755a9e77;
+    // key.n0inv = 0x878b64b9; // key.n0inv * key.n[0] == -1 mod b
+    // key.rr[0] = 0x2f305830; // key.rr == R * R % key.n
 
-    key.n[0] = 0x5990ad6f;
-    key.n0inv = 0x75deae71; // key.n0inv * key.n[0] == -1 mod b
-    key.rr[0] = 0x36b2253e; // key.rr == R * R % key.n
+    // key.n[0] = 0x5990ad6f;
+    // key.n0inv = 0x75deae71; // key.n0inv * key.n[0] == -1 mod b
+    // key.rr[0] = 0x36b2253e; // key.rr == R * R % key.n
 
     // key.n[0] = 0x71581beb;
     // key.n0inv = 0x5e1acb3d; // key.n0inv * key.n[0] == -1 mod b
@@ -301,6 +298,10 @@ int main(int argc, char** argv) {
     // key.n[0] = 0xaafa3457;
     // key.n0inv = 0x134c0899; // key.n0inv * key.n[0] == -1 mod b
     // key.rr[0] = 0x62a00adc; // key.rr == R * R % key.n
+
+    key.n[0] = 0x7a479339;
+    key.n0inv = 0x5e7494f7; // key.n0inv * key.n[0] == -1 mod b
+    key.rr[0] = 0x21913c35; // key.rr == R * R % key.n
 
     // mont_mul_find_exceeding_outputs(&key);
     mont_mul_test_2(&key);
