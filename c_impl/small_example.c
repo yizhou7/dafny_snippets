@@ -54,8 +54,6 @@ void montMulAdd(const RSAPublicKey *key,
                        uint32_t* c,
                        const uint32_t a,
                        const uint32_t* b) {
-    // printf("n: 0x%x\n", key->n[0]);
-
     uint64_t A = (uint64_t)a * b[0] + c[0]; // A == a * b
     uint32_t d0 = (uint32_t)A * key->n0inv; // d0 == (a * b * key->n0inv) % BASE
     // printf("d0 full: 0x%lx\n", A * ((uint64_t) key->n0inv));
@@ -85,16 +83,17 @@ void montMulAdd(const RSAPublicKey *key,
     c[i - 1] = (uint32_t)S;
 
     if (S >> 32) {
-        subtracted = 1;
-        // printf("mont subtraction\n");
+        printf("mont subtraction\n");
         subM(key, c);
     }
 
-    // if (c[0] > key->n[0]) {
-    //     printf("result larger than key.n\n");
-    // } else {
-    //     printf("result not larger than key.n\n");
-    // }
+    if (c[0] > key->n[0]) {
+        printf("result larger than key.n\n");
+        if ((uint64_t) c[0] > 2 * (uint64_t) key->n[0]) {
+            abort();
+            printf("!!!!! result larger than 2 * key.n\n");
+        }
+    }
 }
 
 /* montgomery c[] = a[] * b[] / R % mod */
@@ -153,7 +152,7 @@ void mont_exp_test(const RSAPublicKey *key) {
 
     bool equal = true;
 
-    while (equal) {
+    while (1) {
         number = gen_random();
         a[0] = number;
         modpow3(key, a);
@@ -171,7 +170,6 @@ void mont_exp_test(const RSAPublicKey *key) {
             equal = false;
         }
     }
-
 }
 
 void mont_mul_test_1(const RSAPublicKey *key) {
@@ -191,8 +189,8 @@ void mont_mul_test_1(const RSAPublicKey *key) {
 
 void mont_mul_test_2(const RSAPublicKey *key) {
     uint32_t c[RSANUMWORDS];
-    uint32_t a[RSANUMWORDS] = {0x775b4135}; // a > key.n
-    uint32_t b[RSANUMWORDS] = {0x775b4135}; // b > key.n
+    uint32_t a[RSANUMWORDS] = {0xaaa}; // a > key.n
+    uint32_t b[RSANUMWORDS] = {0xaaa}; // b > key.n
 
     montMul(key, c, a, b);
 
@@ -215,13 +213,18 @@ int main(int argc, char** argv) {
     // key.n0inv = 0x878b64b9; // key.n0inv * key.n[0] == -1 mod b
     // key.rr[0] = 0x2f305830; // key.rr == R * R % key.n
     
-    key.n[0] = 0x97375435;
-    // R_inv = 0x3e22aff1 // R_inv * R == 1 mod key.n
-    key.n0inv = 0x8f6fa1e3; // key.n0inv * key.n[0] == -1 mod b
-    key.rr[0] = 0x13ac4a1e;
-    // mont_mul_test();
-    // mont_mul_test_2(&key);
+    // key.n[0] = 0x97375435;
+    // // R_inv = 0x3e22aff1 // R_inv * R == 1 mod key.n
+    // key.n0inv = 0x8f6fa1e3; // key.n0inv * key.n[0] == -1 mod b
+    // key.rr[0] = 0x13ac4a1e;
 
-    mont_exp_test(&key);
+    key.n[0] = 0x29b;
+    // R_inv = 0x3e22aff1 // R_inv * R == 1 mod key.n
+    key.n0inv = 0xe648ec6d; // key.n0inv * key.n[0] == -1 mod b
+    key.rr[0] = 0x25c;
+
+    mont_mul_test_2(&key);
+
+    // mont_exp_test(&key);
     return 0;
 }

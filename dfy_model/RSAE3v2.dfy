@@ -11,6 +11,26 @@ module RSAE3v2 {
     import opened SeqInt
     import opened RSAE3v1
 
+    datatype raw_pub_key = raw_pub_key(
+        m: seq<uint32>,
+        m': uint32,
+        len: nat,
+        m_val: int,
+        BASE_INV: nat,
+        R: nat,
+        R_INV: nat
+    )
+
+    type pub_key = key:raw_pub_key |
+        && |key.m| == key.len
+        && key.len > 2
+        && seq_interp(key.m) == key.m_val
+        && 0 != key.m_val <  power(BASE, key.len)
+        && cong(key.m' as nat * key.m[0] as nat, -1, BASE)
+        && cong(BASE * key.BASE_INV, 1, key.m_val)
+        && key.R == power(BASE, key.len)
+        && key.R_INV == power(key.BASE_INV, key.len)
+
     lemma cmm_divisible_lemma(p_1: nat, p_2: nat, x_i: nat, y_0: nat, a_0: nat, u_i: nat, m': nat, m_0: nat)
         requires cong(m' * m_0, -1, BASE);
         requires p_1 <= UINT64_MAX as nat;
@@ -438,6 +458,44 @@ module RSAE3v2 {
         }
     }
 
+    lemma cmm_bounded_lemma_1(
+        key: pub_key,
+        u_i: uint32,
+        x_i: uint32,
+        higher: uint32,
+        y: seq<uint32>,
+        A': seq<uint32>,
+        A: seq<uint32>)
+
+        requires |A'| == |A| == |y| == key.len;
+        requires seq_interp(A) < key.m_val + seq_interp(y);
+        requires (higher as nat * key.R + seq_interp(A')) * BASE == 
+            x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A);
+        ensures (higher as nat * key.R + seq_interp(A')) < (seq_interp(y) + key.m_val);
+    {
+        assert (higher as nat * key.R + seq_interp(A')) * BASE < BASE * (seq_interp(y) + key.m_val) by {
+            assert (higher as nat * key.R + seq_interp(A')) * BASE <
+                (x_i as nat + 1) * seq_interp(y) + (u_i as nat + 1) * key.m_val by {
+                    assert seq_interp(A) < key.m_val + seq_interp(y);
+            }
+
+            calc <= {
+                (x_i as nat + 1) * seq_interp(y) + (u_i as nat + 1) * key.m_val;
+                {
+                    assert x_i as nat + 1 <= BASE;
+                }
+                BASE * seq_interp(y) + (u_i as nat + 1) * key.m_val;
+                {
+                    assert u_i as nat + 1 <= BASE;
+                }
+                BASE * seq_interp(y) + BASE * key.m_val;
+                BASE * (seq_interp(y) + key.m_val);
+            }
+        }
+
+        assert (higher as nat * key.R + seq_interp(A')) < (seq_interp(y) + key.m_val);
+    }
+
     lemma cmm_hihger_bit_lemma(A': seq<uint32>, uh_p_1: nat, m_val: nat, n: nat)
         requires |A'| == n;
         requires m_val < power(BASE, n);
@@ -495,25 +553,6 @@ module RSAE3v2 {
         subM(key, A);
     }
 */
-    datatype raw_pub_key = raw_pub_key(
-        m: seq<uint32>,
-        m': uint32,
-        len: nat,
-        m_val: int,
-        BASE_INV: nat,
-        R: nat,
-        R_INV: nat
-    )
-
-    type pub_key = key:raw_pub_key |
-        && |key.m| == key.len
-        && key.len > 2
-        && seq_interp(key.m) == key.m_val
-        && 0 != key.m_val <  power(BASE, key.len)
-        && cong(key.m' as nat * key.m[0] as nat, -1, BASE)
-        && cong(BASE * key.BASE_INV, 1, key.m_val)
-        && key.R == power(BASE, key.len)
-        && key.R_INV == power(key.BASE_INV, key.len)
 
     method montMulAdd(
         key: pub_key,
@@ -583,7 +622,8 @@ module RSAE3v2 {
         A' := A'[j-1 := lh64(temp)];
         S := S + [lh64(temp), uh64(temp)];
 
-        assert (uh64(temp) as nat * key.R + seq_interp(A')) * BASE == x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A) by {
+        assert (uh64(temp) as nat * key.R + seq_interp(A')) * BASE == 
+            x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A) by {
             assert seq_interp(S) == x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A) by {
                 cmm_invarint_lemma_3(key.m, A, x_i, y, key.len, temp, p_1', p_2, p_2', u_i, S, S');
             }
@@ -598,22 +638,24 @@ module RSAE3v2 {
             }
         }
 
+       if uh64(temp) > 1 {
+            assert uh64(temp) >= 2;
+            assert uh64(temp) as nat * key.R + seq_interp(A') >= 2 * key.R + seq_interp(A');
+
+            // assert x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A)
+            //     < x_i as nat * seq_interp(y) + u_i as nat * key.m_val + key.m_val + seq_interp(y)
+            //     == (x_i as nat + 1) * seq_interp(y) + (u_i as nat + 1) * key.m_val;
+            assert (x_i as nat + 1) <= BASE;
+            assume false;
+
+            assert (x_i as nat + 1) * seq_interp(y) + (u_i as nat + 1) * key.m_val 
+                <= BASE * seq_interp(y) + (u_i as nat + 1) * key.m_val by {
+                    assert (x_i as nat + 1) <= BASE;
+
+                }
+        }
+
         assume false;
-
-
-
-
-
-        // assume x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A) <= BASE * (seq_interp(y) + key.m_val);
-
-        // assert uh64(temp) as nat * key.R + seq_interp(A') <= seq_interp(y) + key.m_val;
-
-        // if uh64(temp) > 1 {
-        //     assert uh64(temp) as nat * key.R + seq_interp(A') >= 2 * key.R + seq_interp(A');
-        //     assume seq_interp(y) < key.R;
-        //     assume key.m_val < key.R;
-        //     assert false;
-        // }
 
         // if uh64(temp) != 0 {
         //     assume false;
