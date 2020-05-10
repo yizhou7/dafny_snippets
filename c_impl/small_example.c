@@ -95,7 +95,7 @@ void montMulAdd(const RSAPublicKey *key,
         subM(key, c);
     }
 
-    assert(shift == c[0]);
+    // assert(shift == c[0]);
 
     // if (c[0] > key->n[0]) {
     //     // printf("result larger than key.n\n");
@@ -187,13 +187,29 @@ void mont_mul_test_1(const RSAPublicKey *key) {
     assert(c[0] == 0x87740fa7);
     assert(c[0] > key->n[0]);
 
-    // c == (a * b * R_inv) mod key.n
-    // c < 2 * key.n
-
     print_uint32_array("c", c, 1);
 }
 
-void mont_mul_test_2(const RSAPublicKey *key) {
+void mont_mul_example_1(const RSAPublicKey * key) {
+    uint32_t input_bound = key->n[0] * 2;
+    double max_ratio = 0;
+
+    while (1) {
+        uint32_t c[RSANUMWORDS];
+        uint32_t a[RSANUMWORDS] = {gen_random() % input_bound}; // a < key.n
+        uint32_t b[RSANUMWORDS] = {gen_random() % input_bound}; // b < key.n
+
+        montMul(key, c, a, b);
+        double c1_n = (double) c[0] / key->n[0];
+
+        if (c1_n > max_ratio) {
+            printf("c1_n: %f\n", c1_n);
+            max_ratio = c1_n;
+        }
+    }
+}
+
+void mont_mul_example_2(const RSAPublicKey *key) {
     double max_ratio = 0;
 
     uint32_t input_bound = key->n[0];
@@ -204,72 +220,21 @@ void mont_mul_test_2(const RSAPublicKey *key) {
         uint32_t b[RSANUMWORDS] = {gen_random() % input_bound}; // b < key.n
 
         montMul(key, c, a, b);
-        double c_N = (double) c[0] / key->n[0];
-        double c_R = (double) c[0] / 0xffffffff;
+        double c1_n = (double) c[0] / key->n[0];
 
         uint32_t c2[RSANUMWORDS];
-
         montMul(key, c2, c, c);
-        double ratio_2 = (double) c2[0] / key->n[0];
+        double c2_n = (double) c2[0] / key->n[0];
 
-        // print_uint32_array("c", c, 1);
-        if (ratio_2 > max_ratio) {
+        uint32_t c3[RSANUMWORDS];
+        montMul(key, c3, c2, c);
+        double c3_n = (double) c3[0] / key->n[0];
 
-            // uint64_t A = (uint64_t) a[0] * (uint64_t) b[0]; // A == a * b
-            // uint32_t d0 = (uint32_t) A * key->n0inv; // d0 == (a * b * key->n0inv) % BASE
-            // uint64_t left = (uint64_t) a[0] * (uint64_t) b[0];
-            // left = left >> 32;
-
-            // printf("??/R: %f\n", (double) left / key->n[0]);
-
-            // printf("a/N: %f\n", (double) a[0] / key->n[0]);
-            // printf("b/N: %f\n", (double) b[0] / key->n[0]);
-
-            // printf("S/R: %f\n", c_R);
-            printf("S/N: %f\n\n", c_N);
-            printf("ratio_2: %f\n\n", ratio_2);
-            max_ratio = ratio_2;
-        }
-    }
-}
-
-
-void mont_mul_reverse_step(const RSAPublicKey *key, uint32_t target)
-{
-    print_uint32("testing for", target);
-
-    uint32_t a;
-    uint32_t rr = key->rr[0];
-
-    for (a = 0; a < 0xffffffff; a ++) {
-        uint64_t A = (uint64_t)a * rr; 
-        uint32_t d0 = (uint32_t)A * key->n0inv;
-
-        uint64_t question = (uint64_t) a * (uint64_t) rr + (uint64_t) d0 * (uint64_t) key->n[0];
-        uint32_t shifted = question >> 32;
-        // print_uint64("q", question);
-        if (shifted == target) {
-            printf("bingo!");
-            abort();
-        }
-    }
-}
-
-
-void mont_mul_find_exceeding_outputs(const RSAPublicKey *key) {
-    while (1) {
-        uint32_t number = gen_random() % (key->n[0] * 2);
-
-        uint32_t c[RSANUMWORDS];
-        uint32_t a[RSANUMWORDS] = {number}; 
-        uint32_t b[RSANUMWORDS] = {number};
-        // print_uint32_array("a", a, 1);
-
-        montMul(key, c, a, b);
-        if ((uint64_t) c[0] > key->n[0] * 2) {
-            // print_uint32("a", number);
-            // print_uint32_array("c", c, 1);
-            mont_mul_reverse_step(key, c[0]);
+        if (c3_n > max_ratio) {
+            printf("c1_n: %f\n", c1_n);
+            printf("c2_n: %f\n", c2_n);
+            printf("c3_n: %f\n\n", c3_n);
+            max_ratio = c3_n;
         }
     }
 }
@@ -283,28 +248,11 @@ int main(int argc, char** argv) {
     // printf("number of words: %lu\n", RSANUMWORDS);
     srand(time(NULL));
 
-    // key.n[0] = 0x755a9e77;
-    // key.n0inv = 0x878b64b9; // key.n0inv * key.n[0] == -1 mod b
-    // key.rr[0] = 0x2f305830; // key.rr == R * R % key.n
-
-    // key.n[0] = 0x5990ad6f;
-    // key.n0inv = 0x75deae71; // key.n0inv * key.n[0] == -1 mod b
-    // key.rr[0] = 0x36b2253e; // key.rr == R * R % key.n
-
-    // key.n[0] = 0x71581beb;
-    // key.n0inv = 0x5e1acb3d; // key.n0inv * key.n[0] == -1 mod b
-    // key.rr[0] = 0x238a0d00; // key.rr == R * R % key.n
-
-    // key.n[0] = 0xaafa3457;
-    // key.n0inv = 0x134c0899; // key.n0inv * key.n[0] == -1 mod b
-    // key.rr[0] = 0x62a00adc; // key.rr == R * R % key.n
-
     key.n[0] = 0x7a479339;
     key.n0inv = 0x5e7494f7; // key.n0inv * key.n[0] == -1 mod b
     key.rr[0] = 0x21913c35; // key.rr == R * R % key.n
 
-    // mont_mul_find_exceeding_outputs(&key);
-    mont_mul_test_2(&key);
+    mont_mul_example_1(&key);
 
     return 0;
 }
