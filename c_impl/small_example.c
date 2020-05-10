@@ -56,14 +56,15 @@ void montMulAdd(const RSAPublicKey *key,
                        const uint32_t* b) {
     uint64_t A = (uint64_t)a * b[0] + c[0]; // A == a * b
     uint32_t d0 = (uint32_t)A * key->n0inv; // d0 == (a * b * key->n0inv) % BASE
-    // printf("d0 full: 0x%lx\n", A * ((uint64_t) key->n0inv));
-    // printf("d0: 0x%x\n", d0);
 
     uint64_t B = (uint64_t)d0 * key->n[0] + (uint32_t)A; // B == (a * b * key->n0inv) % BASE * key->n + lower(A)
 
-    uint64_t left = (uint64_t) a * (uint64_t)  b[0] + (uint64_t)  d0 * (uint64_t) key->n[0] + (uint64_t) c[0];
+    uint64_t left = (uint64_t) a * (uint64_t) b[0] + (uint64_t) d0 * (uint64_t) key->n[0] + (uint64_t) c[0];
+    uint64_t question = A + (uint64_t) ((uint32_t)A * key->n0inv) * (uint64_t) key->n[0];
+
     uint64_t right = ((B >> 32) + (A >> 32)) << 32; 
 
+    assert(question == left);
     assert(left == right);
 
     uint32_t old = c[0];
@@ -82,7 +83,8 @@ void montMulAdd(const RSAPublicKey *key,
     uint64_t S = (A >> 32) + (B >> 32);
     c[i - 1] = (uint32_t)S;
 
-    // left = c[0];
+    // left = (uint64_t) a * (uint64_t)  b[0] + (uint64_t)  d0 * (uint64_t) key->n[0] + (uint64_t) old;
+    assert(left >> 32 == c[0]);
 
     if (S >> 32) {
         printf("mont subtraction\n");
@@ -96,6 +98,17 @@ void montMulAdd(const RSAPublicKey *key,
             // abort();
         }
     }
+}
+
+void find_counter(const RSAPublicKey *key)
+{
+    uint64_t A = 0;
+    for (; A < 1000; A++)
+    {
+        uint64_t question = A + (uint64_t) ((uint32_t)A * key->n0inv) * (uint64_t) key->n[0];
+        printf("q: 0x%lx\n", question);
+    }
+
 }
 
 /* montgomery c[] = a[] * b[] / R % mod */
@@ -148,7 +161,6 @@ void modpow3(const RSAPublicKey *key, uint32_t* a) {
 }
 
 void mont_exp_test(const RSAPublicKey *key) {
-    srand(time(NULL));
     uint32_t a[RSANUMWORDS];
     uint32_t number;
 
@@ -189,14 +201,29 @@ void mont_mul_test_1(const RSAPublicKey *key) {
 
 void mont_mul_test_2(const RSAPublicKey *key) {
     uint32_t c[RSANUMWORDS];
-    uint32_t a[RSANUMWORDS] = {937744360};
-    uint32_t b[RSANUMWORDS] = {937744360};
+    uint32_t a[RSANUMWORDS] = {0x6c35600e};
+    uint32_t b[RSANUMWORDS] = {0x6c35600e};
+    dump_uint32_array("a", a, 1);
 
     montMul(key, c, a, b);
-
     // c == (a * b * R_inv) mod key.n
     // c < 2 * key.n
     dump_uint32_array("c", c, 1);
+}
+
+void mont_mul_test_3(const RSAPublicKey *key) {
+    while (1) {
+        uint32_t c[RSANUMWORDS];
+        uint32_t a[RSANUMWORDS] = {gen_random()}; // 3937744360
+        uint32_t b[RSANUMWORDS] = {key->rr[0]};
+        dump_uint32_array("a", a, 1);
+
+        montMul(key, c, a, b);
+
+        // c == (a * b * R_inv) mod key.n
+        // c < 2 * key.n
+        dump_uint32_array("c", c, 1);
+    }
 }
 
 int main(int argc, char** argv) {
@@ -206,6 +233,7 @@ int main(int argc, char** argv) {
     key.exponent = 3;
 
     // printf("number of words: %lu\n", RSANUMWORDS);
+    srand(time(NULL));
 
     key.n[0] = 0x755a9e77;
     // R_inv = 0x3e22aff1 // R_inv * R == 1 mod key.n
@@ -217,9 +245,9 @@ int main(int argc, char** argv) {
     // key.n0inv = 0x8f6fa1e3; // key.n0inv * key.n[0] == -1 mod b
     // key.rr[0] = 0x13ac4a1e;
 
-    // 0x7667ea8f
+    // mont_mul_test_2(&key);
 
-    mont_mul_test_2(&key);
+    find_counter(&key); 
     // mont_exp_test(&key);
     return 0;
 }
