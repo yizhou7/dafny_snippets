@@ -48,27 +48,22 @@ def generate_valid_n():
         if n % 3 != 0:
             return n
 
-# while True:
-#     n = generate_valid_n()
-#     rr = compute_rr(n)
+while True:
+    n = generate_valid_n()
+    rr = compute_rr(n)
 
-#     n_R = n/R
-#     rr_n = rr/n
+    n_R = n/R
+    rr_n = rr/n
 
-#     if 0.47 < n_R < 0.5 and rr_n > 0.8:
-#         print(hex(n))
-#         print("n/R:", n_R)
-#         print("rr/n:", rr_n)
+    if 0.47 < n_R < 0.5 and rr_n > 0.8:
+        print("n/R:", n_R)
+        print("rr/n:", rr_n)
 
-n = 0x7ae1781d
-rr = compute_rr(n)
+        n0inv = B - mod_inverse(n, B)
 
-n0inv = B - mod_inverse(n, B)
-
-out = f"""
-    key.n[0] = {hex(n)};
-    key.n0inv = {hex(n0inv)}; // key.n0inv * key.n[0] == -1 mod b
-    key.rr[0] = {hex(rr)}; // key.rr == R * R % key.n
-"""
-
-print(out )
+        out = f"""
+            key->n[0] = {hex(n)};
+            key->n0inv = {hex(n0inv)}; // key.n0inv * key.n[0] == -1 mod b
+            key->rr[0] = {hex(rr)}; // key.rr == R * R % key.n
+        """
+        print(out)
