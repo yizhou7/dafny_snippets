@@ -90,8 +90,8 @@ void montMulAdd(const RSAPublicKey *key,
     if (c[0] > key->n[0]) {
         printf("result larger than key.n\n");
         if ((uint64_t) c[0] > 2 * (uint64_t) key->n[0]) {
-            abort();
             printf("!!!!! result larger than 2 * key.n\n");
+            abort();
         }
     }
 }
@@ -189,14 +189,13 @@ void mont_mul_test_1(const RSAPublicKey *key) {
 
 void mont_mul_test_2(const RSAPublicKey *key) {
     uint32_t c[RSANUMWORDS];
-    uint32_t a[RSANUMWORDS] = {0xaaa}; // a > key.n
-    uint32_t b[RSANUMWORDS] = {0xaaa}; // b > key.n
+    uint32_t a[RSANUMWORDS] = {3937744360};
+    uint32_t b[RSANUMWORDS] = {3937744360};
 
     montMul(key, c, a, b);
 
     // c == (a * b * R_inv) mod key.n
     // c < 2 * key.n
-
     dump_uint32_array("c", c, 1);
 }
 
@@ -208,20 +207,17 @@ int main(int argc, char** argv) {
 
     // printf("number of words: %lu\n", RSANUMWORDS);
 
-    // key.n[0] = 0x755a9e77;
-    // // R_inv = 0x3e22aff1 // R_inv * R == 1 mod key.n
-    // key.n0inv = 0x878b64b9; // key.n0inv * key.n[0] == -1 mod b
-    // key.rr[0] = 0x2f305830; // key.rr == R * R % key.n
+    key.n[0] = 0x755a9e77;
+    // R_inv = 0x3e22aff1 // R_inv * R == 1 mod key.n
+    key.n0inv = 0x878b64b9; // key.n0inv * key.n[0] == -1 mod b
+    key.rr[0] = 0x2f305830; // key.rr == R * R % key.n
     
     // key.n[0] = 0x97375435;
     // // R_inv = 0x3e22aff1 // R_inv * R == 1 mod key.n
     // key.n0inv = 0x8f6fa1e3; // key.n0inv * key.n[0] == -1 mod b
     // key.rr[0] = 0x13ac4a1e;
 
-    key.n[0] = 0x29b;
-    // R_inv = 0x3e22aff1 // R_inv * R == 1 mod key.n
-    key.n0inv = 0xe648ec6d; // key.n0inv * key.n[0] == -1 mod b
-    key.rr[0] = 0x25c;
+    // 0x7667ea8f
 
     mont_mul_test_2(&key);
 

@@ -653,10 +653,13 @@ module RSAE3v2 {
             cmm_bounded_lemma_1(key, u_i, x_i, uh64(temp), y, A', A);
         }
 
-        assume false;
+        if uh64(temp) != 0 {
 
-        // if uh64(temp) != 0 {
-        //     assume false;
+        } else {
+            assert seq_interp(A') * BASE == x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A);
+            assert seq_interp(A') < seq_interp(y) + key.m_val;
+        }
+        assume false;
 
         //     cmm_subtract_lemma(A', S, key.m_val, temp, key.len);
         //     var b, A'' := seq_sub(A', key.m);
