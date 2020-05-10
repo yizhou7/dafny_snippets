@@ -1,3 +1,6 @@
+import Crypto.Util.number
+import Crypto.Random
+
 import sys
 
 R = 2 **32
@@ -31,10 +34,34 @@ def mod_inverse(a, m) :
 def compute_rr(n):
     return R * R % n
 
-n = int(sys.argv[1], 16)
-print("n/R:", n/R)
-rr = compute_rr(n) 
-# print("rr/R:", rr/R)
+def generate_valid_n():
+    bits=16
+
+    while True:
+        # print ("No of bits in prime is ",bits)
+        p=Crypto.Util.number.getPrime(bits, randfunc=Crypto.Random.get_random_bytes)
+        # print ("\nRandom n-bit Prime (p): ",p)
+
+        q=Crypto.Util.number.getPrime(bits, randfunc=Crypto.Random.get_random_bytes)
+        # print ("\nRandom n-bit Prime (q): ",q)
+        n = p * q
+        if n % 3 != 0:
+            return n
+
+# while True:
+#     n = generate_valid_n()
+#     rr = compute_rr(n)
+
+#     n_R = n/R
+#     rr_n = rr/n
+
+#     if 0.47 < n_R < 0.5 and rr_n > 0.8:
+#         print(hex(n))
+#         print("n/R:", n_R)
+#         print("rr/n:", rr_n)
+
+n = 0x7ae1781d
+rr = compute_rr(n)
 
 n0inv = B - mod_inverse(n, B)
 
