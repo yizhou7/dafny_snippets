@@ -190,14 +190,13 @@ void mont_mul_test_1(const RSAPublicKey *key) {
     print_uint32_array("c", c, 1);
 }
 
+// an example where a < 2 * n, b < 2 * n, but c > 2 * n
 void mont_mul_example_1(RSAPublicKey * key) {
-    // an example where a < 2 * n, b < 2 * n, but c > 2 * n
-
     key->n[0] = 0x7a479339;
     key->n0inv = 0x5e7494f7; // key.n0inv * key.n[0] == -1 mod b
     key->rr[0] = 0x21913c35; // key.rr == R * R % key.n
 
-    uint32_t input_bound = key->n[0] * 2;
+    uint32_t input_bound = key->n[0] * 2; // < 2 * n
     double max_ratio = 0;
 
     while (1) {
@@ -215,15 +214,20 @@ void mont_mul_example_1(RSAPublicKey * key) {
     }
 }
 
-void mont_mul_example_2(const RSAPublicKey *key) {
+// an example where a < n, b < n, but c3 > 2 * n
+void mont_mul_example_2(RSAPublicKey *key) {
+    key->n[0] = 0x7a479339;
+    key->n0inv = 0x5e7494f7; // key.n0inv * key.n[0] == -1 mod b
+    key->rr[0] = 0x21913c35; // key.rr == R * R % key.n
+
     double max_ratio = 0;
 
-    uint32_t input_bound = key->n[0];
+    uint32_t input_bound = key->n[0]; // < key.n
 
     while (1) {
         uint32_t c[RSANUMWORDS];
-        uint32_t a[RSANUMWORDS] = {gen_random() % input_bound}; // a < key.n
-        uint32_t b[RSANUMWORDS] = {gen_random() % input_bound}; // b < key.n
+        uint32_t a[RSANUMWORDS] = {gen_random() % input_bound};
+        uint32_t b[RSANUMWORDS] = {gen_random() % input_bound};
 
         montMul(key, c, a, b);
         double c1_n = (double) c[0] / key->n[0];
@@ -239,7 +243,8 @@ void mont_mul_example_2(const RSAPublicKey *key) {
         if (c3_n > max_ratio) {
             printf("c1_n: %f\n", c1_n);
             printf("c2_n: %f\n", c2_n);
-            printf("c3_n: %f\n\n", c3_n);
+            printf("c3_n: %f\n", c3_n);
+            printf("\n");
             max_ratio = c3_n;
         }
     }
@@ -258,7 +263,8 @@ int main(int argc, char** argv) {
     key.n0inv = 0x5e7494f7; // key.n0inv * key.n[0] == -1 mod b
     key.rr[0] = 0x21913c35; // key.rr == R * R % key.n
 
-    mont_mul_example_1(&key);
+    // mont_mul_example_1(&key);
+    mont_mul_example_2(&key);
 
     return 0;
 }
