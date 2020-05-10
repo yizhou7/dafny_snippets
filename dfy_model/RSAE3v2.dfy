@@ -583,72 +583,77 @@ module RSAE3v2 {
         A' := A'[j-1 := lh64(temp)];
         S := S + [lh64(temp), uh64(temp)];
 
-        assert seq_interp(S) == x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A) by {
-            cmm_invarint_lemma_3(key.m, A, x_i, y, key.len, temp, p_1', p_2, p_2', u_i, S, S');
-        }
-
-        // assert x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A) 
-        //     <  x_i as nat * seq_interp(y) + u_i as nat * key.m_val + key.m_val + seq_interp(y)
-        //     ==  (x_i as nat + 1) * seq_interp(y) + (u_i as nat + 1)* key.m_val;
-        // assert (x_i as nat + 1) <= BASE;
-        // assert (u_i as nat + 1) <= BASE;
-        // assert (x_i as nat + 1) * seq_interp(y) + (u_i as nat + 1)* key.m_val
-        //     <= BASE * seq_interp(y) +  (u_i as nat + 1)* key.m_val
-        //     <= BASE * seq_interp(y) +  BASE * key.m_val;
-
-        assume x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A) <= BASE * (seq_interp(y) + key.m_val);
-
-        assume && seq_interp(S) % BASE == 0
-            && seq_interp(S) / BASE == seq_interp(S[1..]);
-
-        assert uh64(temp) as nat * power(BASE, key.len) + seq_interp(A') == seq_interp(S[1..]) by {
-            assert A' == A'[0..key.len] == S[1..key.len+1] by {
-                assert forall k :: 0 <= k < key.len ==> A'[k] == S[k + 1];
+        assert (uh64(temp) as nat * key.R + seq_interp(A')) * BASE == x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A) by {
+            assert seq_interp(S) == x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A) by {
+                cmm_invarint_lemma_3(key.m, A, x_i, y, key.len, temp, p_1', p_2, p_2', u_i, S, S');
             }
-            cmm_ghost_lemma(A', S, temp, key.len);
-        }
 
-        assert uh64(temp) as nat * power(BASE, key.len) + seq_interp(A') <= seq_interp(y) + key.m_val;
+            assume seq_interp(S) == seq_interp(S[1..]) * BASE;
 
-        if uh64(temp) != 0 {
-            assume false;
-
-            cmm_subtract_lemma(A', S, key.m_val, temp, key.len);
-            var b, A'' := seq_sub(A', key.m);
-            A' := A'';
-    
-            assert cong(seq_interp(A'') * BASE, x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A), key.m_val) by {
-                calc ==> {
-                    seq_interp(A'') + key.m_val == seq_interp(S[1..]);
-                    {
-                        reveal cong();
-                    }
-                    cong(seq_interp(A'') + key.m_val, seq_interp(S[1..]), key.m_val);
-                    {
-                        assert cong(seq_interp(A''), seq_interp(A'') + key.m_val, key.m_val) by {
-                            cong_add_lemma_3(seq_interp(A''), key.m_val, key.m_val);
-                        }
-                        cong_trans_lemma(seq_interp(A''), seq_interp(A'') + key.m_val, seq_interp(S[1..]), key.m_val);
-                    }
-                    cong(seq_interp(A''), seq_interp(S[1..]), key.m_val);
-                    {
-                        cong_mul_lemma_1(seq_interp(A''), seq_interp(S[1..]), BASE, key.m_val);
-                    }
-                    cong(seq_interp(A'') * BASE, seq_interp(S[1..]) * BASE, key.m_val);
+            assert uh64(temp) as nat * key.R + seq_interp(A') == seq_interp(S[1..]) by {
+                assert A' == A'[0..key.len] == S[1..key.len+1] by {
+                    assert forall k :: 0 <= k < key.len ==> A'[k] == S[k + 1];
                 }
-            }
-        } else {
-            assert cong(seq_interp(A') * BASE, x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A), key.m_val) by {
-                assert seq_interp(A') == seq_interp(S[1..]);
-                assert seq_interp(A') * BASE == seq_interp(S);
-                assert seq_interp(A') * BASE == x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A);
-                reveal cong();
+                cmm_ghost_lemma(A', S, temp, key.len);
             }
         }
 
-        assert cong(seq_interp(A'), seq_interp(x[..i+1]) * seq_interp(y) * power(key.BASE_INV, i+1), key.m_val) by {
-            cmm_congruent_lemma(key, x, i, x_i as nat, u_i as nat, seq_interp(A), seq_interp(A'), seq_interp(y));
-        }
+        assume false;
+
+
+
+
+
+        // assume x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A) <= BASE * (seq_interp(y) + key.m_val);
+
+        // assert uh64(temp) as nat * key.R + seq_interp(A') <= seq_interp(y) + key.m_val;
+
+        // if uh64(temp) > 1 {
+        //     assert uh64(temp) as nat * key.R + seq_interp(A') >= 2 * key.R + seq_interp(A');
+        //     assume seq_interp(y) < key.R;
+        //     assume key.m_val < key.R;
+        //     assert false;
+        // }
+
+        // if uh64(temp) != 0 {
+        //     assume false;
+
+        //     cmm_subtract_lemma(A', S, key.m_val, temp, key.len);
+        //     var b, A'' := seq_sub(A', key.m);
+        //     A' := A'';
+    
+        //     assert cong(seq_interp(A'') * BASE, x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A), key.m_val) by {
+        //         calc ==> {
+        //             seq_interp(A'') + key.m_val == seq_interp(S[1..]);
+        //             {
+        //                 reveal cong();
+        //             }
+        //             cong(seq_interp(A'') + key.m_val, seq_interp(S[1..]), key.m_val);
+        //             {
+        //                 assert cong(seq_interp(A''), seq_interp(A'') + key.m_val, key.m_val) by {
+        //                     cong_add_lemma_3(seq_interp(A''), key.m_val, key.m_val);
+        //                 }
+        //                 cong_trans_lemma(seq_interp(A''), seq_interp(A'') + key.m_val, seq_interp(S[1..]), key.m_val);
+        //             }
+        //             cong(seq_interp(A''), seq_interp(S[1..]), key.m_val);
+        //             {
+        //                 cong_mul_lemma_1(seq_interp(A''), seq_interp(S[1..]), BASE, key.m_val);
+        //             }
+        //             cong(seq_interp(A'') * BASE, seq_interp(S[1..]) * BASE, key.m_val);
+        //         }
+        //     }
+        // } else {
+        //     assert cong(seq_interp(A') * BASE, x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A), key.m_val) by {
+        //         assert seq_interp(A') == seq_interp(S[1..]);
+        //         assert seq_interp(A') * BASE == seq_interp(S);
+        //         assert seq_interp(A') * BASE == x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A);
+        //         reveal cong();
+        //     }
+        // }
+
+        // assert cong(seq_interp(A'), seq_interp(x[..i+1]) * seq_interp(y) * power(key.BASE_INV, i+1), key.m_val) by {
+        //     cmm_congruent_lemma(key, x, i, x_i as nat, u_i as nat, seq_interp(A), seq_interp(A'), seq_interp(y));
+        // }
     
     }
 
