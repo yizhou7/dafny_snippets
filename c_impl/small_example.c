@@ -61,10 +61,12 @@ void montMulAdd(const RSAPublicKey *key,
 
     uint64_t B = (uint64_t)d0 * key->n[0] + (uint32_t)A; // B == (a * b * key->n0inv) % BASE * key->n + lower(A)
 
-    // printf("A: 0x%lx\n", A);
-    // printf("B: 0x%lx\n", B);
+    uint64_t left = (uint64_t) a * (uint64_t)  b[0] + (uint64_t)  d0 * (uint64_t) key->n[0] + (uint64_t) c[0];
+    uint64_t right = ((B >> 32) + (A >> 32)) << 32; 
 
-    // (a * b + d_0 * key.n) == (uh64(B) + uh64(A)) * BASE < key->n * BASE
+    assert(left == right);
+
+    uint32_t old = c[0];
 
     int i;
 
@@ -78,9 +80,9 @@ void montMulAdd(const RSAPublicKey *key,
     // printf("B: 0x%lx\n", B >> 32);
 
     uint64_t S = (A >> 32) + (B >> 32);
-    // printf("S: 0x%lx\n", S);
-
     c[i - 1] = (uint32_t)S;
+
+    // left = c[0];
 
     if (S >> 32) {
         printf("mont subtraction\n");
@@ -91,7 +93,7 @@ void montMulAdd(const RSAPublicKey *key,
         printf("result larger than key.n\n");
         if ((uint64_t) c[0] > 2 * (uint64_t) key->n[0]) {
             printf("!!!!! result larger than 2 * key.n\n");
-            abort();
+            // abort();
         }
     }
 }
@@ -150,24 +152,22 @@ void mont_exp_test(const RSAPublicKey *key) {
     uint32_t a[RSANUMWORDS];
     uint32_t number;
 
-    bool equal = true;
-
     while (1) {
-        number = gen_random();
+        number = gen_random() % key->n[0];
         a[0] = number;
         modpow3(key, a);
+        printf("%u\n", number);
 
         // printf("generated: 0x%x\n", number);
         // printf("result: 0x%x\n\n", a[0]);
-
-        printf("%u %u\n", number, a[0]);
 
         uint64_t r = ((uint64_t) number * (uint64_t) number) % key->n[0];
         r = (r * (uint64_t) number) % key->n[0];
 
         if (r != a[0]) {
+            printf("%u %u\n", number, a[0]);
             printf("NOT EQUAL\n");
-            equal = false;
+            abort();
         }
     }
 }
@@ -189,8 +189,8 @@ void mont_mul_test_1(const RSAPublicKey *key) {
 
 void mont_mul_test_2(const RSAPublicKey *key) {
     uint32_t c[RSANUMWORDS];
-    uint32_t a[RSANUMWORDS] = {3937744360};
-    uint32_t b[RSANUMWORDS] = {3937744360};
+    uint32_t a[RSANUMWORDS] = {937744360};
+    uint32_t b[RSANUMWORDS] = {937744360};
 
     montMul(key, c, a, b);
 
@@ -220,7 +220,6 @@ int main(int argc, char** argv) {
     // 0x7667ea8f
 
     mont_mul_test_2(&key);
-
     // mont_exp_test(&key);
     return 0;
 }
