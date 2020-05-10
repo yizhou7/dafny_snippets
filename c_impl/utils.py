@@ -34,8 +34,14 @@ def compute_rr(n):
 n = int(sys.argv[1], 16)
 print("n/R:", n/R)
 rr = compute_rr(n) 
-print("rr/R:", rr/R)
+# print("rr/R:", rr/R)
 
 n0inv = B - mod_inverse(n, B)
-print(hex(rr))
-print(hex(n0inv))
+
+out = f"""
+    key.n[0] = {hex(n)};
+    key.n0inv = {hex(n0inv)}; // key.n0inv * key.n[0] == -1 mod b
+    key.rr[0] = {hex(rr)}; // key.rr == R * R % key.n
+"""
+
+print(out )
