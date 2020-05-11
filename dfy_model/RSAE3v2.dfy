@@ -747,18 +747,24 @@ module RSAE3v2 {
                 reveal cong_a2;
                 cong_mul_lemma_1(ar_val, key.R * a_val, key.R_INV, key.m_val);
             }
-            R_inv_cancel_lemma(key, a_val);
-            reveal cong();
+            assert cong(key.R * a_val * key.R_INV, a_val, key.m_val) by {
+                R_inv_cancel_lemma(key, a_val);
+            }
+            cong_trans_lemma(ar_val * key.R_INV, key.R * a_val * key.R_INV, a_val, key.m_val);
         }
 
-        assert cong_a4: cong(aar_val, ar_val * a_val, key.m_val) by {
-            assert cong(ar_val * ar_val * key.R_INV, ar_val * a_val, key.m_val) by {
-                reveal cong_a3;
-                cong_mul_lemma_1(ar_val * key.R_INV, a_val, ar_val, key.m_val);
-            }
-            assert cong(aar_val, ar_val * ar_val * key.R_INV, key.m_val);
-            cong_trans_lemma(aar_val, ar_val * ar_val * key.R_INV, ar_val * a_val, key.m_val);
-        }
+        // assert cong_a4: cong(aar_val, ar_val * a_val, key.m_val) by {
+        //     assert cong(ar_val * ar_val * key.R_INV, ar_val * a_val, key.m_val) by {
+        //         reveal cong_a3;
+        //         cong_mul_lemma_1(ar_val * key.R_INV, a_val, ar_val, key.m_val);
+        //     }
+        //     assert cong(aar_val, ar_val * ar_val * key.R_INV, key.m_val);
+        //     cong_trans_lemma(aar_val, ar_val * ar_val * key.R_INV, ar_val * a_val, key.m_val);
+        // }
+
+        // assert cong(aaa_val, aar_val * a_val * key.R_INV, key.m_val);
+        // cong_mul_lemma_1(aar_val, ar_val * , , key.m_val);
+
 
     }
 
