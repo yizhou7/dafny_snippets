@@ -581,6 +581,7 @@ module RSAE3v2 {
     
         ensures cong(seq_interp(A'), seq_interp(x[..i+1]) * seq_interp(y) * power(key.BASE_INV, i+1), key.m_val);
         ensures |A'| == key.len;
+        ensures seq_interp(A') < seq_interp(y) + key.m_val;
     {
         single_digit_mul_lemma(x_i, y[0], A[0]);
         var p_1 :uint64 := x_i as uint64 * y[0] as uint64 + A[0] as uint64;
@@ -654,16 +655,21 @@ module RSAE3v2 {
         }
 
         if uh64(temp) != 0 {
-
+            assume false;
+            var b, A'' := seq_sub(A', key.m);
+            A' := A'';
         } else {
-            assert seq_interp(A') * BASE == x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A);
             assert seq_interp(A') < seq_interp(y) + key.m_val;
+            assert cong(seq_interp(A') * BASE, x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A), key.m_val) by {
+                assert seq_interp(A') * BASE == x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A);
+                reveal cong();
+            }
         }
-        assume false;
 
+        assert cong(seq_interp(A'), seq_interp(x[..i+1]) * seq_interp(y) * power(key.BASE_INV, i+1), key.m_val) by {
+            cmm_congruent_lemma(key, x, i, x_i as nat, u_i as nat, seq_interp(A), seq_interp(A'), seq_interp(y));
+        }
         //     cmm_subtract_lemma(A', S, key.m_val, temp, key.len);
-        //     var b, A'' := seq_sub(A', key.m);
-        //     A' := A'';
     
         //     assert cong(seq_interp(A'') * BASE, x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A), key.m_val) by {
         //         calc ==> {
@@ -685,31 +691,16 @@ module RSAE3v2 {
         //             cong(seq_interp(A'') * BASE, seq_interp(S[1..]) * BASE, key.m_val);
         //         }
         //     }
-        // } else {
-        //     assert cong(seq_interp(A') * BASE, x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A), key.m_val) by {
-        //         assert seq_interp(A') == seq_interp(S[1..]);
-        //         assert seq_interp(A') * BASE == seq_interp(S);
-        //         assert seq_interp(A') * BASE == x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A);
-        //         reveal cong();
-        //     }
-        // }
-
-        // assert cong(seq_interp(A'), seq_interp(x[..i+1]) * seq_interp(y) * power(key.BASE_INV, i+1), key.m_val) by {
-        //     cmm_congruent_lemma(key, x, i, x_i as nat, u_i as nat, seq_interp(A), seq_interp(A'), seq_interp(y));
-        // }
-    
     }
 
     method montMul(key: pub_key, x: seq<uint32>, y: seq<uint32>)
         returns (A: seq<uint32>)
 
         requires |x| == |y| == key.len;
-        requires 0 <= seq_interp(x) < key.m_val; 
-        requires 0 <= seq_interp(y) < key.m_val; 
-
         // ensures seq_interp(A) == (seq_interp(x) * seq_interp(y) * power(BASE_INV, n)) % seq_interp(m);
-        ensures seq_interp(A) < 2 * key.m_val - 1;
         ensures cong(seq_interp(A), seq_interp(x) * seq_interp(y) * key.R_INV, key.m_val);
+        ensures seq_interp(A) < key.m_val + seq_interp(y);
+        ensures |A| == key.len;
     {
         A  := zero_seq_int(key.len);
         assert seq_interp(A) == 0;
@@ -729,9 +720,8 @@ module RSAE3v2 {
             invariant |A| == key.len;
 
             invariant cong(seq_interp(A), seq_interp(x[..i]) * seq_interp(y) * power(key.BASE_INV, i), key.m_val);
-            // invariant seq_interp(A) < 2 * key.m_val - 1;
+            invariant seq_interp(A) < key.m_val + seq_interp(y);
         {
-            assume false;
             A := montMulAdd(key, A, x[i], y, i, x);
             i := i + 1;
         }
@@ -741,6 +731,28 @@ module RSAE3v2 {
         }
 
         assert cong(seq_interp(A), seq_interp(x) * seq_interp(y) * key.R_INV, key.m_val);
+    }
+
+    method modpow3(key: pub_key, a: seq<uint32>, RR: seq<uint32>)
+        requires 0 <= seq_interp(a) < key.m_val; 
+        requires 0 <= seq_interp(RR) < key.m_val; 
+        requires |a| == |RR| == key.len;
+    {
+
+        var aR := montMul(key, a, RR); /* aR = a * RR / R mod M   */
+        var aaR := montMul(key, aR, aR); /* aaR = aR * aR / R mod M */
+        var aaa := montMul(key, aaR, a); /* aaa = aaR * a / R mod M */
+
+        ghost var a_val := seq_interp(a);
+        ghost var ar_val := seq_interp(aR);
+        ghost var aar_val := seq_interp(aaR);
+        ghost var aaa_val := seq_interp(aaa);
+
+        assert seq_interp(aaa) < key.m_val + a_val;
+
+        assert cong(seq_interp(aR), a_val * seq_interp(RR) * key.R_INV, key.m_val);
+        assert cong(aar_val, ar_val * ar_val * key.R_INV, key.m_val);
+        assert cong(aaa_val, aar_val * a_val * key.R_INV, key.m_val);
     }
 
 /*
@@ -786,38 +798,4 @@ module RSAE3v2 {
         }
     }
 */
-
-    // method modpow3() 
-
-    // static void modpow3(const RSAPublicKey *key, uint8_t* inout) {
-    //     uint32_t a[RSANUMWORDS];
-    //     uint32_t aR[RSANUMWORDS];
-    //     uint32_t aaR[RSANUMWORDS];
-    //     uint32_t *aaa = aR;  /* Re-use location. */
-    //     int i;
-    //     /* Convert from big endian byte array to little endian word array. */
-    //     for (i = 0; i < key->len; ++i) {
-    //         uint32_t tmp =
-    //             (inout[((key->len - 1 - i) * 4) + 0] << 24) |
-    //             (inout[((key->len - 1 - i) * 4) + 1] << 16) |
-    //             (inout[((key->len - 1 - i) * 4) + 2] << 8) |
-    //             (inout[((key->len - 1 - i) * 4) + 3] << 0);
-    //         a[i] = tmp;
-    //     }
-    //     montMul(key, aR, a, key->rr);  /* aR = a * RR / R mod M   */
-    //     montMul(key, aaR, aR, aR);     /* aaR = aR * aR / R mod M */
-    //     montMul(key, aaa, aaR, a);     /* aaa = aaR * a / R mod M */
-    //     /* Make sure aaa < mod; aaa is at most 1x mod too large. */
-    //     if (geM(key, aaa)) {
-    //         subM(key, aaa);
-    //     }
-    //     /* Convert to bigendian byte array */
-    //     for (i = key->len - 1; i >= 0; --i) {
-    //         uint32_t tmp = aaa[i];
-    //         *inout++ = tmp >> 24;
-    //         *inout++ = tmp >> 16;
-    //         *inout++ = tmp >> 8;
-    //         *inout++ = tmp >> 0;
-    //     }
-    // }
 }
