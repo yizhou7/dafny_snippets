@@ -473,7 +473,7 @@ module RSAE3v2 {
             x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A);
         ensures (higher as nat * key.R + seq_interp(A')) < (seq_interp(y) + key.m_val);
         ensures higher <= 1;
-        ensures higher == 1 ==> seq_interp(A') < key.m_val;
+        ensures (higher == 1 ==> seq_interp(A') < key.m_val);
     {
         assert (higher as nat * key.R + seq_interp(A')) * BASE < BASE * (seq_interp(y) + key.m_val) by {
             assert (higher as nat * key.R + seq_interp(A')) * BASE <
@@ -618,6 +618,7 @@ module RSAE3v2 {
 
         assert uh64(temp) as nat * key.R + seq_interp(A') < seq_interp(y) + key.m_val
             && uh64(temp) <= 1 
+            && (uh64(temp) == 1 ==> seq_interp(A') < key.m_val)
         by {
             cmm_bounded_lemma_1(key, u_i, x_i, uh64(temp), y, A', A);
         }
@@ -626,8 +627,6 @@ module RSAE3v2 {
 
         if uh64(temp) != 0 {
             var b, A'' := seq_sub(A', key.m);
-            assume b == 1;
-
             calc == {
                 result;
                 {
