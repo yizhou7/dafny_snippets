@@ -473,6 +473,7 @@ module RSAE3v2 {
             x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A);
         ensures (higher as nat * key.R + seq_interp(A')) < (seq_interp(y) + key.m_val);
         ensures higher <= 1;
+        ensures higher == 1 ==> seq_interp(A') < key.m_val;
     {
         assert (higher as nat * key.R + seq_interp(A')) * BASE < BASE * (seq_interp(y) + key.m_val) by {
             assert (higher as nat * key.R + seq_interp(A')) * BASE <
@@ -503,34 +504,12 @@ module RSAE3v2 {
             assume key.m_val < key.R;
             assert false;
         }
+
+        if higher == 1 && seq_interp(A') >= key.m_val {
+            assert key.R + seq_interp(A') < seq_interp(y) + key.m_val;
+            seq_interp_upper_bound_lemma(y, key.len);
+        }
     }
-
-    // lemma cmm_subtract_lemma(A': seq<uint32>, S: seq<uint32>, m_val: nat, p_1: uint64, n: nat)
-    //     requires n != 0;
-    //     requires |A'| == n;
-    //     requires |S| == n + 2;
-
-    //     requires m_val < power(BASE, n);
-    //     requires uh64(p_1) != 0;
-    //     requires uh64(p_1) as nat * power(BASE, n) + seq_interp(A') == seq_interp(S[1..]);
-    //     requires seq_interp(S[1..]) < 2 * m_val - 1;
-
-    //     ensures power(BASE, n) + seq_interp(A') == seq_interp(S[1..]);
-    //     ensures seq_interp(A') < m_val;
-    // {
-    //     assert power(BASE, n) + seq_interp(A') == seq_interp(S[1..]) by {
-    //         assert uh64(p_1) == 1;
-    //     }
-
-    //     calc ==> {
-    //         power(BASE, n) + seq_interp(A') < 2 * m_val - 1;
-    //         seq_interp(A') < 2 * m_val - 1 - power(BASE, n);
-    //         {
-    //             assert m_val < power(BASE, n);
-    //         }
-    //         seq_interp(A') < m_val;
-    //     }
-    // }
 
 /*
     uint64_t p_1 = (uint64_t)x_i * y[0] + A[0];
@@ -637,7 +616,8 @@ module RSAE3v2 {
             }
         }
 
-        assert uh64(temp) as nat * key.R + seq_interp(A') < seq_interp(y) + key.m_val && uh64(temp) <= 1 
+        assert uh64(temp) as nat * key.R + seq_interp(A') < seq_interp(y) + key.m_val
+            && uh64(temp) <= 1 
         by {
             cmm_bounded_lemma_1(key, u_i, x_i, uh64(temp), y, A', A);
         }
