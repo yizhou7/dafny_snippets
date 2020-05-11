@@ -813,9 +813,11 @@ module RSAE3v2 {
         var aaR := montMul(key, aR, aR); /* aaR = aR * aR / R mod M */
         var aaa := montMul(key, aaR, a); /* aaa = aaR * a / R mod M */
 
-        mod_pow3_congruent_lemma_1(key, seq_interp(a), seq_interp(aR), seq_interp(aaR), seq_interp(aaa), seq_interp(RR));
+        ghost var aaa_val := seq_interp(aaa);
+        ghost var a_val := seq_interp(a);
 
-        assert cong(aaa, a * a * a, key.m_val);
-        assert seq_interp(aaa) < key.m_val + seq_interp(a);
+        mod_pow3_congruent_lemma_1(key, a_val, seq_interp(aR), seq_interp(aaR), aaa_val, seq_interp(RR));
+        assert cong(aaa_val, a_val * a_val * a_val, key.m_val);
+        assert aaa_val < key.m_val + a_val;
     }
 }
