@@ -733,27 +733,12 @@ module RSAE3v2 {
         assert cong(seq_interp(A), seq_interp(x) * seq_interp(y) * key.R_INV, key.m_val);
     }
 
-    method modpow3(key: pub_key, a: seq<uint32>, RR: seq<uint32>)
-        requires 0 <= seq_interp(a) < key.m_val; 
-        requires 0 <= seq_interp(RR) < key.m_val; 
-        requires |a| == |RR| == key.len;
+    lemma mod_pow3_congruent_lemma(key: pub_key, a_val: int, ar_val: int, aar_val: int, aaa_val: int, rr_val: int)
+        requires cong(ar_val, a_val * rr_val * key.R_INV, key.m_val);
+        requires cong(aar_val, ar_val * ar_val * key.R_INV, key.m_val);
+        requires cong(ar_val, a_val * rr_val * key.R_INV, key.m_val);
     {
-
-        var aR := montMul(key, a, RR); /* aR = a * RR / R mod M   */
-        var aaR := montMul(key, aR, aR); /* aaR = aR * aR / R mod M */
-        var aaa := montMul(key, aaR, a); /* aaa = aaR * a / R mod M */
-
-        ghost var a_val := seq_interp(a);
-        ghost var ar_val := seq_interp(aR);
-        ghost var aar_val := seq_interp(aaR);
-        ghost var aaa_val := seq_interp(aaa);
-        ghost var rr_val := seq_interp(RR);
-
-        assert seq_interp(aaa) < key.m_val + a_val;
-
-        assert cong(ar_val, a_val * rr_val * key.R_INV, key.m_val);
         assume cong(ar_val, a_val * key.R, key.m_val);
-
         calc ==> {
             cong(aaa_val, aar_val * a_val * key.R_INV, key.m_val);
             {
@@ -773,6 +758,19 @@ module RSAE3v2 {
         }
     }
 
+    method modpow3(key: pub_key, a: seq<uint32>, RR: seq<uint32>)
+        requires 0 <= seq_interp(a) < key.m_val; 
+        requires 0 <= seq_interp(RR) < key.m_val; 
+        requires |a| == |RR| == key.len;
+    {
+        var aR := montMul(key, a, RR); /* aR = a * RR / R mod M   */
+        var aaR := montMul(key, aR, aR); /* aaR = aR * aR / R mod M */
+        var aaa := montMul(key, aaR, a); /* aaa = aaR * a / R mod M */
+
+        mod_pow3_congruent_lemma(key, seq_interp(a), seq_interp(aR), seq_interp(aaR), seq_interp(aaa), seq_interp(RR));
+
+        assert seq_interp(aaa) < key.m_val + seq_interp(a);
+    }
 /*
     {
        // TODO: refactor the proofs there?
