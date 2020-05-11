@@ -31,7 +31,7 @@ module RSAE3v2 {
         && key.R == power(BASE, key.len)
         && key.R_INV == power(key.BASE_INV, key.len)
 
-    lemma cmm_divisible_lemma(p_1: nat, p_2: nat, x_i: nat, y_0: nat, a_0: nat, u_i: nat, m': nat, m_0: nat)
+    lemma cmm_divisible_lemma_1(p_1: nat, p_2: nat, x_i: nat, y_0: nat, a_0: nat, u_i: nat, m': nat, m_0: nat)
         requires cong(m' * m_0, -1, BASE);
         requires p_1 <= UINT64_MAX as nat;
         requires p_1 == x_i * y_0 + a_0;
@@ -307,32 +307,16 @@ module RSAE3v2 {
         }
     }
     
-    lemma cmm_bounded_lemma(
-        m: seq<uint32>,
-        A: seq<uint32>, 
-        x_i: uint32,
-        u_i: uint32,
-        y: seq<uint32>,
-        S: seq<uint32>,
-        n: nat)
-
-        requires |S| == n + 2;
-
+    lemma cmm_divisible_lemma_2(key: pub_key, S: seq<uint32>)
+        requires |S| == key.len + 2;
         requires S[0] == 0;
-        requires seq_interp(m) != 0;
-        requires seq_interp(S) == x_i as nat * seq_interp(y) + u_i as nat * seq_interp(m) + seq_interp(A);
-
-        ensures seq_interp(S) % BASE == 0 && seq_interp(S) / BASE == seq_interp(S[1..]);
+        ensures seq_interp(S) == seq_interp(S[1..]) * BASE;
     {
-        ghost var m_val := seq_interp(m);
-        ghost var m_bound := m_val - 1;
-        ghost var base_bound := BASE - 1;
-
         assert seq_interp(S) % BASE == 0 && seq_interp(S) / BASE == seq_interp(S[1..]) by {
             assert cong(S[0] as int , 0, BASE) by {
                 reveal cong();
             } 
-            seq_div_base_lemma(S, n + 2);
+            seq_div_base_lemma(S, key.len + 2);
         }
     }
 
@@ -557,7 +541,7 @@ module RSAE3v2 {
         var p_2 :uint64 := u_i as uint64 * key.m[0] as uint64 + lh64(p_1) as uint64;
 
         assert cong(p_2 as int, 0, BASE) by {
-            cmm_divisible_lemma(p_1 as nat, p_2 as nat, x_i as nat, y[0] as nat, A[0] as nat, u_i as nat, key.m' as nat, key.m[0] as nat);
+            cmm_divisible_lemma_1(p_1 as nat, p_2 as nat, x_i as nat, y[0] as nat, A[0] as nat, u_i as nat, key.m' as nat, key.m[0] as nat);
         }
 
         ghost var S := [0];
@@ -606,7 +590,9 @@ module RSAE3v2 {
                 cmm_invarint_lemma_3(key.m, A, x_i, y, key.len, temp, p_1', p_2, p_2', u_i, S, S');
             }
 
-            assume seq_interp(S) == seq_interp(S[1..]) * BASE;
+            assert seq_interp(S) == seq_interp(S[1..]) * BASE by {
+                cmm_divisible_lemma_2(key, S);
+            }
 
             assert uh64(temp) as nat * key.R + seq_interp(A') == seq_interp(S[1..]) by {
                 assert A' == A'[0..key.len] == S[1..key.len+1] by {
