@@ -29,7 +29,7 @@ module RSAE3v2 {
         && cong(key.m' as nat * key.m[0] as nat, -1, BASE)
         && cong(BASE * key.BASE_INV, 1, key.m_val)
         && key.R == power(BASE, key.len)
-        && key.R_INV == power(key.BASE_INV, key.len)
+        && cong(key.R_INV * key.R, 1, key.m_val)
 
     lemma cmm_divisible_lemma_1(p_1: nat, p_2: nat, x_i: nat, y_0: nat, a_0: nat, u_i: nat, m': nat, m_0: nat)
         requires cong(m' * m_0, -1, BASE);
@@ -705,25 +705,49 @@ module RSAE3v2 {
         requires cong(aar_val, ar_val * ar_val * key.R_INV, key.m_val);
         requires cong(ar_val, a_val * rr_val * key.R_INV, key.m_val);
     {
-        assert cong(ar_val, a_val * key.R, key.m_val) by {
-            assume false;
+        assert cong(rr_val * a_val * key.R_INV, key.R * a_val, key.m_val) by {
+            assert cong(rr_val, key.R * key.R, key.m_val);
+            calc ==> {
+                cong(rr_val, key.R * key.R, key.m_val);
+                {
+                    cong_mul_lemma_1(rr_val, key.R * key.R, a_val * key.R_INV, key.m_val);
+                }
+                cong(rr_val * a_val * key.R_INV, key.R * key.R * a_val * key.R_INV, key.m_val);
+                {
+                    assert cong(key.R_INV * key.R * key.R * a_val, key.R * a_val, key.m_val) by {
+                        assert cong(key.R_INV * key.R, 1, key.m_val);
+                        cong_mul_lemma_1(key.R_INV * key.R, 1, key.R * a_val, key.m_val);
+                    }
+                    cong_trans_lemma(rr_val * a_val * key.R_INV,
+                        key.R * key.R * a_val * key.R_INV,
+                        key.R * a_val, key.m_val);
+                }
+                cong(rr_val * a_val * key.R_INV, key.R * a_val, key.m_val);
+            }
         }
+
+        // assert cong(ar_val, a_val * key.R, key.m_val) by {
+           
+
+        // }
+            assume false;
+
         calc ==> {
             cong(aaa_val, aar_val * a_val * key.R_INV, key.m_val);
             {
                 assert cong(aar_val, ar_val * ar_val * key.R_INV, key.m_val);
                 assume false;
             }
-            cong(aaa_val, ar_val * ar_val * key.R_INV * a_val * key.R_INV, key.m_val);
-            {
-                assert cong(ar_val, a_val * key.R, key.m_val);
-                assume false;
-            }
-            cong(aaa_val, a_val * key.R * a_val * key.R * key.R_INV * a_val * key.R_INV, key.m_val);
-            {
-                assume false;
-            }
-            cong(aaa_val, a_val * a_val * a_val, key.m_val);
+            // cong(aaa_val, ar_val * ar_val * key.R_INV * a_val * key.R_INV, key.m_val);
+            // {
+            //     assert cong(ar_val, a_val * key.R, key.m_val);
+            //     assume false;
+            // }
+            // cong(aaa_val, a_val * key.R * a_val * key.R * key.R_INV * a_val * key.R_INV, key.m_val);
+            // {
+            //     assume false;
+            // }
+            // cong(aaa_val, a_val * a_val * a_val, key.m_val);
         }
     }
 
