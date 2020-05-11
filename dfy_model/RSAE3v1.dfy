@@ -825,16 +825,4 @@ module RSAE3v1 {
     {
         assert true;
     }
-
-    // method modpow3(A: nat, N:nat, R: nat, RR: nat)
-    //     requires RR == R * R;
-    // {
-    //     montMul(key, aR, a, RR);       /* aR = M * RR / R mod N   */
-    //     montMul(key, aaR, aR, aR);     /* aaR = aR * MR / R mod N */
-    //     montMul(key, aaa, aaR, a);     /* aaa = aaR * a / R mod N */
-        
-    //     if (geM(key, aaa)) {
-    //        subM(key, aaa);
-    //     }
-    // }
 }
