@@ -716,9 +716,9 @@ module RSAE3v2 {
         requires cong(rr_val, key.R * key.R, key.m_val);
         requires cong(ar_val, a_val * rr_val * key.R_INV, key.m_val);
         requires cong(aar_val, ar_val * ar_val * key.R_INV, key.m_val);
-        requires cong(ar_val, a_val * rr_val * key.R_INV, key.m_val);
+        requires cong(aaa_val, aar_val * a_val * key.R_INV, key.m_val);
     {
-        assert cong(rr_val * a_val * key.R_INV, key.R * a_val, key.m_val) by {
+        assert cong_a1: cong(rr_val * a_val * key.R_INV, key.R * a_val, key.m_val) by {
             assert cong(rr_val, key.R * key.R, key.m_val);
             calc ==> {
                 cong(rr_val, key.R * key.R, key.m_val);
@@ -727,10 +727,7 @@ module RSAE3v2 {
                 }
                 cong(rr_val * a_val * key.R_INV, key.R * key.R * a_val * key.R_INV, key.m_val);
                 {
-                    assert cong(key.R_INV * key.R * key.R * a_val, key.R * a_val, key.m_val) by {
-                        assert cong(key.R_INV * key.R, 1, key.m_val);
-                        cong_mul_lemma_1(key.R_INV * key.R, 1, key.R * a_val, key.m_val);
-                    }
+                    R_inv_cancel_lemma(key, key.R * a_val);
                     cong_trans_lemma(rr_val * a_val * key.R_INV,
                         key.R * key.R * a_val * key.R_INV,
                         key.R * a_val, key.m_val);
@@ -739,25 +736,30 @@ module RSAE3v2 {
             }
         }
 
-        assume false;
+        assert cong_a2: cong(ar_val, key.R * a_val, key.m_val) by {
+            assert cong(ar_val, a_val * rr_val * key.R_INV, key.m_val);
+            reveal cong_a1;
+            reveal cong();
+        }
 
-        // calc ==> {
-        //     cong(aaa_val, aar_val * a_val * key.R_INV, key.m_val);
-        //     {
-        //         assert cong(aar_val, ar_val * ar_val * key.R_INV, key.m_val);
-        //         assume false;
-        //     }
-        //     // cong(aaa_val, ar_val * ar_val * key.R_INV * a_val * key.R_INV, key.m_val);
-        //     // {
-        //     //     assert cong(ar_val, a_val * key.R, key.m_val);
-        //     //     assume false;
-        //     // }
-        //     // cong(aaa_val, a_val * key.R * a_val * key.R * key.R_INV * a_val * key.R_INV, key.m_val);
-        //     // {
-        //     //     assume false;
-        //     // }
-        //     // cong(aaa_val, a_val * a_val * a_val, key.m_val);
-        // }
+        assert cong_a3: cong(ar_val * key.R_INV, a_val, key.m_val) by {
+            assert cong(ar_val * key.R_INV, key.R * a_val * key.R_INV, key.m_val) by {
+                reveal cong_a2;
+                cong_mul_lemma_1(ar_val, key.R * a_val, key.R_INV, key.m_val);
+            }
+            R_inv_cancel_lemma(key, a_val);
+            reveal cong();
+        }
+
+        assert cong_a4: cong(aar_val, ar_val * a_val, key.m_val) by {
+            assert cong(ar_val * ar_val * key.R_INV, ar_val * a_val, key.m_val) by {
+                reveal cong_a3;
+                cong_mul_lemma_1(ar_val * key.R_INV, a_val, ar_val, key.m_val);
+            }
+            assert cong(aar_val, ar_val * ar_val * key.R_INV, key.m_val);
+            cong_trans_lemma(aar_val, ar_val * ar_val * key.R_INV, ar_val * a_val, key.m_val);
+        }
+
     }
 
     method modpow3(key: pub_key, a: seq<uint32>, RR: seq<uint32>)
