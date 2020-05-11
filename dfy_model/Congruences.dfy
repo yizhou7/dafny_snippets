@@ -63,6 +63,15 @@ module Congruences {
         }
     }
 
+    lemma cong_remainder_lemma(a: int, b:int, n: int)
+        requires n != 0;
+        requires cong(a, b, n) && 0 <= a < n;
+        ensures a == b % n;
+    {
+        reveal cong();
+        assert a % n == a;
+    }
+
     lemma mod_div_inv_leamma(a: int, b: int, b_inv: int, n: int)
         requires n != 0 && b != 0
         requires cong(b * b_inv, 1, n);
@@ -94,7 +103,7 @@ module Congruences {
 
     lemma cong_trans_lemma(a: int, b: int, c: int, n: int)
         requires n != 0;
-        requires cong(a, b, n) && cong(b, c, n);
+        requires (cong(a, b, n) || cong(b, a, n)) && (cong(b, c, n) || cong(c, b, n));
         ensures cong(a, c, n);
     {
         reveal cong();
