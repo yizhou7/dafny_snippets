@@ -747,12 +747,30 @@ module RSAE3v2 {
         ghost var ar_val := seq_interp(aR);
         ghost var aar_val := seq_interp(aaR);
         ghost var aaa_val := seq_interp(aaa);
+        ghost var rr_val := seq_interp(RR);
 
         assert seq_interp(aaa) < key.m_val + a_val;
 
-        assert cong(seq_interp(aR), a_val * seq_interp(RR) * key.R_INV, key.m_val);
-        assert cong(aar_val, ar_val * ar_val * key.R_INV, key.m_val);
-        assert cong(aaa_val, aar_val * a_val * key.R_INV, key.m_val);
+        assert cong(ar_val, a_val * rr_val * key.R_INV, key.m_val);
+        assume cong(ar_val, a_val * key.R, key.m_val);
+
+        calc ==> {
+            cong(aaa_val, aar_val * a_val * key.R_INV, key.m_val);
+            {
+                assert cong(aar_val, ar_val * ar_val * key.R_INV, key.m_val);
+                assume false;
+            }
+            cong(aaa_val, ar_val * ar_val * key.R_INV * a_val * key.R_INV, key.m_val);
+            {
+                assert cong(ar_val, a_val * key.R, key.m_val);
+                assume false;
+            }
+            cong(aaa_val, a_val * key.R * a_val * key.R * key.R_INV * a_val * key.R_INV, key.m_val);
+            {
+                assume false;
+            }
+            cong(aaa_val, a_val * a_val * a_val, key.m_val);
+        }
     }
 
 /*
