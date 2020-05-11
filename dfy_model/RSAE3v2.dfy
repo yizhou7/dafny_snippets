@@ -505,45 +505,32 @@ module RSAE3v2 {
         }
     }
 
-    lemma cmm_hihger_bit_lemma(A': seq<uint32>, uh_p_1: nat, m_val: nat, n: nat)
-        requires |A'| == n;
-        requires m_val < power(BASE, n);
-        requires uh_p_1 * power(BASE, n) + seq_interp(A')  < 2 * m_val - 1;
-        ensures uh_p_1 <= 1;
-    {
-        if uh_p_1 > 1 {
-            assert uh_p_1 * power(BASE, n) >= 2 * power(BASE, n);
-            assert false; // contradiction 
-        }
-    }
+    // lemma cmm_subtract_lemma(A': seq<uint32>, S: seq<uint32>, m_val: nat, p_1: uint64, n: nat)
+    //     requires n != 0;
+    //     requires |A'| == n;
+    //     requires |S| == n + 2;
 
-    lemma cmm_subtract_lemma(A': seq<uint32>, S: seq<uint32>, m_val: nat, p_1: uint64, n: nat)
-        requires n != 0;
-        requires |A'| == n;
-        requires |S| == n + 2;
+    //     requires m_val < power(BASE, n);
+    //     requires uh64(p_1) != 0;
+    //     requires uh64(p_1) as nat * power(BASE, n) + seq_interp(A') == seq_interp(S[1..]);
+    //     requires seq_interp(S[1..]) < 2 * m_val - 1;
 
-        requires m_val < power(BASE, n);
-        requires uh64(p_1) != 0;
-        requires uh64(p_1) as nat * power(BASE, n) + seq_interp(A') == seq_interp(S[1..]);
-        requires seq_interp(S[1..]) < 2 * m_val - 1;
+    //     ensures power(BASE, n) + seq_interp(A') == seq_interp(S[1..]);
+    //     ensures seq_interp(A') < m_val;
+    // {
+    //     assert power(BASE, n) + seq_interp(A') == seq_interp(S[1..]) by {
+    //         assert uh64(p_1) == 1;
+    //     }
 
-        ensures power(BASE, n) + seq_interp(A') == seq_interp(S[1..]);
-        ensures seq_interp(A') < m_val;
-    {
-        assert power(BASE, n) + seq_interp(A') == seq_interp(S[1..]) by {
-            cmm_hihger_bit_lemma(A', uh64(p_1) as nat, m_val, n);
-            assert uh64(p_1) == 1;
-        }
-
-        calc ==> {
-            power(BASE, n) + seq_interp(A') < 2 * m_val - 1;
-            seq_interp(A') < 2 * m_val - 1 - power(BASE, n);
-            {
-                assert m_val < power(BASE, n);
-            }
-            seq_interp(A') < m_val;
-        }
-    }
+    //     calc ==> {
+    //         power(BASE, n) + seq_interp(A') < 2 * m_val - 1;
+    //         seq_interp(A') < 2 * m_val - 1 - power(BASE, n);
+    //         {
+    //             assert m_val < power(BASE, n);
+    //         }
+    //         seq_interp(A') < m_val;
+    //     }
+    // }
 
 /*
     uint64_t p_1 = (uint64_t)x_i * y[0] + A[0];
@@ -654,14 +641,45 @@ module RSAE3v2 {
             cmm_bounded_lemma_1(key, u_i, x_i, uh64(temp), y, A', A);
         }
 
+        ghost var result := x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A);
+
         if uh64(temp) != 0 {
-            assume false;
             var b, A'' := seq_sub(A', key.m);
+            assume  b == 1;
+
+            calc == {
+                result;
+                {
+                    assert uh64(temp) == 1;
+                }
+                (key.R + seq_interp(A')) * BASE;
+                {
+                    assert seq_interp(A') + key.R == seq_interp(A'') + key.m_val;
+                }
+                (seq_interp(A'') + key.m_val) * BASE;
+            }
+            assume false;
+
+            calc ==> {
+                cong((seq_interp(A'') + key.m_val) * BASE, result, key.m_val);
+                {
+                    cong_add_lemma_3((seq_interp(A'') + key.m_val) * BASE, -key.m_val * BASE,  key.m_val);
+                }
+                // cong((seq_interp(A'') + key.m_val) * BASE - key.m_val * BASE, result, key.m_val);
+                // {
+                //     assert (seq_interp(A'') + key.m_val) * BASE - key.m_val * BASE == seq_interp(A'') * BASE;
+                // }
+                // cong(seq_interp(A'') * BASE, result, key.m_val);
+            }
+
             A' := A'';
+
+            assume false;
+            // assume cong(seq_interp(A') * BASE, x_i as int * seq_interp(y) + u_i as int * key.m_val + seq_interp(A), key.m_val);
         } else {
             assert seq_interp(A') < seq_interp(y) + key.m_val;
-            assert cong(seq_interp(A') * BASE, x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A), key.m_val) by {
-                assert seq_interp(A') * BASE == x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A);
+            assert cong(seq_interp(A') * BASE, result, key.m_val) by {
+                assert seq_interp(A') * BASE == result;
                 reveal cong();
             }
         }
@@ -669,35 +687,13 @@ module RSAE3v2 {
         assert cong(seq_interp(A'), seq_interp(x[..i+1]) * seq_interp(y) * power(key.BASE_INV, i+1), key.m_val) by {
             cmm_congruent_lemma(key, x, i, x_i as nat, u_i as nat, seq_interp(A), seq_interp(A'), seq_interp(y));
         }
-        //     cmm_subtract_lemma(A', S, key.m_val, temp, key.len);
-    
-        //     assert cong(seq_interp(A'') * BASE, x_i as nat * seq_interp(y) + u_i as nat * key.m_val + seq_interp(A), key.m_val) by {
-        //         calc ==> {
-        //             seq_interp(A'') + key.m_val == seq_interp(S[1..]);
-        //             {
-        //                 reveal cong();
-        //             }
-        //             cong(seq_interp(A'') + key.m_val, seq_interp(S[1..]), key.m_val);
-        //             {
-        //                 assert cong(seq_interp(A''), seq_interp(A'') + key.m_val, key.m_val) by {
-        //                     cong_add_lemma_3(seq_interp(A''), key.m_val, key.m_val);
-        //                 }
-        //                 cong_trans_lemma(seq_interp(A''), seq_interp(A'') + key.m_val, seq_interp(S[1..]), key.m_val);
-        //             }
-        //             cong(seq_interp(A''), seq_interp(S[1..]), key.m_val);
-        //             {
-        //                 cong_mul_lemma_1(seq_interp(A''), seq_interp(S[1..]), BASE, key.m_val);
-        //             }
-        //             cong(seq_interp(A'') * BASE, seq_interp(S[1..]) * BASE, key.m_val);
-        //         }
-        //     }
     }
 
     method montMul(key: pub_key, x: seq<uint32>, y: seq<uint32>)
         returns (A: seq<uint32>)
 
         requires |x| == |y| == key.len;
-        // ensures seq_interp(A) == (seq_interp(x) * seq_interp(y) * power(BASE_INV, n)) % seq_interp(m);
+
         ensures cong(seq_interp(A), seq_interp(x) * seq_interp(y) * key.R_INV, key.m_val);
         ensures seq_interp(A) < key.m_val + seq_interp(y);
         ensures |A| == key.len;
@@ -734,11 +730,14 @@ module RSAE3v2 {
     }
 
     lemma mod_pow3_congruent_lemma(key: pub_key, a_val: int, ar_val: int, aar_val: int, aaa_val: int, rr_val: int)
+        requires cong(rr_val, key.R * key.R, key.m_val);
         requires cong(ar_val, a_val * rr_val * key.R_INV, key.m_val);
         requires cong(aar_val, ar_val * ar_val * key.R_INV, key.m_val);
         requires cong(ar_val, a_val * rr_val * key.R_INV, key.m_val);
     {
-        assume cong(ar_val, a_val * key.R, key.m_val);
+        assert cong(ar_val, a_val * key.R, key.m_val) by {
+            assume false;
+        }
         calc ==> {
             cong(aaa_val, aar_val * a_val * key.R_INV, key.m_val);
             {
@@ -760,7 +759,8 @@ module RSAE3v2 {
 
     method modpow3(key: pub_key, a: seq<uint32>, RR: seq<uint32>)
         requires 0 <= seq_interp(a) < key.m_val; 
-        requires 0 <= seq_interp(RR) < key.m_val; 
+        requires 0 <= seq_interp(RR) < key.m_val;
+        requires cong(seq_interp(RR), key.R * key.R, key.m_val);
         requires |a| == |RR| == key.len;
     {
         var aR := montMul(key, a, RR); /* aR = a * RR / R mod M   */
