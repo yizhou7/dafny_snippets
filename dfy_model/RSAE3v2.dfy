@@ -741,47 +741,4 @@ module RSAE3v2 {
 
         assert seq_interp(aaa) < key.m_val + seq_interp(a);
     }
-/*
-    {
-       // TODO: refactor the proofs there?
-        var geq := seq_geq(A, m);
-
-        if geq {
-            var b, D := seq_sub(A, m);
-
-            assert cong(seq_interp(A), seq_interp(A) - m_val, m_val) by {
-                cong_add_lemma_3(seq_interp(A), - (m_val as int), m_val);
-            }
-
-            calc ==> {
-                cong(seq_interp(A), seq_interp(A) - m_val, m_val);
-                {
-                   reveal cong(); 
-                }
-                cong(seq_interp(A) - m_val, seq_interp(A), m_val);
-                {
-                    assert cong(seq_interp(A), seq_interp(x) * seq_interp(y) * power(BASE_INV, n), seq_interp(m));
-                    cong_trans_lemma(seq_interp(A) - m_val, seq_interp(A), seq_interp(x) * seq_interp(y) * power(BASE_INV, n), seq_interp(m));
-                }
-                cong(seq_interp(A) - m_val, seq_interp(x) * seq_interp(y) * power(BASE_INV, n), seq_interp(m));
-                {
-                    assert seq_interp(D) == seq_interp(A) - m_val;
-                }
-                cong(seq_interp(D), seq_interp(x) * seq_interp(y) * power(BASE_INV, n), seq_interp(m));
-            }
-            A := D;
-        }
-
-        ghost var temp := seq_interp(x) * seq_interp(y) * power(BASE_INV, n);
-
-        assert seq_interp(A) == temp % seq_interp(m) by {
-            assert cong(temp, seq_interp(A), seq_interp(m)) by {
-                assert cong(seq_interp(A), temp, seq_interp(m));
-                reveal cong();
-            }
-            assert seq_interp(A) < m_val;
-            cong_residual_lemma(temp, seq_interp(A), seq_interp(m));
-        }
-    }
-*/
 }
