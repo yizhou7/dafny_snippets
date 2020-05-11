@@ -587,7 +587,8 @@ module RSAE3v2 {
         var j := 1;
 
         assert x_i as nat * seq_interp(y[..j]) + u_i as nat * seq_interp(key.m[..j]) + seq_interp(A[..1]) as nat == 
-            uh64(p_2) as int * power(BASE, j) + uh64(p_1) as int * power(BASE, j) by {
+            uh64(p_2) as int * power(BASE, j) + uh64(p_1) as int * power(BASE, j)
+        by {
             cmm_invarint_lemma_1(key.m, A, x_i, y, key.len, p_1, p_2, u_i);
         }
 
@@ -645,7 +646,7 @@ module RSAE3v2 {
 
         if uh64(temp) != 0 {
             var b, A'' := seq_sub(A', key.m);
-            assume  b == 1;
+            assume b == 1;
 
             calc == {
                 result;
@@ -658,24 +659,28 @@ module RSAE3v2 {
                 }
                 (seq_interp(A'') + key.m_val) * BASE;
             }
-            assume false;
+            
+            assert cong((seq_interp(A'') + key.m_val) * BASE, result, key.m_val) by {
+                reveal cong();
+            }
 
             calc ==> {
                 cong((seq_interp(A'') + key.m_val) * BASE, result, key.m_val);
                 {
+                    mod_mul_lemma(-BASE, key.m_val, key.m_val);
                     cong_add_lemma_3((seq_interp(A'') + key.m_val) * BASE, -key.m_val * BASE,  key.m_val);
+                    reveal cong();
                 }
-                // cong((seq_interp(A'') + key.m_val) * BASE - key.m_val * BASE, result, key.m_val);
-                // {
-                //     assert (seq_interp(A'') + key.m_val) * BASE - key.m_val * BASE == seq_interp(A'') * BASE;
-                // }
-                // cong(seq_interp(A'') * BASE, result, key.m_val);
+                cong((seq_interp(A'') + key.m_val) * BASE - key.m_val * BASE, result, key.m_val);
+                {
+                    assert (seq_interp(A'') + key.m_val) * BASE - key.m_val * BASE == seq_interp(A'') * BASE;
+                }
+                cong(seq_interp(A'') * BASE, result, key.m_val);
             }
 
-            A' := A'';
+            assert cong(seq_interp(A'') * BASE, result, key.m_val);
 
-            assume false;
-            // assume cong(seq_interp(A') * BASE, x_i as int * seq_interp(y) + u_i as int * key.m_val + seq_interp(A), key.m_val);
+            A' := A'';
         } else {
             assert seq_interp(A') < seq_interp(y) + key.m_val;
             assert cong(seq_interp(A') * BASE, result, key.m_val) by {
