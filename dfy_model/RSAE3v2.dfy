@@ -803,7 +803,9 @@ module RSAE3v2 {
         assert cong(aaa, a * a * a, key.m_val);
     }
 
-    method modpow3(key: pub_key, a: seq<uint32>, RR: seq<uint32>)
+    method modpow3(key: pub_key, a: seq<uint32>, RR: seq<uint32>) 
+        returns (aaa: seq<uint32>)
+    
         requires 0 <= seq_interp(a) < key.m_val; 
         requires 0 <= seq_interp(RR) < key.m_val;
         requires cong(seq_interp(RR), key.R * key.R, key.m_val);
@@ -811,13 +813,32 @@ module RSAE3v2 {
     {
         var aR := montMul(key, a, RR); /* aR = a * RR / R mod M   */
         var aaR := montMul(key, aR, aR); /* aaR = aR * aR / R mod M */
-        var aaa := montMul(key, aaR, a); /* aaa = aaR * a / R mod M */
+        aaa := montMul(key, aaR, a); /* aaa = aaR * a / R mod M */
 
         ghost var aaa_val := seq_interp(aaa);
         ghost var a_val := seq_interp(a);
 
         mod_pow3_congruent_lemma_1(key, a_val, seq_interp(aR), seq_interp(aaR), aaa_val, seq_interp(RR));
-        assert cong(aaa_val, a_val * a_val * a_val, key.m_val);
-        assert aaa_val < key.m_val + a_val;
+
+        var geq := seq_geq(aaa, key.m);
+
+        if geq {
+            var _, temp := seq_sub(aaa, key.m);
+            ghost var temp_val := seq_interp(temp);
+            
+            assert cong(aaa_val, temp_val, key.m_val) by {
+                assert temp_val == aaa_val - key.m_val;
+                cong_add_lemma_3(aaa_val, - key.m_val, key.m_val);
+            }
+            cong_trans_lemma(temp_val, aaa_val, a_val * a_val * a_val, key.m_val);
+
+            aaa := temp;
+        }
+
+        assert seq_interp(aaa) == (a_val * a_val * a_val) % key.m_val by {
+            assert 0 <= seq_interp(aaa) < key.m_val;
+            assert cong(seq_interp(aaa), a_val * a_val * a_val, key.m_val);
+            cong_remainder_lemma(seq_interp(aaa), a_val * a_val * a_val, key.m_val);
+        }
     }
 }
