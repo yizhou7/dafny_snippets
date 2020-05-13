@@ -22,8 +22,7 @@ module RSAE3v2 {
     )
 
     type pub_key = key:raw_pub_key |
-        && |key.m| == key.len
-        && key.len > 2
+        && |key.m| == key.len >= 1
         && seq_interp(key.m) == key.m_val
         && 0 != key.m_val <  power(BASE, key.len)
         && cong(key.m' as nat * key.m[0] as nat, -1, BASE)
@@ -86,7 +85,7 @@ module RSAE3v2 {
         p_2: uint64,
         u_i: uint32)
 
-        requires |m| == |A| == |y| == n > 1;
+        requires |m| == |A| == |y| == n >= 1;
         requires p_1 as int == x_i as int * y[0] as int  + A[0] as int;
         requires p_2 as int == u_i as int * m[0] as int + lh64(p_1) as int;
         requires cong(p_2 as int, 0, BASE);
@@ -760,13 +759,18 @@ module RSAE3v2 {
         }
 
         assert cong_a4: cong(aar, ar * a, key.m_val) by {
-            ghost var mid := ar * ar * key.R_INV;
-            assert cong(mid, ar * a, key.m_val) by {
-                assert cong(ar * key.R_INV, a, key.m_val);
-                cong_mul_lemma_1(ar * key.R_INV, a, ar, key.m_val);
+            calc ==> {
+                cong(ar * key.R_INV, a, key.m_val);
+                {
+                    cong_mul_lemma_1(ar * key.R_INV, a, ar, key.m_val);
+                }
+                cong( ar * ar * key.R_INV, ar * a, key.m_val);
+                {
+                    assert cong(aar,  ar * ar * key.R_INV, key.m_val);
+                    cong_trans_lemma(aar,  ar * ar * key.R_INV, ar * a, key.m_val);
+                }
+                cong(aar, ar * a, key.m_val);            
             }
-            assert cong(aar, mid, key.m_val);
-            cong_trans_lemma(aar, mid, ar * a, key.m_val);
         }
 
         assert cong(aar, key.R * a * a, key.m_val) by {
