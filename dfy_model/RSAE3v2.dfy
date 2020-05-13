@@ -24,12 +24,20 @@ module RSAE3v2 {
     type pub_key = key:raw_pub_key |
         && |key.m| == key.len >= 1
         && seq_interp(key.m) == key.m_val
-        && 0 != key.m_val <  power(BASE, key.len)
+        && 0 != key.m_val < power(BASE, key.len)
         && cong(key.m' as nat * key.m[0] as nat, -1, BASE)
         && cong(BASE * key.BASE_INV, 1, key.m_val)
         && key.R == power(BASE, key.len)
         && key.R_INV == power(key.BASE_INV, key.len)
         && cong(key.R_INV * key.R, 1, key.m_val)
+    // witness raw_pub_key(
+    //     [0x7a479339],
+    //     0x5e7494f7, 
+    //     1,
+    //     0x7a479339,
+    //     0x2d1df7a5,
+    //     BASE,
+    //     0x2d1df7a5)
 
     lemma cmm_divisible_lemma_1(p_1: nat, p_2: nat, x_i: nat, y_0: nat, a_0: nat, u_i: nat, m': nat, m_0: nat)
         requires cong(m' * m_0, -1, BASE);
