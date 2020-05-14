@@ -11,7 +11,7 @@ module RSAE3v2 {
     import opened SeqInt
     import opened RSAE3v1
 
-    datatype raw_pub_key = raw_pub_key(
+    datatype pub_key = pub_key(
         m: seq<uint32>,
         m': uint32,
         len: nat,
@@ -21,16 +21,25 @@ module RSAE3v2 {
         R_INV: nat
     )
 
-    type pub_key = key:raw_pub_key |
-        && |key.m| == key.len
-        && key.len > 2
+    predicate valid_key(key: pub_key) {
+        && |key.m| == key.len >= 1
         && seq_interp(key.m) == key.m_val
-        && 0 != key.m_val <  power(BASE, key.len)
+        && 0 != key.m_val < power(BASE, key.len)
         && cong(key.m' as nat * key.m[0] as nat, -1, BASE)
         && cong(BASE * key.BASE_INV, 1, key.m_val)
         && key.R == power(BASE, key.len)
         && key.R_INV == power(key.BASE_INV, key.len)
         && cong(key.R_INV * key.R, 1, key.m_val)
+    }
+
+        // raw_pub_key(
+        // [0x7a479339],
+        // 0x5e7494f7, 
+        // 1,
+        // 0x7a479339,
+        // 0x2d1df7a5,
+        // BASE,
+        // 0x2d1df7a5);
 
     lemma cmm_divisible_lemma_1(p_1: nat, p_2: nat, x_i: nat, y_0: nat, a_0: nat, u_i: nat, m': nat, m_0: nat)
         requires cong(m' * m_0, -1, BASE);
@@ -86,7 +95,7 @@ module RSAE3v2 {
         p_2: uint64,
         u_i: uint32)
 
-        requires |m| == |A| == |y| == n > 1;
+        requires |m| == |A| == |y| == n >= 1;
         requires p_1 as int == x_i as int * y[0] as int  + A[0] as int;
         requires p_2 as int == u_i as int * m[0] as int + lh64(p_1) as int;
         requires cong(p_2 as int, 0, BASE);
@@ -309,6 +318,7 @@ module RSAE3v2 {
     }
     
     lemma cmm_divisible_lemma_2(key: pub_key, S: seq<uint32>)
+        requires valid_key(key);
         requires |S| == key.len + 2;
         requires S[0] == 0;
         ensures seq_interp(S) == seq_interp(S[1..]) * BASE;
@@ -343,25 +353,18 @@ module RSAE3v2 {
         }
     }
 
-    // takes long
-    lemma cmm_congruent_lemma(
-        key: pub_key,
-        x: seq<uint32>,
-        i: nat,
-        x_i: nat,
-        u_i: nat,
-        A_val: nat,
-        A_val': nat,
-        y_val: nat)
-
-        requires key.m_val != 0;
+    lemma cmm_congruent_lemma_2(key: pub_key, x: seq<uint32>, i: nat, x_i: nat, u_i: nat, A_val: nat, A_val': nat, y_val: nat)
+        requires valid_key(key);
         requires i < |x| == key.len && x[i] as int == x_i;
 
         requires cong(A_val, seq_interp(x[..i]) * y_val * power(key.BASE_INV, i), key.m_val);
         requires cong(A_val' * BASE, x_i * y_val + u_i * key.m_val + A_val, key.m_val);
 
-        ensures cong(A_val', seq_interp(x[..i+1]) * y_val * power(key.BASE_INV, i+1), key.m_val);
+        ensures cong(A_val', (seq_interp(x[..i]) * y_val * power(key.BASE_INV, i) + x_i * y_val) * key.BASE_INV, key.m_val);
     {
+        ghost var ps_inv := power(key.BASE_INV, i);
+        var temp := seq_interp(x[..i]) * y_val * ps_inv;
+
         assert assert_1 : cong(A_val', (A_val + x_i * y_val) * key.BASE_INV, key.m_val) by {
             calc ==> {
                 cong(A_val' * BASE, x_i * y_val + u_i * key.m_val + A_val,key. m_val);
@@ -390,8 +393,6 @@ module RSAE3v2 {
             }
         }
 
-        ghost var ps_inv := power(key.BASE_INV, i);
-        var temp := seq_interp(x[..i]) * y_val * ps_inv;
 
         assert assert_2: cong((A_val + x_i * y_val) * key.BASE_INV, (temp + x_i * y_val) * key.BASE_INV, key.m_val) by {
             calc ==> {
@@ -407,10 +408,27 @@ module RSAE3v2 {
             }
         }
 
-        assert assert_3: cong(A_val', (temp + x_i * y_val) * key.BASE_INV, key.m_val) by {
+        assert cong(A_val', (temp + x_i * y_val) * key.BASE_INV, key.m_val) by {
             reveal assert_1;
             reveal assert_2;
             cong_trans_lemma(A_val', (A_val + x_i * y_val) * key.BASE_INV, (temp + x_i * y_val) * key.BASE_INV, key.m_val);
+        }
+    }
+
+    lemma cmm_congruent_lemma(key: pub_key, x: seq<uint32>, i: nat, x_i: nat, u_i: nat, A_val: nat, A_val': nat, y_val: nat)
+        requires valid_key(key);
+        requires i < |x| == key.len && x[i] as int == x_i;
+
+        requires cong(A_val, seq_interp(x[..i]) * y_val * power(key.BASE_INV, i), key.m_val);
+        requires cong(A_val' * BASE, x_i * y_val + u_i * key.m_val + A_val, key.m_val);
+
+        ensures cong(A_val', seq_interp(x[..i+1]) * y_val * power(key.BASE_INV, i+1), key.m_val);
+    {
+        ghost var ps_inv := power(key.BASE_INV, i);
+        var temp := seq_interp(x[..i]) * y_val * ps_inv;
+  
+        assert cong(A_val', (temp + x_i * y_val) * key.BASE_INV, key.m_val) by {
+            cmm_congruent_lemma_2(key, x, i, x_i, u_i, A_val, A_val', y_val);
         }
 
         assert assert_4: cong((temp + x_i * y_val) * key.BASE_INV, y_val * seq_interp(x[..i+1]) * ps_inv * key.BASE_INV, key.m_val) by {
@@ -422,7 +440,6 @@ module RSAE3v2 {
                 (seq_interp(x[..i]) * y_val * ps_inv + x_i * y_val) % key.m_val;
                 (y_val * (seq_interp(x[..i]) * ps_inv + x_i)) % key.m_val;
                 {
-                    // assert (y_val * (seq_interp(x[..i]) * ps_inv + x[i] as int)) % key.m_val == (y_val * (seq_interp(x[..i+1]) * ps_inv)) % key.m_val;
                     mont_mul_congruent_aux_lemma_1(x, i, y_val, power(BASE, i), power(key.BASE_INV, i), key.BASE_INV, key.m_val);
                 }
                 (y_val * seq_interp(x[..i+1]) * ps_inv) % key.m_val;
@@ -433,7 +450,6 @@ module RSAE3v2 {
         }
 
         assert cong(A_val', seq_interp(x[..i+1]) * y_val * power(key.BASE_INV, i + 1), key.m_val) by {
-            reveal assert_3;
             reveal assert_4;
             cong_trans_lemma(A_val', (temp + x_i * y_val) * key.BASE_INV, y_val * seq_interp(x[..i+1]) * ps_inv * key.BASE_INV, key.m_val);
             assert cong(A_val', y_val * seq_interp(x[..i+1]) * ps_inv * key.BASE_INV, key.m_val);
@@ -453,6 +469,7 @@ module RSAE3v2 {
         A': seq<uint32>,
         A: seq<uint32>)
 
+        requires valid_key(key);
         requires |A'| == |A| == |y| == key.len;
         requires seq_interp(A) < key.m_val + seq_interp(y);
         requires (higher as nat * key.R + seq_interp(A')) * BASE == 
@@ -486,8 +503,12 @@ module RSAE3v2 {
        if higher > 1 {
             assert higher >= 2;
             assert higher as nat * key.R + seq_interp(A') >= 2 * key.R + seq_interp(A');
-            assume seq_interp(y) < key.R;
-            assume key.m_val < key.R;
+            
+            assert seq_interp(y) < key.R by {
+                seq_interp_upper_bound_lemma(y, key.len);
+            }
+
+            assert key.m_val < key.R;
             assert false;
         }
 
@@ -524,6 +545,7 @@ module RSAE3v2 {
         ghost x: seq<uint32>)
 
         returns (A': seq<uint32>)
+        requires valid_key(key);
 
         requires |A| == |y| == |x| == key.len;
         requires i < |x| == key.len && x[i] == x_i;
@@ -664,6 +686,7 @@ module RSAE3v2 {
     method montMul(key: pub_key, x: seq<uint32>, y: seq<uint32>)
         returns (A: seq<uint32>)
 
+        requires valid_key(key);
         requires |x| == |y| == key.len;
 
         ensures cong(seq_interp(A), seq_interp(x) * seq_interp(y) * key.R_INV, key.m_val);
@@ -702,6 +725,7 @@ module RSAE3v2 {
     }
 
     lemma R_inv_cancel_lemma(key: pub_key, v: int)
+        requires valid_key(key);
         ensures cong(v * key.R * key.R_INV, v, key.m_val);
     {
         calc ==> {
@@ -714,6 +738,7 @@ module RSAE3v2 {
     }
 
     lemma mod_pow3_congruent_lemma_1(key: pub_key, a: int, ar: int, aar: int, aaa: int, rr: int)
+        requires valid_key(key);
         requires cong(rr, key.R * key.R, key.m_val);
         requires cong(ar, a * rr * key.R_INV, key.m_val);
         requires cong(aar, ar * ar * key.R_INV, key.m_val);
@@ -728,7 +753,7 @@ module RSAE3v2 {
             assert cong(aar * key.R_INV, key.R * a * a * key.R_INV, key.m_val) by {
                 cong_mul_lemma_1(aar, key.R * a * a, key.R_INV, key.m_val);
             }
-            assert cong(a * a * key.R *  key.R_INV, a * a, key.m_val) by {
+            assert cong(key.R * a * a  *  key.R_INV, a * a, key.m_val) by {
                 R_inv_cancel_lemma(key, a * a);
             }
             cong_trans_lemma(aar * key.R_INV, key.R * a * a * key.R_INV, a * a, key.m_val);
@@ -736,7 +761,7 @@ module RSAE3v2 {
 
         assert cong(aaa, a * a * a, key.m_val) by {
             assert cong(aaa, aar * a * key.R_INV, key.m_val);
-            assert cong(aar * key.R_INV * a, a * a * a, key.m_val) by {
+            assert cong(aar * a * key.R_INV, a * a * a, key.m_val) by {
                 cong_mul_lemma_1(aar * key.R_INV, a * a, a, key.m_val);
             }
             cong_trans_lemma(aaa, aar * a * key.R_INV, a * a * a, key.m_val);
@@ -745,10 +770,48 @@ module RSAE3v2 {
     }
 
     lemma mod_pow3_congruent_lemma_2(key: pub_key, a: int, ar: int, aar: int, rr: int)
+        requires valid_key(key);
         requires cong(rr, key.R * key.R, key.m_val);
         requires cong(ar, a * rr * key.R_INV, key.m_val);
         requires cong(aar, ar * ar * key.R_INV, key.m_val);
         ensures cong(aar, key.R * a * a, key.m_val);
+    {
+        assert cong(ar, key.R * a, key.m_val) && cong(ar * key.R_INV, a, key.m_val) by {
+            mod_pow3_congruent_lemma_3(key, a, ar, aar, rr);
+        }
+
+        assert cong_a4: cong(aar, ar * a, key.m_val) by {
+            calc ==> {
+                cong(ar * key.R_INV, a, key.m_val);
+                {
+                    cong_mul_lemma_1(ar * key.R_INV, a, ar, key.m_val);
+                }
+                cong( ar * ar * key.R_INV, ar * a, key.m_val);
+                {
+                    assert cong(aar,  ar * ar * key.R_INV, key.m_val);
+                    cong_trans_lemma(aar,  ar * ar * key.R_INV, ar * a, key.m_val);
+                }
+                cong(aar, ar * a, key.m_val);            
+            }
+        }
+
+        assert cong(aar, key.R * a * a, key.m_val) by {
+            assert cong(ar * a, key.R * a * a, key.m_val) by {
+                assert cong(ar, key.R * a, key.m_val);
+                cong_mul_lemma_1(ar, key.R * a, a, key.m_val);
+            }
+            reveal cong_a4;
+            cong_trans_lemma(aar, ar * a, key.R * a * a, key.m_val);
+        }
+    }
+
+    lemma mod_pow3_congruent_lemma_3(key: pub_key, a: int, ar: int, aar: int, rr: int)
+        requires valid_key(key);
+        requires cong(rr, key.R * key.R, key.m_val);
+        requires cong(ar, a * rr * key.R_INV, key.m_val);
+        requires cong(aar, ar * ar * key.R_INV, key.m_val);
+        ensures cong(ar, key.R * a, key.m_val);
+        ensures cong(ar * key.R_INV, a, key.m_val);
     {
         assert cong_a1: cong(rr * a * key.R_INV, key.R * a, key.m_val) by {
             assert cong(rr, key.R * key.R, key.m_val);
@@ -768,15 +831,14 @@ module RSAE3v2 {
             }
         }
 
-        assert cong_a2: cong(ar, key.R * a, key.m_val) by {
+        assert cong(ar, key.R * a, key.m_val) by {
             assert cong(ar, a * rr * key.R_INV, key.m_val);
             reveal cong_a1;
             cong_trans_lemma(ar, a * rr * key.R_INV, key.R * a, key.m_val);
         }
 
-        assert cong_a3: cong(ar * key.R_INV, a, key.m_val) by {
+        assert cong(ar * key.R_INV, a, key.m_val) by {
             assert cong(ar * key.R_INV, key.R * a * key.R_INV, key.m_val) by {
-                reveal cong_a2;
                 cong_mul_lemma_1(ar, key.R * a, key.R_INV, key.m_val);
             }
             assert cong(key.R * a * key.R_INV, a, key.m_val) by {
@@ -785,29 +847,14 @@ module RSAE3v2 {
             cong_trans_lemma(ar * key.R_INV, key.R * a * key.R_INV, a, key.m_val);
         }
 
-        assert cong_a4: cong(aar, ar * a, key.m_val) by {
-            ghost var mid := ar * ar * key.R_INV;
-            assert cong(mid, ar * a, key.m_val) by {
-                reveal cong_a3;
-                cong_mul_lemma_1(ar * key.R_INV, a, ar, key.m_val);
-            }
-            assert cong(aar, mid, key.m_val);
-            cong_trans_lemma(aar, mid, ar * a, key.m_val);
-        }
-
-        assert cong(aar, key.R * a * a, key.m_val) by {
-            assert cong(ar * a, key.R * a * a, key.m_val) by {
-                reveal cong_a2;
-                cong_mul_lemma_1(ar, key.R * a, a, key.m_val);
-            }
-            reveal cong_a4;
-            cong_trans_lemma(aar, ar * a, key.R * a * a, key.m_val);
-        }
+        assert cong(ar, key.R * a, key.m_val);
+        assert cong(ar * key.R_INV, a, key.m_val);
     }
 
     method modpow3(key: pub_key, a: seq<uint32>, RR: seq<uint32>) 
         returns (aaa: seq<uint32>)
-    
+
+        requires valid_key(key);
         requires 0 <= seq_interp(a) < key.m_val; 
         requires 0 <= seq_interp(RR) < key.m_val;
         requires cong(seq_interp(RR), key.R * key.R, key.m_val);
