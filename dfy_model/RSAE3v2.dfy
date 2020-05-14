@@ -11,7 +11,7 @@ module RSAE3v2 {
     import opened SeqInt
     import opened RSAE3v1
 
-    datatype raw_pub_key = raw_pub_key(
+    datatype pub_key = pub_key(
         m: seq<uint32>,
         m': uint32,
         len: nat,
@@ -21,7 +21,7 @@ module RSAE3v2 {
         R_INV: nat
     )
 
-    type pub_key = key:raw_pub_key |
+    predicate valid_key(key: pub_key) {
         && |key.m| == key.len >= 1
         && seq_interp(key.m) == key.m_val
         && 0 != key.m_val < power(BASE, key.len)
@@ -30,14 +30,16 @@ module RSAE3v2 {
         && key.R == power(BASE, key.len)
         && key.R_INV == power(key.BASE_INV, key.len)
         && cong(key.R_INV * key.R, 1, key.m_val)
-    // witness raw_pub_key(
-    //     [0x7a479339],
-    //     0x5e7494f7, 
-    //     1,
-    //     0x7a479339,
-    //     0x2d1df7a5,
-    //     BASE,
-    //     0x2d1df7a5)
+    }
+
+        // raw_pub_key(
+        // [0x7a479339],
+        // 0x5e7494f7, 
+        // 1,
+        // 0x7a479339,
+        // 0x2d1df7a5,
+        // BASE,
+        // 0x2d1df7a5);
 
     lemma cmm_divisible_lemma_1(p_1: nat, p_2: nat, x_i: nat, y_0: nat, a_0: nat, u_i: nat, m': nat, m_0: nat)
         requires cong(m' * m_0, -1, BASE);
@@ -316,6 +318,7 @@ module RSAE3v2 {
     }
     
     lemma cmm_divisible_lemma_2(key: pub_key, S: seq<uint32>)
+        requires valid_key(key);
         requires |S| == key.len + 2;
         requires S[0] == 0;
         ensures seq_interp(S) == seq_interp(S[1..]) * BASE;
@@ -351,7 +354,7 @@ module RSAE3v2 {
     }
 
     lemma cmm_congruent_lemma_2(key: pub_key, x: seq<uint32>, i: nat, x_i: nat, u_i: nat, A_val: nat, A_val': nat, y_val: nat)
-        requires key.m_val != 0;
+        requires valid_key(key);
         requires i < |x| == key.len && x[i] as int == x_i;
 
         requires cong(A_val, seq_interp(x[..i]) * y_val * power(key.BASE_INV, i), key.m_val);
@@ -413,8 +416,7 @@ module RSAE3v2 {
     }
 
     lemma cmm_congruent_lemma(key: pub_key, x: seq<uint32>, i: nat, x_i: nat, u_i: nat, A_val: nat, A_val': nat, y_val: nat)
-
-        requires key.m_val != 0;
+        requires valid_key(key);
         requires i < |x| == key.len && x[i] as int == x_i;
 
         requires cong(A_val, seq_interp(x[..i]) * y_val * power(key.BASE_INV, i), key.m_val);
@@ -465,6 +467,7 @@ module RSAE3v2 {
         A': seq<uint32>,
         A: seq<uint32>)
 
+        requires valid_key(key);
         requires |A'| == |A| == |y| == key.len;
         requires seq_interp(A) < key.m_val + seq_interp(y);
         requires (higher as nat * key.R + seq_interp(A')) * BASE == 
@@ -536,6 +539,7 @@ module RSAE3v2 {
         ghost x: seq<uint32>)
 
         returns (A': seq<uint32>)
+        requires valid_key(key);
 
         requires |A| == |y| == |x| == key.len;
         requires i < |x| == key.len && x[i] == x_i;
@@ -676,6 +680,7 @@ module RSAE3v2 {
     method montMul(key: pub_key, x: seq<uint32>, y: seq<uint32>)
         returns (A: seq<uint32>)
 
+        requires valid_key(key);
         requires |x| == |y| == key.len;
 
         ensures cong(seq_interp(A), seq_interp(x) * seq_interp(y) * key.R_INV, key.m_val);
@@ -714,6 +719,7 @@ module RSAE3v2 {
     }
 
     lemma R_inv_cancel_lemma(key: pub_key, v: int)
+        requires valid_key(key);
         ensures cong(v * key.R * key.R_INV, v, key.m_val);
     {
         calc ==> {
@@ -726,6 +732,7 @@ module RSAE3v2 {
     }
 
     lemma mod_pow3_congruent_lemma_1(key: pub_key, a: int, ar: int, aar: int, aaa: int, rr: int)
+        requires valid_key(key);
         requires cong(rr, key.R * key.R, key.m_val);
         requires cong(ar, a * rr * key.R_INV, key.m_val);
         requires cong(aar, ar * ar * key.R_INV, key.m_val);
@@ -757,6 +764,7 @@ module RSAE3v2 {
     }
 
     lemma mod_pow3_congruent_lemma_2(key: pub_key, a: int, ar: int, aar: int, rr: int)
+        requires valid_key(key);
         requires cong(rr, key.R * key.R, key.m_val);
         requires cong(ar, a * rr * key.R_INV, key.m_val);
         requires cong(aar, ar * ar * key.R_INV, key.m_val);
@@ -792,6 +800,7 @@ module RSAE3v2 {
     }
 
     lemma mod_pow3_congruent_lemma_3(key: pub_key, a: int, ar: int, aar: int, rr: int)
+        requires valid_key(key);
         requires cong(rr, key.R * key.R, key.m_val);
         requires cong(ar, a * rr * key.R_INV, key.m_val);
         requires cong(aar, ar * ar * key.R_INV, key.m_val);
@@ -838,7 +847,8 @@ module RSAE3v2 {
 
     method modpow3(key: pub_key, a: seq<uint32>, RR: seq<uint32>) 
         returns (aaa: seq<uint32>)
-    
+
+        requires valid_key(key);
         requires 0 <= seq_interp(a) < key.m_val; 
         requires 0 <= seq_interp(RR) < key.m_val;
         requires cong(seq_interp(RR), key.R * key.R, key.m_val);
