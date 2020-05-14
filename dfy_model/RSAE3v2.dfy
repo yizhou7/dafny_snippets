@@ -427,7 +427,9 @@ module RSAE3v2 {
         ghost var ps_inv := power(key.BASE_INV, i);
         var temp := seq_interp(x[..i]) * y_val * ps_inv;
   
-        assume cong(A_val', (temp + x_i * y_val) * key.BASE_INV, key.m_val);
+        assert cong(A_val', (temp + x_i * y_val) * key.BASE_INV, key.m_val) by {
+            cmm_congruent_lemma_2(key, x, i, x_i, u_i, A_val, A_val', y_val);
+        }
 
         assert assert_4: cong((temp + x_i * y_val) * key.BASE_INV, y_val * seq_interp(x[..i+1]) * ps_inv * key.BASE_INV, key.m_val) by {
             calc == {
@@ -501,8 +503,12 @@ module RSAE3v2 {
        if higher > 1 {
             assert higher >= 2;
             assert higher as nat * key.R + seq_interp(A') >= 2 * key.R + seq_interp(A');
-            assume seq_interp(y) < key.R;
-            assume key.m_val < key.R;
+            
+            assert seq_interp(y) < key.R by {
+                seq_interp_upper_bound_lemma(y, key.len);
+            }
+
+            assert key.m_val < key.R;
             assert false;
         }
 
