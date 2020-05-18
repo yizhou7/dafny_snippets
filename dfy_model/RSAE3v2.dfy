@@ -13,6 +13,7 @@ module RSAE3v2 {
 
     datatype pub_key = pub_key(
         m: seq<uint32>,
+        RR: seq<uint32>,
         m': uint32,
         len: nat,
         m_val: int,
@@ -22,7 +23,7 @@ module RSAE3v2 {
     )
 
     predicate valid_key(key: pub_key) {
-        && |key.m| == key.len >= 1
+        && |key.m| == |key.RR| == key.len >= 1
         && seq_interp(key.m) == key.m_val
         && 0 != key.m_val < power(BASE, key.len)
         && cong(key.m' as nat * key.m[0] as nat, -1, BASE)
@@ -30,6 +31,8 @@ module RSAE3v2 {
         && key.R == power(BASE, key.len)
         && key.R_INV == power(key.BASE_INV, key.len)
         && cong(key.R_INV * key.R, 1, key.m_val)
+        && 0 <= seq_interp(key.RR) < key.m_val
+        && cong(seq_interp(key.RR), key.R * key.R, key.m_val)
     }
 
         // raw_pub_key(
@@ -851,24 +854,22 @@ module RSAE3v2 {
         assert cong(ar * key.R_INV, a, key.m_val);
     }
 
-    method modpow3(key: pub_key, a: seq<uint32>, RR: seq<uint32>) 
+    method modpow3(key: pub_key, a: seq<uint32>) 
         returns (aaa: seq<uint32>)
 
         requires valid_key(key);
         requires 0 <= seq_interp(a) < key.m_val; 
-        requires 0 <= seq_interp(RR) < key.m_val;
-        requires cong(seq_interp(RR), key.R * key.R, key.m_val);
-        requires |a| == |RR| == key.len;
+        requires |a| == key.len;
         ensures seq_interp(aaa) == (seq_interp(a) * seq_interp(a) * seq_interp(a)) % key.m_val;
     {
-        var aR := montMul(key, a, RR); /* aR = a * RR / R mod M   */
+        var aR := montMul(key, a, key.RR); /* aR = a * RR / R mod M   */
         var aaR := montMul(key, aR, aR); /* aaR = aR * aR / R mod M */
         aaa := montMul(key, aaR, a); /* aaa = aaR * a / R mod M */
 
         ghost var aaa_val := seq_interp(aaa);
         ghost var a_val := seq_interp(a);
 
-        mod_pow3_congruent_lemma_1(key, a_val, seq_interp(aR), seq_interp(aaR), aaa_val, seq_interp(RR));
+        mod_pow3_congruent_lemma_1(key, a_val, seq_interp(aR), seq_interp(aaR), aaa_val, seq_interp(key.RR));
 
         var geq := seq_geq(aaa, key.m);
 
