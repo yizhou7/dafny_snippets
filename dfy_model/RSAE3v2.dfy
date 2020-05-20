@@ -917,6 +917,109 @@ module RSAE3v2 {
         && cong(key.e * rsa.d_val, 1, rsa.phi_val)
     }
 
+    lemma rsa_cong_lemma_2(rsa: rsa_params, key: pub_key, m: nat, c: nat, k: int, p: nat)
+        requires rsa.d_val * key.e == rsa.phi_val * k + 1;
+        requires rsa_valid(rsa, key);
+        requires power(c, key.e) % key.n_val == m;
+        requires p == rsa.p_val || p == rsa.q_val;
+        requires cong(m, 0, p);
+        ensures cong(power(m, rsa.d_val * key.e), m, p);        
+    {
+        var d := rsa.d_val;
+        var e := key.e;
+
+        ghost var temp := power(m, d * e);
+        assert cong(m, 0, p);
+
+        calc ==> {
+            cong(m, 0, p);
+            {
+                cong_power_lemma(m, 0, d * e, p);
+            }
+            cong(temp, power(0, d * e), p);
+            cong(temp, 0, p);
+            {
+                assert cong(m, 0, p);
+                cong_trans_lemma(temp, 0, m, p);
+            }
+            cong(temp, m, p);
+        }
+
+        assert cong(power(m, d * e), m, p);
+    }
+
+    lemma rsa_cong_lemma_3(rsa: rsa_params, key: pub_key, m: nat, c: nat, k: int, p: nat)
+        requires rsa.d_val * key.e == rsa.phi_val * k + 1;
+        requires rsa_valid(rsa, key);
+        requires power(c, key.e) % key.n_val == m;
+        requires p == rsa.p_val || p == rsa.q_val;
+        // ensures cong(power(m, rsa.d_val * key.e), m, p);
+    {
+        var d := rsa.d_val;
+        var n := key.n_val;
+        var e := key.e;
+        var phi := rsa.phi_val;
+        var q := if p == rsa.p_val then rsa.q_val else rsa.p_val;
+
+        assert prime(p);
+        calc ==> {
+            prime(p);
+            {
+                assume !cong(m, 0, p);
+                fermats_little_theorem(m, p);
+            }
+            cong(power(m, p - 1), 1, p); 
+            {
+                cong_power_lemma(power(m, p - 1), 1, (q - 1) * k, p);
+            }
+            cong(power(power(m, p - 1), (q - 1) * k), power(1, (q - 1) * k), p);
+            {
+                power_base_one_lemma((q - 1) * k);
+            }
+            cong(power(power(m, p - 1), (q - 1) * k), 1, p);
+            {
+                power_power_lemma(m, p - 1, (q - 1) * k);
+            }            
+            cong(power(m, (p - 1) * (q - 1) * k), 1, p);
+            {
+                assert (q - 1) * (p - 1) == phi;
+            }
+            // cong(power(m, phi * k), 1, p);
+            // {
+            //     cong_mul_lemma_1(power(m, phi * k), 1, m, p);
+            // }
+            // cong(power(m, phi * k) * m, m, p);
+            // {
+            //     power_add_one_lemma(m, phi * k);
+            // }
+            // cong(power(m, phi * k + 1), m, p);
+            // {
+            //     assert d * e == phi * k + 1;
+            // }
+            // cong(power(m, d * e), m, p);
+        }
+    }
+
+
+    lemma rsa_cong_lemma_1(rsa: rsa_params, key: pub_key, m: nat, c: nat, k: int, target: nat)
+        requires rsa.d_val * key.e == rsa.phi_val * k + 1;
+        requires rsa_valid(rsa, key);
+        requires power(c, key.e) % key.n_val == m;
+        requires target == rsa.p_val || target == rsa.q_val;
+        // ensures cong(power(m, rsa.d_val * key.e), m, target);
+    {
+        var d := rsa.d_val;
+        var n := key.n_val;
+        var e := key.e;
+        var p := target;
+
+        if m % p == 0 {
+            rsa_cong_lemma_2(rsa, key, m, c, k, p);
+        }  else {
+            // assert cong(power(m, d * e), m, p);
+        }
+    }
+
     lemma rsa_signature_lemma(rsa: rsa_params, key: pub_key, m: nat, c: nat)
         requires rsa_valid(rsa, key);
         requires power(c, key.e) % key.n_val == m;
@@ -925,6 +1028,7 @@ module RSAE3v2 {
         ghost var d := rsa.d_val;
         ghost var n := key.n_val;
         ghost var e := key.e;
+        ghost var phi := rsa.phi_val;
 
         var c' := power(m, d) % n;
 
@@ -941,17 +1045,14 @@ module RSAE3v2 {
             power(m, d * e) % n;
         }
 
-        
-        // calc ==> {
-        //     prime(rsa.p);
-        //     {
-        //         fermats_little_theorem(m, p);
-        //     }
-        //     cong(power(m, p - 1), 1, p); 
-        //     {
-        //         cong_power_lemma(power(m, p - 1), 1, (q - 1) * , p);
-        //     }
-        // }
+        assert cong(d * e, 1, phi);
+
+        assert exists k :int :: (d * e == phi * k + 1) by {
+            cong_k_exist_lemma(d * e, 1, phi);
+        }
+
+        var k :| d * e == phi * k + 1;
+
     }
 
     method RSA_e_3_verify(key: pub_key, signature: seq<uint32>, sha: seq<uint32>, ghost rsa: rsa_params)
