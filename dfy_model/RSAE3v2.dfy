@@ -3,6 +3,7 @@ include "Powers.dfy"
 include "Congruences.dfy"
 include "SeqInt.dfy"
 include "RSAE3v1.dfy"
+include "Theorems.dfy"
 
 module RSAE3v2 {
     import opened NativeTypes
@@ -10,6 +11,7 @@ module RSAE3v2 {
     import opened Congruences
     import opened SeqInt
     import opened RSAE3v1
+    import opened Theorems
 
     datatype pub_key = pub_key(
         e: nat, 
@@ -915,25 +917,30 @@ module RSAE3v2 {
         && cong(key.e * rsa.d_val, 1, rsa.phi_val)
     }
 
-    lemma rsa_signature_lemma(rsa: rsa_params, key: pub_key, m_val: int, c: int)
+    lemma rsa_signature_lemma(rsa: rsa_params, key: pub_key, m: int, c: int)
         requires rsa_valid(rsa, key);
-        requires power(c, key.e) % key.n_val == m_val;
-		// ensures c == power(m_val, rsa.d_val) % key.n_val;
+        requires power(c, key.e) % key.n_val == m;
+		// ensures c == power(m, rsa.d_val) % key.n_val;
     {
-		var c' := power(m_val, rsa.d_val) % key.n_val;
+    	ghost var d := rsa.d_val;
+    	ghost var n := key.n_val;
+    	ghost var e := key.e;
+
+		var c' := power(m, d) % n;
 
 		calc == {
-	        power(c', key.e) % key.n_val;
-	        power(power(m_val, rsa.d_val) % key.n_val, key.e) % key.n_val;
+	        power(c', e) % n;
+	        power(power(m, d) % n, e) % n;
 	        {
-	        	assume false;
+	        	power_mod_lemma_2(power(m, d), e, n);
 	        }
-	        power(power(m_val, rsa.d_val), key.e) % key.n_val;
+	        power(power(m, d), e) % n;
 	        {
-	        	assume false;
+                power_power_lemma(m, d, e);
 	        }
-	        power(m_val, rsa.d_val * key.e) % key.n_val;
+	        power(m, d * e) % n;
 		}
+
     }
 
     method RSA_e_3_verify(key: pub_key, signature: seq<uint32>, sha: seq<uint32>, ghost rsa: rsa_params)

@@ -669,7 +669,7 @@ module SeqInt {
                 {
                     assert cong(word_interp(A, n - 1), 0, BASE) by {
                         assert power(BASE, n - 1) % BASE == 0 by {
-                            power_mod_lemma(BASE, n - 1);
+                            power_mod_lemma_1(BASE, n - 1);
                         }
                         calc ==> {
                             power(BASE, n - 1) % BASE == 0;
@@ -751,7 +751,7 @@ module SeqInt {
             }
 
             assert A1: power(BASE, n-1) % BASE == 0 by {
-                power_mod_lemma(BASE, n-1);
+                power_mod_lemma_1(BASE, n-1);
             }
 
             assert A2: seq_interp(T') % BASE == 0 by {
