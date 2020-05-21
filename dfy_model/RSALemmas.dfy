@@ -242,9 +242,32 @@ module RSALemmas
     }
 
     lemma rsa_signature_lemma_1(rsa: rsa_params, m: nat, s: nat)
+        requires m < rsa.n;
         requires rsa_valid(rsa);
-        // requires power()
+        ensures (power(s, rsa.e) % rsa.n != m) ==> (s != power(m, rsa.d) % rsa.n);
     {
+        var e, d, n := rsa.e, rsa.d, rsa.n;
 
+        if s == power(m, d) % n {
+            calc == {
+                power(s, e) % n;
+                power(power(m, d) % n, e) % n;
+                {
+                    power_mod_lemma_2(power(m, d), e, n);
+                }
+                power(power(m, d), e) % n;
+                {
+                    power_power_lemma(m, d, e);
+                }
+                power(m, d * e) % n;
+                {
+                    assert m == power(m, d * e) % n by {
+                       rsa_correct_lemma(rsa, m);
+                    }
+                }
+                m;
+            }
+            assert power(s, e) % n == m;
+        }
     }
 }
