@@ -82,23 +82,23 @@ module RSALemmas
         && cong(rsa.e * rsa.d, 1, rsa.phi)
     }
 
-    lemma rsa_cong_lemma(rsa: rsa_params, m: nat, p: nat)
+    lemma rsa_cong_lemma_1(rsa: rsa_params, m: nat, p: nat)
         requires rsa_valid(rsa);
         requires p == rsa.p || p == rsa.q;
+        ensures cong(power(m, rsa.d * rsa.e), m, p);
     {
         var e, d := rsa.e, rsa.d;
         var q := if p == rsa.q then rsa.p else rsa.q;
         var n, phi := rsa.n, rsa.phi;
 
         if cong(m, 0, p) {
-            rsa_cong_lemma_1(rsa, m, p);
+            rsa_cong_lemma_2(rsa, m, p);
         }  else {
-            // assert cong(power(m, d * e), m, p);
-            assume false;
+            rsa_cong_lemma_3(rsa, m, p);
         }
     }
 
-    lemma rsa_cong_lemma_1(rsa: rsa_params, m: nat, p: nat)
+    lemma rsa_cong_lemma_2(rsa: rsa_params, m: nat, p: nat)
         requires rsa_valid(rsa);
         requires p == rsa.p || p == rsa.q;
         requires cong(m, 0, p);
@@ -124,6 +124,19 @@ module RSALemmas
             cong(temp, m, p);
         }
         assert cong(power(m, d * e), m, p);
+    }
+
+    lemma rsa_cong_lemma_3(rsa: rsa_params, m: nat, p: nat)
+        requires rsa_valid(rsa);
+        requires p == rsa.p || p == rsa.q;
+        requires !cong(m, 0, p);
+        ensures cong(power(m, rsa.d * rsa.e), m, p);
+    {
+        var e, d := rsa.e, rsa.d;
+        var q := if p == rsa.q then rsa.p else rsa.q;
+        var n, phi := rsa.n, rsa.phi;
+
+        assume false;
     }
 
     lemma rsa_correct_lemma(rsa: rsa_params, m: nat)
@@ -172,8 +185,6 @@ module RSALemmas
 }
 
 /*
-
-
     lemma rsa_cong_lemma_3(rsa: rsa_params, key: pub_key, m: nat, c: nat, k: int, p: nat)
         requires rsa.d_val * key.e == rsa.phi_val * k + 1;
         requires rsa_valid(rsa, key);
@@ -224,21 +235,6 @@ module RSALemmas
             // }
             // cong(power(m, d * e), m, p);
         }
-    }
-
-    lemma rsa_cong_lemma_1(rsa: rsa_params, key: pub_key, m: nat, c: nat, k: int, target: nat)
-        requires rsa.d_val * key.e == rsa.phi_val * k + 1;
-        requires rsa_valid(rsa, key);
-        requires cong(power(c, key.e), m, key.n_val);
-        requires target == rsa.p_val || target == rsa.q_val;
-        ensures cong(power(m, rsa.d_val * key.e), m, target);
-    {
-        var d := rsa.d_val;
-        var n := key.n_val;
-        var e := key.e;
-        var p := target;
-
-
     }
 
     lemma rsa_signature_lemma(rsa: rsa_params, key: pub_key, m: nat, c: nat)
