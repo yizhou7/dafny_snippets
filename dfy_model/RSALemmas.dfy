@@ -216,7 +216,8 @@ module RSALemmas
 
     lemma rsa_correct_lemma(rsa: rsa_params, m: nat)
         requires rsa_valid(rsa);
-        ensures cong(power(m, rsa.e * rsa.d), m, rsa.n);
+        requires m < rsa.n;
+        ensures m == power(m, rsa.d * rsa.e) % rsa.n;
     {
         var e, d := rsa.e, rsa.d;
         var p, q := rsa.p, rsa.q;
@@ -231,7 +232,19 @@ module RSALemmas
             }
             chinese_remainder_theorem(power(m, d * e), m, p, q);
         }
+
+        assert m == power(m, d * e) % n by {
+            assert cong(m, power(m, d * e), n) by {
+                reveal cong();
+            }
+            cong_remainder_lemma(m, power(m, d * e), rsa.n);
+        }
     }
 
+    lemma rsa_signature_lemma_1(rsa: rsa_params, m: nat, s: nat)
+        requires rsa_valid(rsa);
+        // requires power()
+    {
 
+    }
 }
