@@ -914,6 +914,7 @@ module RSAE3v2 {
         && rsa.phi_val == (rsa.q_val - 1) * (rsa.p_val - 1)
         && coprime(rsa.phi_val, key.e)
         && rsa.d_val < rsa.phi_val
+        && key.e < rsa.phi_val
         && cong(key.e * rsa.d_val, 1, rsa.phi_val)
     }
 
@@ -944,7 +945,6 @@ module RSAE3v2 {
             }
             cong(temp, m, p);
         }
-
         assert cong(power(m, d * e), m, p);
     }
 
@@ -978,7 +978,7 @@ module RSAE3v2 {
             }
             cong(power(power(m, p - 1), (q - 1) * k), 1, p);
             {
-                power_power_lemma(m, p - 1, (q - 1) * k);
+                power_power_lemma(m, (p - 1), (q - 1) * k);
             }            
             cong(power(m, (p - 1) * (q - 1) * k), 1, p);
             {
@@ -1004,31 +1004,34 @@ module RSAE3v2 {
     lemma rsa_cong_lemma_1(rsa: rsa_params, key: pub_key, m: nat, c: nat, k: int, target: nat)
         requires rsa.d_val * key.e == rsa.phi_val * k + 1;
         requires rsa_valid(rsa, key);
-        requires power(c, key.e) % key.n_val == m;
+        requires cong(power(c, key.e), m, key.n_val);
         requires target == rsa.p_val || target == rsa.q_val;
-        // ensures cong(power(m, rsa.d_val * key.e), m, target);
+        ensures cong(power(m, rsa.d_val * key.e), m, target);
     {
         var d := rsa.d_val;
         var n := key.n_val;
         var e := key.e;
         var p := target;
 
-        if m % p == 0 {
+        if cong(m, 0, p) {
             rsa_cong_lemma_2(rsa, key, m, c, k, p);
         }  else {
             // assert cong(power(m, d * e), m, p);
+            assume false;
         }
     }
 
     lemma rsa_signature_lemma(rsa: rsa_params, key: pub_key, m: nat, c: nat)
         requires rsa_valid(rsa, key);
-        requires power(c, key.e) % key.n_val == m;
-        // ensures c == power(m, rsa.d_val) % key.n_val;
+        requires cong(power(c, key.e), m, key.n_val);
+        // ensures cong(c, power(m, d), n);
     {
-        ghost var d := rsa.d_val;
-        ghost var n := key.n_val;
-        ghost var e := key.e;
-        ghost var phi := rsa.phi_val;
+        var d := rsa.d_val;
+        var n := key.n_val;
+        var e := key.e;
+        var phi := rsa.phi_val;
+        var p := rsa.p_val;
+        var q := rsa.q_val;
 
         var c' := power(m, d) % n;
 
@@ -1045,14 +1048,32 @@ module RSAE3v2 {
             power(m, d * e) % n;
         }
 
-        assert cong(d * e, 1, phi);
-
         assert exists k :int :: (d * e == phi * k + 1) by {
+            assert cong(d * e, 1, phi);
             cong_k_exist_lemma(d * e, 1, phi);
         }
 
         var k :| d * e == phi * k + 1;
 
+        assert cong(power(m, d * e), m, n) by {
+            ghost var temp := power(m, d * e);
+            assert cong(temp, m, q) by {
+                rsa_cong_lemma_1(rsa, key, m, c, k, q);
+            }
+            assert cong(temp, m, p) by {
+                rsa_cong_lemma_1(rsa, key, m, c, k, p);
+            }
+            chinese_remainder_theorem(temp, m, p, q);
+        }
+
+        ghost var d';
+        if cong(c, power(m, d'), n) && d' != d {
+            assert cong(power(c, e), power(m, d * e), n) by {
+                cong_trans_lemma(power(c, e), m, power(m, d * e), n);
+            }
+            assume cong(power(c, e), power(m, d' * e), n);
+
+        }
     }
 
     method RSA_e_3_verify(key: pub_key, signature: seq<uint32>, sha: seq<uint32>, ghost rsa: rsa_params)
