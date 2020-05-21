@@ -188,6 +188,7 @@ module RSALemmas
         assert cong(power(m, d * e), m, p);
     }
 
+    // unstable
     lemma rsa_cong_lemma_4(rsa: rsa_params, m: nat, p: nat, q: nat, k: int)
         requires rsa_valid(rsa);
         requires rsa.d * rsa.e == rsa.phi * k + 1;
@@ -213,41 +214,24 @@ module RSALemmas
         } 
     }
 
-
     lemma rsa_correct_lemma(rsa: rsa_params, m: nat)
         requires rsa_valid(rsa);
         ensures cong(power(m, rsa.e * rsa.d), m, rsa.n);
     {
-    //     var e, d := rsa.e, rsa.d;
-    //     var p, q := rsa.p, rsa.q;
-    //     var n, phi := rsa.n, rsa.phi;
+        var e, d := rsa.e, rsa.d;
+        var p, q := rsa.p, rsa.q;
+        var n, phi := rsa.n, rsa.phi;
 
+        assert cong(power(m, d * e), m, n) by {
+            assert cong(power(m, d * e), m, p) by {
+                rsa_cong_lemma_1(rsa, m, p);
+            }
+            assert cong(power(m, d * e), m, q) by {
+                rsa_cong_lemma_1(rsa, m, q);
+            }
+            chinese_remainder_theorem(power(m, d * e), m, p, q);
+        }
     }
 
-    // {
-    //     var c' := power(m, d) % n;
-    //     calc == {
-    //         power(c', e) % n;
-    //         power(power(m, d) % n, e) % n;
-    //         {
-    //             power_mod_lemma_2(power(m, d), e, n);
-    //         }
-    //         power(power(m, d), e) % n;
-    //         {
-    //             power_power_lemma(m, d, e);
-    //         }
-    //         power(m, d * e) % n;
-    //     }
 
-    //     assert cong(power(m, d * e), m, n) by {
-    //         ghost var temp := power(m, d * e);
-    //         assert cong(temp, m, q) by {
-    //             rsa_cong_lemma_1(rsa, key, m, c, k, q);
-    //         }
-    //         assert cong(temp, m, p) by {
-    //             rsa_cong_lemma_1(rsa, key, m, c, k, p);
-    //         }
-    //         chinese_remainder_theorem(temp, m, p, q);
-    //     }
-    // }
 }
