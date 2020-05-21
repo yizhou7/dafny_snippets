@@ -94,7 +94,13 @@ module RSALemmas
         if cong(m, 0, p) {
             rsa_cong_lemma_2(rsa, m, p);
         }  else {
-            rsa_cong_lemma_3(rsa, m, p);
+            assert exists k :int :: (d * e == phi * k + 1) by {
+                assert cong(d * e, 1, phi);
+                cong_k_exist_lemma(d * e, 1, phi);
+            }
+
+            var k :| d * e == phi * k + 1;
+            rsa_cong_lemma_3(rsa, m, p, k);
         }
     }
 
@@ -126,8 +132,9 @@ module RSALemmas
         assert cong(power(m, d * e), m, p);
     }
 
-    lemma rsa_cong_lemma_3(rsa: rsa_params, m: nat, p: nat)
+    lemma rsa_cong_lemma_3(rsa: rsa_params, m: nat, p: nat, k: int)
         requires rsa_valid(rsa);
+        requires rsa.d * rsa.e == rsa.phi * k + 1;
         requires p == rsa.p || p == rsa.q;
         requires !cong(m, 0, p);
         ensures cong(power(m, rsa.d * rsa.e), m, p);
@@ -136,8 +143,76 @@ module RSALemmas
         var q := if p == rsa.q then rsa.p else rsa.q;
         var n, phi := rsa.n, rsa.phi;
 
-        assume false;
+        assert cong_a1 : power(power(m, p - 1), (q - 1) * k) == power(m, phi * k) by {
+            rsa_cong_lemma_4(rsa, m, p, q, k);
+        }
+
+        calc ==> {
+            prime(p) && !cong(m, 0, p);
+            {
+                fermats_little_theorem(m, p);
+            }
+            cong(power(m, p - 1), 1, p); 
+            {
+                cong_power_lemma(power(m, p - 1), 1, (q - 1) * k, p);
+            }
+            cong(power(power(m, p - 1), (q - 1) * k), power(1, (q - 1) * k), p);
+           {
+                power_base_one_lemma((q - 1) * k);
+            }
+            cong(power(power(m, p - 1), (q - 1) * k), 1, p);
+            {
+                reveal cong_a1;
+            }
+            cong(power(m, phi * k), 1, p);
+        }
+
+        assert cong(power(m, phi * k), 1, p); // splitting here helps for some reason
+
+        calc ==> {
+            cong(power(m, phi * k), 1, p);
+            {
+                cong_mul_lemma_1(power(m, phi * k), 1, m, p);
+            }
+            cong(power(m, phi * k) * m, m, p);
+            {
+                power_add_one_lemma(m, phi * k);
+            }
+            cong(power(m, phi * k + 1), m, p);
+            {
+                assert d * e == phi * k + 1;
+            }
+            cong(power(m, d * e), m, p);
+        }
+
+        assert cong(power(m, d * e), m, p);
     }
+
+    lemma rsa_cong_lemma_4(rsa: rsa_params, m: nat, p: nat, q: nat, k: int)
+        requires rsa_valid(rsa);
+        requires rsa.d * rsa.e == rsa.phi * k + 1;
+        requires p == rsa.p || p == rsa.q;
+        requires if p == rsa.q then q == rsa.p else q == rsa.q;
+        ensures power(power(m, p - 1), (q - 1) * k) == power(m, rsa.phi * k);
+    {
+        var e, d := rsa.e, rsa.d;
+        var n, phi := rsa.n, rsa.phi;
+
+        assert power(power(m, p - 1), (q - 1) * k) == power(m, phi * k) by {
+            calc == {
+                power(power(m, p - 1), (q - 1) * k);
+                {
+                    power_power_lemma(m, p - 1, (q - 1) * k);
+                }
+                power(m, (p - 1) * (q - 1) * k);
+                {
+                    assert (p - 1) * (q - 1) == phi;
+                }
+                power(m, phi * k);
+            }
+        } 
+    }
+
 
     lemma rsa_correct_lemma(rsa: rsa_params, m: nat)
         requires rsa_valid(rsa);
@@ -164,13 +239,6 @@ module RSALemmas
     //         power(m, d * e) % n;
     //     }
 
-    //     assert exists k :int :: (d * e == phi * k + 1) by {
-    //         assert cong(d * e, 1, phi);
-    //         cong_k_exist_lemma(d * e, 1, phi);
-    //     }
-
-    //     var k :| d * e == phi * k + 1;
-
     //     assert cong(power(m, d * e), m, n) by {
     //         ghost var temp := power(m, d * e);
     //         assert cong(temp, m, q) by {
@@ -183,74 +251,3 @@ module RSALemmas
     //     }
     // }
 }
-
-/*
-    lemma rsa_cong_lemma_3(rsa: rsa_params, key: pub_key, m: nat, c: nat, k: int, p: nat)
-        requires rsa.d_val * key.e == rsa.phi_val * k + 1;
-        requires rsa_valid(rsa, key);
-        requires power(c, key.e) % key.n_val == m;
-        requires p == rsa.p_val || p == rsa.q_val;
-        // ensures cong(power(m, rsa.d_val * key.e), m, p);
-    {
-        var d := rsa.d_val;
-        var n := key.n_val;
-        var e := key.e;
-        var phi := rsa.phi_val;
-        var q := if p == rsa.p_val then rsa.q_val else rsa.p_val;
-
-        assert prime(p);
-        calc ==> {
-            prime(p);
-            {
-                assume !cong(m, 0, p);
-                fermats_little_theorem(m, p);
-            }
-            cong(power(m, p - 1), 1, p); 
-            {
-                cong_power_lemma(power(m, p - 1), 1, (q - 1) * k, p);
-            }
-            cong(power(power(m, p - 1), (q - 1) * k), power(1, (q - 1) * k), p);
-            {
-                power_base_one_lemma((q - 1) * k);
-            }
-            cong(power(power(m, p - 1), (q - 1) * k), 1, p);
-            {
-                power_power_lemma(m, (p - 1), (q - 1) * k);
-            }            
-            cong(power(m, (p - 1) * (q - 1) * k), 1, p);
-            {
-                assert (q - 1) * (p - 1) == phi;
-            }
-            // cong(power(m, phi * k), 1, p);
-            // {
-            //     cong_mul_lemma_1(power(m, phi * k), 1, m, p);
-            // }
-            // cong(power(m, phi * k) * m, m, p);
-            // {
-            //     power_add_one_lemma(m, phi * k);
-            // }
-            // cong(power(m, phi * k + 1), m, p);
-            // {
-            //     assert d * e == phi * k + 1;
-            // }
-            // cong(power(m, d * e), m, p);
-        }
-    }
-
-    lemma rsa_signature_lemma(rsa: rsa_params, key: pub_key, m: nat, c: nat)
-        requires rsa_valid(rsa, key);
-        requires cong(power(c, key.e), m, key.n_val);
-        // ensures cong(c, power(m, d), n);
-    {
-
-
-        ghost var d';
-        if cong(c, power(m, d'), n) && d' != d {
-            assert cong(power(c, e), power(m, d * e), n) by {
-                cong_trans_lemma(power(c, e), m, power(m, d * e), n);
-            }
-            assume cong(power(c, e), power(m, d' * e), n);
-
-        }
-    }
-*/
