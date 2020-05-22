@@ -829,7 +829,7 @@ module RSAE3v2 {
         requires pub_key_valid(key);
         requires 0 <= seq_interp(a) < key.n_val; 
         requires |a| == key.len;
-        ensures seq_interp(aaa) == (seq_interp(a) * seq_interp(a) * seq_interp(a)) % key.n_val;
+        ensures seq_interp(aaa) == power(seq_interp(a), 3) % key.n_val;
         ensures |aaa| == key.len;
     {
         var aR := montMul(key, a, key.RR); /* aR = a * RR / R mod M   */
@@ -861,6 +861,10 @@ module RSAE3v2 {
             assert cong(seq_interp(aaa), a_val * a_val * a_val, key.n_val);
             cong_remainder_lemma(seq_interp(aaa), a_val * a_val * a_val, key.n_val);
         }
+
+        assert (a_val * a_val * a_val == power(a_val, 3)) by {
+            reveal power();
+        }
     }
 
     method RSA_e_3_verify(key: pub_key, signature: seq<uint32>, sha: seq<uint32>, ghost rsa: rsa_params)
@@ -890,9 +894,10 @@ module RSAE3v2 {
 
         assert buf == sha;
 
-        // assert buf == sha;
+        ghost var s := seq_interp(signature);
+        ghost var m := seq_interp(sha);
 
-        // ghost var s := seq_interp(signature);
+        assert (power(s, 3) % rsa.n == m);
         // ghost var 
         // assume  == seq_interp(sha);
 
