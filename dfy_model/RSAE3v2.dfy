@@ -290,7 +290,7 @@ module RSAE3v2 {
     }
     
     lemma cmm_divisible_lemma_2(key: pub_key, S: seq<uint32>)
-        requires valid_pub_key(key);
+        requires pub_key_valid(key);
         requires |S| == key.len + 2;
         requires S[0] == 0;
         ensures seq_interp(S) == seq_interp(S[1..]) * BASE;
@@ -326,7 +326,7 @@ module RSAE3v2 {
     }
 
     lemma cmm_congruent_lemma_2(key: pub_key, x: seq<uint32>, i: nat, x_i: nat, u_i: nat, A_val: nat, A_val': nat, y_val: nat)
-        requires valid_pub_key(key);
+        requires pub_key_valid(key);
         requires i < |x| == key.len && x[i] as int == x_i;
 
         requires cong(A_val, seq_interp(x[..i]) * y_val * power(key.BASE_INV, i), key.n_val);
@@ -388,7 +388,7 @@ module RSAE3v2 {
     }
 
     lemma cmm_congruent_lemma(key: pub_key, x: seq<uint32>, i: nat, x_i: nat, u_i: nat, A_val: nat, A_val': nat, y_val: nat)
-        requires valid_pub_key(key);
+        requires pub_key_valid(key);
         requires i < |x| == key.len && x[i] as int == x_i;
 
         requires cong(A_val, seq_interp(x[..i]) * y_val * power(key.BASE_INV, i), key.n_val);
@@ -441,7 +441,7 @@ module RSAE3v2 {
         A': seq<uint32>,
         A: seq<uint32>)
 
-        requires valid_pub_key(key);
+        requires pub_key_valid(key);
         requires |A'| == |A| == |y| == key.len;
         requires seq_interp(A) < key.n_val + seq_interp(y);
         requires (higher as nat * key.R + seq_interp(A')) * BASE == 
@@ -517,7 +517,7 @@ module RSAE3v2 {
         ghost x: seq<uint32>)
 
         returns (A': seq<uint32>)
-        requires valid_pub_key(key);
+        requires pub_key_valid(key);
 
         requires |A| == |y| == |x| == key.len;
         requires i < |x| == key.len && x[i] == x_i;
@@ -658,7 +658,7 @@ module RSAE3v2 {
     method montMul(key: pub_key, x: seq<uint32>, y: seq<uint32>)
         returns (A: seq<uint32>)
 
-        requires valid_pub_key(key);
+        requires pub_key_valid(key);
         requires |x| == |y| == key.len;
 
         ensures cong(seq_interp(A), seq_interp(x) * seq_interp(y) * key.R_INV, key.n_val);
@@ -697,7 +697,7 @@ module RSAE3v2 {
     }
 
     lemma R_inv_cancel_lemma(key: pub_key, v: int)
-        requires valid_pub_key(key);
+        requires pub_key_valid(key);
         ensures cong(v * key.R * key.R_INV, v, key.n_val);
     {
         calc ==> {
@@ -710,7 +710,7 @@ module RSAE3v2 {
     }
 
     lemma mod_pow3_congruent_lemma_1(key: pub_key, a: int, ar: int, aar: int, aaa: int, rr: int)
-        requires valid_pub_key(key);
+        requires pub_key_valid(key);
         requires cong(rr, key.R * key.R, key.n_val);
         requires cong(ar, a * rr * key.R_INV, key.n_val);
         requires cong(aar, ar * ar * key.R_INV, key.n_val);
@@ -742,7 +742,7 @@ module RSAE3v2 {
     }
 
     lemma mod_pow3_congruent_lemma_2(key: pub_key, a: int, ar: int, aar: int, rr: int)
-        requires valid_pub_key(key);
+        requires pub_key_valid(key);
         requires cong(rr, key.R * key.R, key.n_val);
         requires cong(ar, a * rr * key.R_INV, key.n_val);
         requires cong(aar, ar * ar * key.R_INV, key.n_val);
@@ -778,7 +778,7 @@ module RSAE3v2 {
     }
 
     lemma mod_pow3_congruent_lemma_3(key: pub_key, a: int, ar: int, aar: int, rr: int)
-        requires valid_pub_key(key);
+        requires pub_key_valid(key);
         requires cong(rr, key.R * key.R, key.n_val);
         requires cong(ar, a * rr * key.R_INV, key.n_val);
         requires cong(aar, ar * ar * key.R_INV, key.n_val);
@@ -826,7 +826,7 @@ module RSAE3v2 {
     method modpow3(key: pub_key, a: seq<uint32>) 
         returns (aaa: seq<uint32>)
 
-        requires valid_pub_key(key);
+        requires pub_key_valid(key);
         requires 0 <= seq_interp(a) < key.n_val; 
         requires |a| == key.len;
         ensures seq_interp(aaa) == (seq_interp(a) * seq_interp(a) * seq_interp(a)) % key.n_val;
@@ -866,23 +866,37 @@ module RSAE3v2 {
     method RSA_e_3_verify(key: pub_key, signature: seq<uint32>, sha: seq<uint32>, ghost rsa: rsa_params)
         returns (x : bool)
 
-        requires rsa_valid(rsa, key);
+        requires rsa_valid(rsa);
+        requires pub_key_valid(key);
+
         requires |signature| == |sha| == key.len;
         requires 0 <= seq_interp(signature) < key.n_val;
 
-        ensures x ==> seq_interp(signature) == power(seq_interp(sha), rsa.d_val) % key.n_val;
+        // ensures x <==> seq_interp(signature) == power(seq_interp(sha), rsa.d_val) % key.n_val;
     {
-    //     var decrypted := modpow3(key, signature);
-    //     var i := 0;
+        var buf := modpow3(key, signature);
+        var i := 0;
 
-    //     while i < key.len
-    //         decreases key.len - i;
-    //     {
-    //         if decrypted[i] != sha[i] {
-    //             return false;
-    //         }
-    //         i := i + 1;
-    //     }
+        while i < key.len
+            decreases key.len - i;
+            invariant 0 <= i <= key.len;
+            invariant buf[..i] == sha[..i];
+        {
+            if buf[i] != sha[i] {
+                return false;
+            }
+            i := i + 1;
+        }
+
+        assert 
+        // assert buf == sha;
+
+        // ghost var s := seq_interp(signature);
+        // ghost var 
+        // assume  == seq_interp(sha);
+
+
+
     //     return true;
         assume false;
     }
