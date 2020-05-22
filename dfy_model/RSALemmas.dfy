@@ -48,7 +48,7 @@ module RSALemmas
         R_INV: nat
     )
 
-    predicate valid_pub_key(key: pub_key) {
+    predicate pub_key_valid(key: pub_key) {
         && key.e == 3
         && |key.m| == |key.RR| == key.len >= 1
         && seq_interp(key.m) == key.n_val

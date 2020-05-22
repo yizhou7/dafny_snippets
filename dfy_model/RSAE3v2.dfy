@@ -888,7 +888,8 @@ module RSAE3v2 {
             i := i + 1;
         }
 
-        assert 
+        assert buf == sha;
+
         // assert buf == sha;
 
         // ghost var s := seq_interp(signature);
