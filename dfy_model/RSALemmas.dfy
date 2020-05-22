@@ -82,6 +82,14 @@ module RSALemmas
         && cong(rsa.e * rsa.d, 1, rsa.phi)
     }
 
+    predicate pub_key_connect_valid(rsa: rsa_params, key: pub_key)
+    {
+        && rsa_valid(rsa)
+        && pub_key_valid(key)
+        && rsa.e == key.e
+        && rsa.n == key.n_val
+    }
+
     lemma rsa_cong_lemma_1(rsa: rsa_params, m: nat, p: nat)
         requires rsa_valid(rsa);
         requires p == rsa.p || p == rsa.q;

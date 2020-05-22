@@ -870,16 +870,18 @@ module RSAE3v2 {
     method RSA_e_3_verify(key: pub_key, signature: seq<uint32>, sha: seq<uint32>, ghost rsa: rsa_params)
         returns (x : bool)
 
-        requires rsa_valid(rsa);
-        requires pub_key_valid(key);
-
+        requires pub_key_connect_valid(rsa, key);
         requires |signature| == |sha| == key.len;
         requires 0 <= seq_interp(signature) < key.n_val;
+        requires 0 <= seq_interp(sha) < key.n_val;
 
-        // ensures x <==> seq_interp(signature) == power(seq_interp(sha), rsa.d_val) % key.n_val;
+        ensures x <==> seq_interp(signature) == power(seq_interp(sha), rsa.d) % key.n_val;
     {
         var buf := modpow3(key, signature);
         var i := 0;
+
+        ghost var s := seq_interp(signature);
+        ghost var m := seq_interp(sha);
 
         while i < key.len
             decreases key.len - i;
@@ -887,23 +889,20 @@ module RSAE3v2 {
             invariant buf[..i] == sha[..i];
         {
             if buf[i] != sha[i] {
+                assert (s != power(m, rsa.d) % rsa.n) by {
+                    assume (power(s, rsa.e) % rsa.n != m);
+                    rsa_signature_lemma(rsa, m, s);
+                }
                 return false;
             }
             i := i + 1;
         }
 
         assert buf == sha;
-
-        ghost var s := seq_interp(signature);
-        ghost var m := seq_interp(sha);
-
-        assert (power(s, 3) % rsa.n == m);
-        // ghost var 
-        // assume  == seq_interp(sha);
-
-
-
-    //     return true;
-        assume false;
+        assert (s == power(m, rsa.d) % rsa.n) by {
+            assert (power(s, rsa.e) % rsa.n == m);
+            rsa_signature_lemma(rsa, m, s);
+        }
+        return true;
     }
 }
