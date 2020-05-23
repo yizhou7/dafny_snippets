@@ -154,7 +154,76 @@ module SeqInt {
             i := i - 1;
         }
 
+        assert A[i+1..] == B[i+1..];
         assert A[i] != B[i];
+
+        ghost var A_i_cval := seq_interp(A[..i]);
+        ghost var B_i_cval := seq_interp(B[..i]);
+
+        // assert A_i_cval < power(BASE, i) by {
+        //     seq_interp_upper_bound_lemma(A[..i], i);
+        // }
+
+        assume seq_interp(A[..i+1]) == A[i] as int * power(BASE, i) + A_i_cval;
+        assume seq_interp(B[..i+1]) == B[i] as int * power(BASE, i) + B_i_cval;
+
+        assume 0 <= A_i_cval < power(BASE, i);
+        assume 0 <= B_i_cval < power(BASE, i);
+
+        var diff := seq_interp(A[..i+1]) - seq_interp(B[..i+1]);
+        var R := power(BASE, i);
+
+        if A[i] > B[i] {
+            assert R + A_i_cval - B_i_cval > 0 by {
+                assert -R < A_i_cval - B_i_cval;
+            }
+
+           calc >= {
+                diff;
+                A[i] as int * R + A_i_cval - B[i] as int * R - B_i_cval;
+                {
+                    assert A[i] - B[i] >= 1;
+                }
+                R + A_i_cval - B_i_cval;
+            }
+
+            assert diff >= R + A_i_cval - B_i_cval > 0;
+        } else {
+            assert -R + A_i_cval - B_i_cval < 0 by {
+                assert R > A_i_cval - B_i_cval;
+            }
+
+           calc <= {
+                diff;
+                A[i] as int * R + A_i_cval - B[i] as int * R - B_i_cval;
+                {
+                    assert A[i] as int - B[i] as int <= -1;
+                }
+                -R + A_i_cval - B_i_cval;
+            }
+
+            assert diff <= -R + A_i_cval - B_i_cval < 0;
+        }
+
+        assert diff != 0;
+
+        // calc == {
+        //     seq_interp(A[..i+1]);
+        //     interp(A[..i+1], i+1);
+        //     word_interp(A[..i+1], i) + interp(A[..i+1], i);
+        //     {
+        //         assume false;
+        //     }
+        //     word_interp(A[..i+1], i) + seq_interp(A[..i]);
+        //     {
+        //         assert word_interp(A[..i+1], i) == A[i] as int * power(BASE, i);
+        //     }
+        //     A[i] as int * power(BASE, i) + seq_interp(A[..i]);
+        // }
+
+        // assert seq_interp(B[..i]) < R(i) by {
+        //     seq_interp_upper_bound_lemma(A[..i], i);
+        // }
     }
 
     method seq_add_impl(A: seq<uint32>, B: seq<uint32>, n: nat) returns (c: uint2, S:seq<uint32>)
