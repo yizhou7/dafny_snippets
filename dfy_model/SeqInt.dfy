@@ -140,7 +140,7 @@ module SeqInt {
     lemma {:induction n} neq_lemma(A: seq<uint32>, B: seq<uint32>, n: nat)
         requires |A| == |B| == n;
         requires A != B;
-        // ensures seq_interp(A) != seq_interp(B);
+        ensures seq_interp(A) != seq_interp(B);
     {
         ghost var i: nat := n - 1;
 
@@ -179,6 +179,8 @@ module SeqInt {
         assert seq_interp(A[..i+1]) != seq_interp(B[..i+1]) by {
             neq_aux_lemma_1(A, A_i_cval, B, B_i_cval, i, n);
         }
+
+        neq_aux_lemma_2(A, B, i, n);
     }
 
     lemma neq_aux_lemma_1(A: seq<uint32>, A_i_cval: int, B: seq<uint32>, B_i_cval: int, i: nat, n: nat)
@@ -232,6 +234,40 @@ module SeqInt {
         }
 
         assert diff != 0;
+    }
+
+    lemma neq_aux_lemma_2(A: seq<uint32>, B: seq<uint32>, i: nat, n: nat)
+        requires i < |A| == |B| == n;
+        requires A[i+1..] == B[i+1..];
+        requires seq_interp(A[..i+1]) != seq_interp(B[..i+1]);
+        ensures seq_interp(A) != seq_interp(B);
+    {
+        if i == n - 1 {
+            assert A[..i+1] == A && B[..i+1] == B;
+            assert seq_interp(A) != seq_interp(B);
+        } else {
+            var n' := n - 1;
+            var A', B' := A[..n'], B[..n'];
+
+            assert A[..i+1] == A'[..i+1] && B[..i+1] == B'[..i+1];
+            assert seq_interp(A'[..i+1]) != seq_interp(B'[..i+1]);
+
+            assert seq_interp(A') != seq_interp(B') by {
+                neq_aux_lemma_2(A', B', i, n');
+            }
+
+            assert seq_interp(A) == A[n-1] as nat * power(BASE, n-1) + seq_interp(A') by {
+                prefix_interp_lemma_2(A, n);
+                assert A[..n] == A;
+            }   
+
+            assert seq_interp(B) == B[n-1] as nat * power(BASE, n-1) + seq_interp(B') by {
+                prefix_interp_lemma_2(B, n);
+                assert B[..n] == B;
+            }
+
+            assert seq_interp(A) != seq_interp(B);
+        }
     }
 
     method seq_add_impl(A: seq<uint32>, B: seq<uint32>, n: nat) returns (c: uint2, S:seq<uint32>)
