@@ -890,7 +890,10 @@ module RSAE3v2 {
         {
             if buf[i] != sha[i] {
                 assert (s != power(m, rsa.d) % rsa.n) by {
-                    assume (power(s, rsa.e) % rsa.n != m);
+                    assert seq_interp(buf) != m by {
+                        assert buf != sha;
+                        neq_lemma(buf, sha, key.len);
+                    }
                     rsa_signature_lemma(rsa, m, s);
                 }
                 return false;
