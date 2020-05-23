@@ -137,6 +137,26 @@ module SeqInt {
         }
     }
 
+    lemma {:induction n} neq_lemma(A: seq<uint32>, B: seq<uint32>, n: nat)
+        requires |A| == |B| == n;
+        requires A != B;
+        // ensures seq_interp(A) != seq_interp(B);
+    {
+        ghost var i: nat := n - 1;
+
+        while i != 0
+            invariant A[i+1..] == B[i+1..];
+            decreases i;
+        {
+            if A[i] != B[i] {
+                break;
+            }
+            i := i - 1;
+        }
+
+        assert A[i] != B[i];
+    }
+
     method seq_add_impl(A: seq<uint32>, B: seq<uint32>, n: nat) returns (c: uint2, S:seq<uint32>)
         requires |A| == |B| == n;
         ensures |S| == n;
