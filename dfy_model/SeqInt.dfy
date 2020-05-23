@@ -160,16 +160,42 @@ module SeqInt {
         ghost var A_i_cval := seq_interp(A[..i]);
         ghost var B_i_cval := seq_interp(B[..i]);
 
-        // assert A_i_cval < power(BASE, i) by {
-        //     seq_interp_upper_bound_lemma(A[..i], i);
-        // }
+        assert 0 <= A_i_cval < power(BASE, i) by {
+            seq_interp_upper_bound_lemma(A[..i], i);
+        }
 
-        assume seq_interp(A[..i+1]) == A[i] as int * power(BASE, i) + A_i_cval;
-        assume seq_interp(B[..i+1]) == B[i] as int * power(BASE, i) + B_i_cval;
+        assert 0 <= B_i_cval < power(BASE, i) by {
+            seq_interp_upper_bound_lemma(B[..i], i);
+        }
 
-        assume 0 <= A_i_cval < power(BASE, i);
-        assume 0 <= B_i_cval < power(BASE, i);
+        assert seq_interp(A[..i+1]) == A[i] as nat * power(BASE, i) + A_i_cval by {
+            prefix_interp_lemma_2(A, i+1);
+        }
 
+        assert seq_interp(B[..i+1]) == B[i] as nat * power(BASE, i) + B_i_cval by {
+            prefix_interp_lemma_2(B, i+1);
+        }
+
+        assert seq_interp(A[..i+1]) != seq_interp(B[..i+1]) by {
+            neq_aux_lemma_1(A, A_i_cval, B, B_i_cval, i, n);
+        }
+    }
+
+    lemma neq_aux_lemma_1(A: seq<uint32>, A_i_cval: int, B: seq<uint32>, B_i_cval: int, i: nat, n: nat)
+        requires i < |A| == |B| == n;
+        requires A[i] != B[i];
+
+        requires seq_interp(A[..i+1]) == A[i] as int * power(BASE, i) + A_i_cval;
+        requires seq_interp(B[..i+1]) == B[i] as int * power(BASE, i) + B_i_cval;
+
+        requires A_i_cval == seq_interp(A[..i]);
+        requires B_i_cval == seq_interp(B[..i]);
+
+        requires 0 <= A_i_cval < power(BASE, i);
+        requires 0 <= B_i_cval < power(BASE, i);
+
+        ensures seq_interp(A[..i+1]) != seq_interp(B[..i+1]);
+    {
         var diff := seq_interp(A[..i+1]) - seq_interp(B[..i+1]);
         var R := power(BASE, i);
 
@@ -206,24 +232,6 @@ module SeqInt {
         }
 
         assert diff != 0;
-
-        // calc == {
-        //     seq_interp(A[..i+1]);
-        //     interp(A[..i+1], i+1);
-        //     word_interp(A[..i+1], i) + interp(A[..i+1], i);
-        //     {
-        //         assume false;
-        //     }
-        //     word_interp(A[..i+1], i) + seq_interp(A[..i]);
-        //     {
-        //         assert word_interp(A[..i+1], i) == A[i] as int * power(BASE, i);
-        //     }
-        //     A[i] as int * power(BASE, i) + seq_interp(A[..i]);
-        // }
-
-        // assert seq_interp(B[..i]) < R(i) by {
-        //     seq_interp_upper_bound_lemma(A[..i], i);
-        // }
     }
 
     method seq_add_impl(A: seq<uint32>, B: seq<uint32>, n: nat) returns (c: uint2, S:seq<uint32>)
