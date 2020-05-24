@@ -30,7 +30,7 @@ module Powers
         ensures power(b, e) / b == power(b, e - 1);
     {
         assert power(b, e) % b == 0 by {
-            power_mod_lemma(b, e);
+            power_mod_lemma_1(b, e);
         }
         power_add_one_lemma(b, e - 1);
     }
@@ -58,7 +58,7 @@ module Powers
         }
     }
 
-    lemma {:induction e} power_mod_lemma(b: int, e: nat) 
+    lemma {:induction e} power_mod_lemma_1(b: int, e: nat) 
         requires e != 0 && b != 0;
         ensures power(b, e) % b == 0;
     {
