@@ -150,4 +150,45 @@ module Powers
             }
         }
     }
+
+    lemma {:induction e} power_mod_lemma_2(b: int, e: nat, n: int)
+        requires n != 0;
+        ensures power(b % n, e) % n == power(b, e) % n;
+    {
+        if e == 0 {
+            reveal power();
+        } else {
+            calc ==> {
+                true;
+                {
+                    power_mod_lemma_2(b, e - 1, n);
+                }
+                power(b % n, e - 1) % n == power(b, e - 1) % n;
+                {
+                    reveal cong();
+                }                
+                cong(power(b % n, e - 1), power(b, e - 1), n);
+                {
+                    assert cong(b % n, b, n) by {
+                        reveal cong();
+                    }
+                    cong_mul_lemma_2(power(b % n, e - 1), power(b, e - 1), b % n, b, n);
+                }
+                cong(power(b % n, e - 1) * (b % n), power(b, e - 1) * b, n);
+                {
+                    power_add_one_lemma(b % n, e - 1);
+                }
+                cong(power(b % n, e), power(b, e - 1) * b, n);
+                {
+                    power_add_one_lemma(b, e - 1);
+                }
+                cong(power(b % n, e), power(b, e), n);
+            }
+
+            assert power(b % n, e) % n == power(b, e) % n by {
+                assert cong(power(b % n, e), power(b, e), n);
+                reveal cong();
+            }
+        }
+    }
 }
