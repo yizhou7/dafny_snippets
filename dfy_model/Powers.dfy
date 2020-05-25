@@ -99,4 +99,55 @@ module Powers
             }
         }
     }
+
+    lemma {:induction e2} power_same_base_lemma(a: int, e1: nat, e2: nat)
+        ensures power(a, e1) * power(a, e2) == power(a, e1 + e2);
+    {
+        if e2 == 0 {
+            reveal power();
+        } else {
+            calc ==> {
+                true;
+                {
+                    power_same_base_lemma(a, e1, e2 - 1);
+                }
+                power(a, e1) * power(a, e2 - 1) == power(a, e1 + e2 - 1);
+                power(a, e1) * power(a, e2 - 1) * a == power(a, e1 + e2 - 1) * a;
+                {
+                    assert power(a, e2 - 1) * a == power(a, e2) by {
+                        power_add_one_lemma(a, e2 - 1);
+                    }
+                }
+                power(a, e1) * power(a, e2) == power(a, e1 + e2 - 1) * a;
+                {
+                    assert power(a, e1 + e2 - 1) * a == power(a, e1 + e2) by {
+                        power_add_one_lemma(a, e1 + e2 - 1);
+                    }
+                }
+                power(a, e1) * power(a, e2) == power(a, e1 + e2);
+            }
+            assert power(a, e1) * power(a, e2) == power(a, e1 + e2);
+        }
+    }
+
+    lemma {:inudction e2} power_power_lemma(b: int, e1: nat, e2: nat)
+        ensures power(power(b, e1), e2) == power(b, e1 * e2);
+    {
+        if e2 == 0 {
+            reveal power();
+        } else {
+            assert power(power(b, e1), e2 - 1) == power(b, e1 * (e2 - 1)) by {
+                power_power_lemma(b, e1, e2 - 1);
+            }
+
+            assert power(power(b, e1), e2 - 1) * power(b, e1) == power(power(b, e1), e2) by {
+                power_add_one_lemma(power(b, e1), e2 - 1);
+            }
+
+            assert power(b, e1 * (e2 - 1)) * power(b, e1) == power(b, e1 * e2) by {
+                assert e1 * (e2 - 1) + e1 == e1 * e2;
+                assume false;
+            }
+        }
+    }
 }
