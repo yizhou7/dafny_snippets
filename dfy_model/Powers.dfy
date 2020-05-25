@@ -145,8 +145,8 @@ module Powers
             }
 
             assert power(b, e1 * (e2 - 1)) * power(b, e1) == power(b, e1 * e2) by {
+                power_same_base_lemma(b,  e1 * (e2 - 1), e1);
                 assert e1 * (e2 - 1) + e1 == e1 * e2;
-                assume false;
             }
         }
     }
