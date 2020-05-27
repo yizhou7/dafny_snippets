@@ -1,0 +1,424 @@
+// Used by INSTALL.md
+include{:verbatim} "vale.i.dfy"
+
+var ok:bool {:state ok()};
+var x:int {:state reg(X)};
+var y:int {:state reg(Y)};
+var z:int {:state reg(Z)};
+var w:int {:state reg(W)};
+var mem:memmap {:state mem()};
+
+// type nat:Type(0) := int_range(0, _);
+// type seq(a:Type(0)):Type(0) {:primitive} extern;
+// type map(a:Type(0), b:Type(0)):Type(0) extern;
+// type reg:Type(0) extern;
+// const X:reg extern;
+// const Z:reg extern;
+// function operator([]) #[a:Type(0)](s:seq(a), i:int):a extern; // TODO: requires clause
+// function operator([ := ]) #[a:Type(0)](s:seq(a), i:int, v:a):seq(a) extern; // TODO: requires clause
+// function operator([]) #[a:Type(0), b:Type(0)](m:map(a, b), key:a):b extern; // TODO: requires clause
+// function operator([ := ]) #[a:Type(0), b:Type(0)](m:map(a, b), key:a, v:b):map(a, b) extern;
+
+operand_type opr:int @ reg := inout x | inout y | inout z | inout w;
+
+procedure Imm(out dst:opr, inline imm:int)
+    {:instruction Ins(InsImm(dst, imm))}
+    ensures
+        dst == imm;
+{
+    reveal evalCodeOpaque;
+}
+
+procedure Add(inout dst:opr, in src:opr)
+    {:instruction Ins(InsAdd(dst, src))}
+    ensures
+        dst == old(dst) + old(src);
+{
+    reveal evalCodeOpaque;
+}
+
+procedure test1()
+    requires
+        x == 0;
+    ensures
+        x == 3;
+    modifies
+        x; y;
+{
+    Imm(y, 1);
+    Add(x, y);
+    Add(x, y);
+    Add(x, y);
+}
+
+// #verbatim
+// predicate{:opaque} Post(x:int, y:int, g:int) { true }
+// predicate Inv(x:int, y:int, g:int, i:int) { Post(x, y, g) && i >= 0 }
+// predicate R(h:int, g:int) { h == g + 1 }
+// predicate Easy(a:int, b:int, c:int, d:int) { true }
+// #endverbatim
+
+// function Post(x:int, y:int, g:int):bool extern;
+// function Inv(x:int, y:int, g:int, i:int):bool extern;
+// function R(h:int, g:int):bool extern;
+// function Easy(a:int, b:int, c:int, d:int):bool extern;
+
+// // --------------------------------------------------------------
+
+// procedure LoopBody(ghost g:int, ghost i:int, ghost h1:int) returns(ghost h2:int)
+//     requires
+//         g <= x;
+//         0 <= h1;
+//         Inv(x, y, g, i);
+//     ensures
+//         x == old(x) + 1;
+//         h1 < h2;
+//         Inv(x, y, g, i + 1);
+//     reads
+//         y;
+//     modifies
+//         x; z;
+// {
+//     reveal Post;
+//     Imm(z, 1);
+//     Add(x, z);
+//     h2 := h1 + 1;
+// }
+
+// procedure Loop(ghost g:int, ghost h1:int) returns(ghost h2:int)
+//     requires/ensures
+//         g <= x;
+//     requires
+//         0 <= h1;
+//         Post(x, y, g);
+//     ensures
+//         x > y;
+//         Post(x, y, g);
+//         h1 <= h2;
+//     reads
+//         y;
+//     modifies
+//         x; z;
+// {
+//     ghost var i:nat := 0;
+//     h2 := h1;
+//     while (x <= y)
+//         invariant
+//             g <= x;
+//             0 <= i;
+//             Inv(x, y, g, i);
+//             0 <= h1;
+//             h1 <= h2;
+//         decreases
+//             y - x; // TODO: currently, this is ignored
+//     {
+//         h2 := LoopBody(g, i, h2);
+//         i := i + 1;
+//     }
+// }
+
+// procedure ULoopBody(ghost g:int, ghost i:int, ghost h1:int) returns(ghost h2:int)
+//     requires
+//         g <= x;
+//         0 <= h1;
+//         Inv(x, y, g, i);
+//     ensures
+//         x == old(x) + 1;
+//         h1 < h2;
+//         Inv(x, y, g, i + 1);
+//     reads
+//         y;
+//     modifies
+//         x; z;
+// {
+//     reveal Post;
+//     Imm(z, 1);
+//     Add(x, z);
+//     h2 := h1 + 1;
+// }
+
+// procedure ULoop(ghost g:int, ghost h1:int) returns(ghost h2:int)
+//     requires/ensures
+//         g <= x;
+//     requires
+//         0 <= h1;
+//         Inv(x, y, g, 0);
+//     ensures
+//         x > y;
+//         h1 <= h2;
+//     reads
+//         y;
+//     modifies
+//         x; z;
+// {
+//     ghost var i:nat := 0;
+//     h2 := h1;
+//     while (x <= y)
+//         invariant
+//             g <= x;
+//             0 <= i;
+//             Inv(x, y, g, i);
+//             h1 <= h2;
+//         decreases
+//             y - x;
+//     {
+//         h2 := ULoopBody(g, i, h2);
+//         i := i + 1;
+//     }
+// }
+
+// #verbatim
+// predicate{:opaque} RotateInv(n:nat, a:int, b:int, c:int, d:int) { true }
+
+// function RotateReg(i:int):reg
+// {
+//     var n := i % 4;
+//     if n == 0 then W else if n == 1 then X else if n == 2 then Y else Z
+// }
+// #endverbatim
+// function RotateInv(n:nat, a:int, b:int, c:int, d:int):bool extern;
+// function RotateReg(i:int):reg extern;
+
+// procedure RotateBody(inline n:nat, inout a:opr, inout b:opr, inout c:opr, inout d:opr)
+//     requires
+//         n > 0;
+//         RotateInv(n, a, b, c, d);
+//     ensures
+//         RotateInv(#nat(n - 1), b, c, d, a); // note: we could have given n type pos instead of nat to avoid the cast
+// {
+//     reveal RotateInv;
+// }
+
+// procedure RotateLoop(inline n:nat, inout a:opr, inout b:opr, inout c:opr, inout d:opr)
+//     {:recursive}
+//     requires
+//         @a == RotateReg(16 - n);
+//         @b == RotateReg(17 - n);
+//         @c == RotateReg(18 - n);
+//         @d == RotateReg(19 - n);
+//     requires
+//         RotateInv(n, a, b, c, d);
+//     ensures
+//         let arr := seq(a, b, c, d) in RotateInv(0, arr[n % 4], arr[(n + 1) % 4], arr[(n + 2) % 4], arr[(n + 3) % 4]);
+// {
+//     inline if (n > 0)
+//     {
+//         RotateBody(n, a, b, c, d);
+//         RotateLoop(#nat(n - 1), b, c, d, a);
+//     }
+// }
+
+// procedure RotateProc()
+//     modifies
+//         w; x; y; z;
+//     requires
+//         RotateInv(16, w, x, y, z);
+//     ensures
+//         RotateInv(0, w, x, y, z);
+// {
+//     RotateLoop(16, w, x, y, z);
+// }
+
+// // --------------------------------------------------------------
+
+// procedure InlineIfElse(inline n:nat)
+//     requires
+//         n < 3;
+//     requires/ensures
+//         x >= 0;
+//     ensures
+//         x == old(x) + n;
+//     modifies
+//         x; z;
+// {
+//     inline if (n == 0)
+//     {
+//         Imm(z, 0);
+//         Add(x, z);
+//     }
+//     else if (n == 1)
+//     {
+//         Imm(z, 1);
+//         Add(x, z);
+//     }
+//     else
+//     {
+//         Imm(z, 2);
+//         Add(x, z);
+//     }
+// }
+
+// // --------------------------------------------------------------
+
+// procedure InlineIfInTheMiddle(inline n:nat)
+//     requires
+//         n < 2;
+//     requires/ensures
+//         x >= 0;
+//     ensures
+//         x == old(x) + n + 2;
+//     modifies
+//         x; z;
+// {
+//     Imm(z, 1);
+//     ghost var h: int;
+//     h := 0;
+//     Add(x, z);
+//     inline if (n == 0)
+//     {
+//         h := h + 100;
+//         Imm(z, 0);
+//         Add(x, z);
+//     }
+//     else
+//     {
+//         Imm(z, 1);
+//         Add(x, z);
+//         h := h + 20;
+//     }
+//     Imm(z, 1);
+//     h := h + 5;
+//     Add(x, z);
+//     assert n == 0 ==> h == 105;
+//     assert n != 0 ==> h == 25;
+// }
+
+// // --------------------------------------------------------------
+
+// procedure Unroll(inline n:nat)
+//     {:recursive}
+//     requires/ensures
+//         x >= 0;
+//     ensures
+//         x >= old(x) + n;
+//     modifies
+//         x; z;
+// {
+//     inline if (n > 0)
+//     {
+//         Imm(z, n);
+//         Add(x, z);
+//         Unroll(#nat(n - 1));
+//     }
+// }
+
+// // --------------------------------------------------------------
+
+// procedure GhostReturn(ghost g:int, inline n:bool, in src:opr, ghost i:int) returns (ghost h:int)
+//     requires
+//         g <= x;
+//         Inv(x, y, g, i);
+//     ensures
+//         x == old(x) + 1;
+//         n || !n;
+//         src < 0 || 0 <= src;
+//         Inv(x, y, g, i + 1);
+//         R(h, g);
+//     reads
+//         y;
+//     modifies
+//         x; z;
+// {
+//     reveal Post;
+//     Imm(z, 1);
+//     Add(x, z);
+//     h := g + 1;
+// }
+
+// procedure GhostReturnCaller(ghost kg:int, in source:opr)
+//     requires/ensures
+//         kg <= x;
+//     requires
+//         x <= y;
+//         Post(x, y, kg);
+//     ensures
+//         x > y ==> Post(x, y, kg);
+//     reads
+//         y;
+//     modifies
+//         x; z; w;
+// {
+//     ghost var ki:int := 0;
+//     ghost var kh:int := 0;
+//     let n:int := 17;
+//     kh := GhostReturn(kg, true, source, ki);
+//     assert R(kh, kg);
+//     ki := ki + 1;
+// }
+
+// // --------------------------------------------------------------
+
+// procedure GhostReturnY(ghost g:int, inline n:bool, in src:opr, ghost i:int) returns (ghost h:int)
+//     requires
+//         true;
+//     ensures
+//         true;
+//     reads
+//         y;
+//     modifies
+//         x; z;
+// {
+//     Imm(z, 1);
+//     Add(x, z);
+// }
+
+// procedure GhostReturnCallerY(ghost kg:int, in source:opr)
+//     requires
+//          @source != X;
+//          @source != Z;
+//     requires
+//         Easy(x, y, kg, 0);
+//     ensures
+//         true;
+//     reads
+//         y;
+//     modifies
+//         x; z; w;
+// {
+//     ghost var ki := 0;
+//     ghost var kh:int := 0;
+//     kh := GhostReturnY(kg, true, source, ki);
+//     kh := GhostReturnY(kg, true, source, ki);
+// }
+
+// procedure UGhostReturnY(ghost g:int, inline n:bool, in src:opr, ghost i:int) returns (ghost h:int)
+//     reads
+//         y;
+//     modifies
+//         x; z;
+// {
+//     Imm(z, 1);
+//     Add(x, z);
+// }
+
+// procedure UGhostReturnCallerY(ghost kg:int, in source:opr)
+//     requires
+//         @source != X && @source != Z;
+//         Easy(x, y, kg, 0);
+//     reads
+//         y;
+//     modifies
+//         x; z; w;
+// {
+//     ghost var ki := 0;
+//     ghost var kh:int := 0;
+//     kh := UGhostReturnY(kg, true, source, ki);
+//     kh := UGhostReturnY(kg, true, source, ki);
+// }
+
+// // --------------------------------------------------------------
+
+// procedure ProcA(in src:opr)
+//     modifies x;
+// {
+// }
+
+// procedure ProcB(in source:opr)
+//     requires @source != X;
+//     modifies x;
+// {
+//     ProcA(source);
+//     ProcA(source);
+// }
+
+// --------------------------------------------------------------
