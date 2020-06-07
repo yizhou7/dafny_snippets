@@ -1,0 +1,1 @@
+EXPR="../casm_expr/sub_mem_1" && python3 main.py --pre $EXPR/pre --post $EXPR/post --p1 $EXPR/P1.s --p1lang asm --p2 $EXPR/P1.s --p2lang asm

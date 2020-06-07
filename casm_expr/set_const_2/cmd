@@ -1,1 +1,1 @@
-python3 main.py --pre ../veri_titan/casm_expr/set_const_2/pre --post ../veri_titan/casm_expr/set_const_2/post --p1 ../veri_titan/casm_expr/set_const_2/P1.s --p1lang asm --p2 ../veri_titan/casm_expr/set_const_2/P2.s --p2lang asm
+EXPR="../casm_expr/set_const_2" && python3 main.py --pre $EXPR/pre --post $EXPR/post --p1 $EXPR/P1.s --p1lang asm --p2 $EXPR/P1.s --p2lang asm

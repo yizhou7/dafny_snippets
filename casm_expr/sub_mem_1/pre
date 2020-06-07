@@ -1,0 +1,5 @@
+@Data{P1.rdi:64, P1.rdi:64 ~ P1.rdi:64 + 4:64};
+@Data{P1.rsi:64, P1.rsi:64 ~ P1.rsi:64 + 4:64};
+
+@Data{P2.rdi:64, P2.rdi:64 ~ P2.rdi:64 + 4:64};
+@Data{P2.rsi:64, P2.rsi:64 ~ P2.rsi:64 + 4:64};
