@@ -10,12 +10,9 @@ add:
 	.cfi_offset 6, -16
 	movq	%rsp, %rbp
 	.cfi_def_cfa_register 6
-	movq	%rdi, -24(%rbp)
-	movl	$333, -4(%rbp)
-	movl	-4(%rbp), %eax
-	leal	222(%rax), %edx
-	movq	-24(%rbp), %rax
-	movl	%edx, (%rax)
+	movq	%rdi, -8(%rbp)
+	movq	-8(%rbp), %rax
+	movb	$65, (%rax)
 	nop
 	popq	%rbp
 	.cfi_def_cfa 7, 8
