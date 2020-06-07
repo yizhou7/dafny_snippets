@@ -1,0 +1,1 @@
+python3 main.py --pre ../veri_titan/casm_expr/set_const_1/pre --post ../veri_titan/casm_expr/set_const_1/post --p1 ../veri_titan/casm_expr/set_const_1/P1.s --p1lang asm --p2 ../veri_titan/casm_expr/set_const_1/P2.s --p2lang asm
